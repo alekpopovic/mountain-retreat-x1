@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import cast
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
@@ -19,6 +20,7 @@ PLUMBING_TEMPLATE_NAME = "plumbing_wastewater.md.j2"
 HVAC_TEMPLATE_NAME = "hvac_package.md.j2"
 SMART_HOME_TEMPLATE_NAME = "smart_home_security.md.j2"
 OFF_GRID_TEMPLATE_NAME = "off_grid_package.md.j2"
+SELF_BUILD_TEMPLATE_NAME = "self_build_guide.md.j2"
 DEFAULT_TEMPLATE_DIR = Path("docs/templates/markdown")
 
 
@@ -216,6 +218,28 @@ class FailureScenarioItem:
     professional_review: str
 
 
+@dataclass(frozen=True)
+class SelfBuildStep:
+    """Step entry for the preliminary self-build planning guide."""
+
+    number: int
+    phase_number: int
+    phase_title: str
+    name: str
+    objective: str
+    prerequisites: tuple[str, ...]
+    materials: tuple[str, ...]
+    tools: tuple[str, ...]
+    people_trades_required: tuple[str, ...]
+    approximate_duration: str
+    procedure: tuple[str, ...]
+    quality_checks: tuple[str, ...]
+    safety_risks: tuple[str, ...]
+    common_mistakes: tuple[str, ...]
+    professional_stop_point: str
+    photos_documents: tuple[str, ...]
+
+
 def _shared_limitations(config: MountainRetreatConfig) -> tuple[str, ...]:
     return (
         config.project.disclaimer,
@@ -243,13 +267,10 @@ def _shared_assumptions(config: MountainRetreatConfig) -> tuple[str, ...]:
 
 def _material_lines(config: MountainRetreatConfig, group: str) -> tuple[str, ...]:
     materials = (
-        config.materials_core.materials
-        if group == "core"
-        else config.materials_mep.materials
+        config.materials_core.materials if group == "core" else config.materials_mep.materials
     )
     return tuple(
-        f"{item.code}: {item.name} ({item.base_quantity:g} {item.unit})"
-        for item in materials
+        f"{item.code}: {item.name} ({item.base_quantity:g} {item.unit})" for item in materials
     )
 
 
@@ -770,13 +791,11 @@ def _fixture_notes(room_name: str, fixture_type: str) -> str:
         return "Confirm trap seal protection, waterproofing interface, and cleanout access."
     if "tap" in name or "hose" in name:
         return (
-            "Confirm backflow protection, isolation valve, winter drain-down, "
-            "and slope to drain."
+            "Confirm backflow protection, isolation valve, winter drain-down, and slope to drain."
         )
     if "jacuzzi" in name or "spa" in name:
         return (
-            "Placeholder only; requires structural, electrical, waterproofing, "
-            "and drainage design."
+            "Placeholder only; requires structural, electrical, waterproofing, and drainage design."
         )
     return f"Confirm final fixture requirements for {room_name}."
 
@@ -838,8 +857,7 @@ def _plumbing_context(config: MountainRetreatConfig) -> dict[str, object]:
         zone
         for zone in config.terrace.zones
         if any(
-            "water" in item.lower() or "drain" in item.lower()
-            for item in zone.utility_requirements
+            "water" in item.lower() or "drain" in item.lower() for item in zone.utility_requirements
         )
     )
     return {
@@ -931,8 +949,7 @@ def _hvac_equipment(config: MountainRetreatConfig) -> tuple[HvacEquipmentItem, .
             electrical_dependency="Dedicated electrical supply and controls TBD",
             maintenance_interval="Seasonal inspection; manufacturer schedule TBD",
             notes=(
-                "Outdoor unit placement, defrost drainage, noise, snow clearance, "
-                "and access TBD."
+                "Outdoor unit placement, defrost drainage, noise, snow clearance, and access TBD."
             ),
         ),
         HvacEquipmentItem(
@@ -943,8 +960,7 @@ def _hvac_equipment(config: MountainRetreatConfig) -> tuple[HvacEquipmentItem, .
             electrical_dependency="Controls/sensors/circulation pumps TBD",
             maintenance_interval="Annual inspection",
             notes=(
-                "Clearance, insulation, valves, strainers, and drain points require "
-                "layout review."
+                "Clearance, insulation, valves, strainers, and drain points require layout review."
             ),
         ),
         HvacEquipmentItem(
@@ -994,8 +1010,7 @@ def _hvac_equipment(config: MountainRetreatConfig) -> tuple[HvacEquipmentItem, .
             electrical_dependency="Controls and backup heater power TBD",
             maintenance_interval="Annual safety and legionella-control review",
             notes=(
-                "Coordinate with plumbing package, expansion, relief discharge, "
-                "and service access."
+                "Coordinate with plumbing package, expansion, relief discharge, and service access."
             ),
         ),
     )
@@ -1479,6 +1494,436 @@ def _off_grid_context(config: MountainRetreatConfig) -> dict[str, object]:
     }
 
 
+SELF_BUILD_PHASES = (
+    "Project preparation",
+    "Professional review checklist",
+    "Permits and legal preparation",
+    "Budgeting and procurement",
+    "Site setup",
+    "Temporary power and water",
+    "Safety setup",
+    "Access road and logistics",
+    "Excavation",
+    "Drainage",
+    "Foundation preparation",
+    "Rebar preparation",
+    "Concrete pour planning",
+    "Waterproofing",
+    "Timber/structure procurement",
+    "Structural assembly",
+    "Roof installation",
+    "Exterior closure",
+    "Windows and doors",
+    "Facade",
+    "Electrical rough-in",
+    "Plumbing rough-in",
+    "HVAC rough-in",
+    "Insulation and membranes",
+    "Interior walls",
+    "Flooring",
+    "Bathrooms",
+    "Kitchen",
+    "Terrace construction",
+    "Smart home installation",
+    "Solar/off-grid installation",
+    "Commissioning",
+    "Final inspection",
+    "Handover binder",
+    "Maintenance start",
+)
+
+SELF_BUILD_NORMAL_TASKS = (
+    "scope and information check",
+    "work area and resource readiness",
+    "quality hold point",
+)
+
+SELF_BUILD_LARGE_TASKS = (
+    *SELF_BUILD_NORMAL_TASKS,
+    "material delivery and storage",
+    "layout and coordination",
+    "trade interface review",
+    "weather and access contingency",
+    "photo record and document control",
+    "closeout and next-phase release",
+)
+
+
+def _phase_detail_profile(phase_title: str, config: MountainRetreatConfig) -> dict[str, object]:
+    text = phase_title.lower()
+    common_materials = (
+        "current YAML assumptions and generated preliminary drawings",
+        "approved-by-professional documents only where the law requires them",
+        "site notebook, photo log, and inspection register",
+    )
+    common_tools = (
+        "tape measure / laser measure",
+        "camera or phone for photo records",
+        "checklist clipboard or site tablet",
+    )
+    common_trades = (
+        "owner/self-builder",
+        "qualified site supervisor",
+        "licensed professional reviewer where required",
+    )
+    profile: dict[str, object] = {
+        "materials": common_materials,
+        "tools": common_tools,
+        "trades": common_trades,
+        "duration": "0.5-1 day planning allowance",
+        "risks": (
+            "acting on preliminary information as if it were approved construction data",
+            "missing inspection hold points or local authority requirements",
+        ),
+        "mistakes": (
+            "starting work before professional review is recorded",
+            "not updating assumptions when site conditions change",
+        ),
+        "checks": (
+            "confirm the step is consistent with the latest YAML assumptions",
+            "confirm required inspections are listed before work proceeds",
+        ),
+        "documents": (
+            "dated checklist entry",
+            "photos of existing condition and completed work area",
+            "review notes or inspection record where applicable",
+        ),
+    }
+
+    if any(word in text for word in ("permit", "legal", "professional review")):
+        profile.update(
+            materials=(
+                "planning package marked PRELIMINARY",
+                "professional review comments",
+                "local authority forms and submission checklist",
+            ),
+            tools=("document register", "revision tracker", "meeting minutes template"),
+            trades=("owner", "architect", "licensed engineers", "local authority"),
+            duration="1-5 days depending on authority and reviewer availability",
+            risks=(
+                "mistaking generated documents for permits or legal approvals",
+                "omitting required architect, engineer, utility, or authority review",
+            ),
+            mistakes=(
+                "submitting unreviewed placeholder values",
+                "not tracking reviewer comments through closure",
+            ),
+        )
+    elif any(word in text for word in ("budget", "procurement")):
+        profile.update(
+            materials=(
+                "BOM workbook and cost estimate workbook",
+                "supplier placeholders replaced by real quotations",
+                "procurement log with lead times and substitutions",
+            ),
+            tools=("spreadsheet tracker", "quote comparison sheet", "delivery calendar"),
+            trades=("owner", "cost estimator", "contractor", "suppliers"),
+            duration="1-3 days per procurement package",
+            risks=(
+                "ordering from preliminary quantities",
+                "accepting substitutions without design review",
+            ),
+            mistakes=("ignoring waste factors", "not reserving contingency for mountain logistics"),
+        )
+    elif any(word in text for word in ("site", "safety", "access", "logistics", "temporary")):
+        profile.update(
+            materials=(
+                "temporary fencing and signage",
+                "welfare, storage, first-aid, and fire-extinguisher provisions",
+                "temporary power/water equipment approved by qualified trades",
+            ),
+            tools=("traffic plan", "PPE register", "weather log", "delivery route map"),
+            trades=(
+                "site supervisor",
+                "safety coordinator",
+                "licensed electrician/plumber as needed",
+            ),
+            duration="0.5-2 days before physical works",
+            risks=("unstable access road", "temporary services installed without licensed review"),
+            mistakes=(
+                "placing storage in drainage paths",
+                "not planning snow, mud, or crane access",
+            ),
+        )
+    elif any(
+        word in text for word in ("excavation", "drainage", "foundation", "rebar", "concrete")
+    ):
+        profile.update(
+            materials=(
+                "survey set-out stakes and batter boards",
+                (
+                    "gravel/tampon assumption depth "
+                    f"{config.calculator_assumptions.gravel_depth_m:g} m"
+                ),
+                "reinforcement, formwork, membranes, and concrete placeholders from BOM",
+            ),
+            tools=("level/laser", "compaction equipment", "excavator access", "concrete tools"),
+            trades=(
+                "groundworks contractor",
+                "licensed structural engineer",
+                "surveyor",
+                "concrete crew",
+            ),
+            duration="1-3 days per hold point, weather dependent",
+            risks=("slope instability", "frost and drainage failure", "uninspected reinforcement"),
+            mistakes=(
+                "covering rebar before inspection",
+                "pouring concrete without weather and access plan",
+            ),
+            checks=(
+                "confirm levels, dimensions, compaction, drainage falls, and frost protection",
+                "record structural engineer inspection before concrete is placed",
+            ),
+        )
+    elif any(word in text for word in ("waterproof", "roof", "exterior", "windows", "facade")):
+        profile.update(
+            materials=(
+                config.building.roof_type,
+                config.building.facade_type,
+                "flashing, tapes, membranes, sealants, and drainage accessories",
+            ),
+            tools=("moisture meter", "scaffold/edge protection", "sealant/tape tools"),
+            trades=("architect", "envelope specialist", "roofer", "window/facade installer"),
+            duration="0.5-2 days per elevation or zone",
+            risks=("water ingress", "fall hazards", "incorrect flashing sequence"),
+            mistakes=(
+                "burying membranes without photo record",
+                "installing windows before opening review",
+            ),
+        )
+    elif any(word in text for word in ("timber", "structure", "structural assembly")):
+        profile.update(
+            materials=(
+                f"structural variant: {config.building.construction_variant}",
+                "engineered timber/CLT/masonry package as professionally designed",
+                "connectors, hold-downs, bracing, and lifting accessories",
+            ),
+            tools=("lifting plan", "torque tools", "temporary bracing", "fall protection"),
+            trades=("licensed structural engineer", "qualified erector", "crane/lifting crew"),
+            duration="1-5 days depending on package and weather",
+            risks=("unstable partially erected structure", "incorrect connection installation"),
+            mistakes=(
+                "removing temporary bracing early",
+                "substituting connectors without engineer approval",
+            ),
+        )
+    elif any(word in text for word in ("electrical", "smart home", "solar", "off-grid")):
+        profile.update(
+            materials=(
+                "electrical package with placeholders clearly marked",
+                f"smart-home platform assumption: {config.smart_home.platform}",
+                (
+                    f"off-grid option: {config.off_grid.pv_kwp:g} kWp PV / "
+                    f"{config.off_grid.battery_kwh:g} kWh battery"
+                ),
+            ),
+            tools=("cable schedule", "label printer", "continuity tester for qualified trade use"),
+            trades=("licensed electrician", "electrical engineer", "network/smart-home integrator"),
+            duration="0.5-3 days per circuit or system zone",
+            risks=(
+                "shock/fire risk",
+                "unapproved cable/breaker sizing",
+                "unsafe generator/PV transfer",
+            ),
+            mistakes=(
+                "covering cables before inspection",
+                "mixing low-voltage and mains routes incorrectly",
+            ),
+        )
+    elif any(word in text for word in ("plumbing", "bathroom", "kitchen")):
+        profile.update(
+            materials=(
+                "fixture schedule from plumbing package",
+                "isolation valves, traps, vents, waterproofing accessories",
+                "leak sensors and access panels where configured",
+            ),
+            tools=("pressure test kit", "pipe labeling", "waterproofing checklist"),
+            trades=("licensed plumber/mechanical contractor", "waterproofing installer", "tiler"),
+            duration="0.5-3 days per wet room or fixture group",
+            risks=(
+                "leaks hidden behind finishes",
+                "frost damage",
+                "unapproved wastewater connection",
+            ),
+            mistakes=("closing walls before pressure test", "omitting access to valves and traps"),
+        )
+    elif any(word in text for word in ("hvac", "insulation", "membranes")):
+        profile.update(
+            materials=(
+                "heat pump and underfloor-heating assumptions",
+                "insulation, vapor barrier, tapes, sleeves, and pipe insulation",
+                "ventilation/extract components as professionally designed",
+            ),
+            tools=("thermal camera if available", "air-sealing tools", "manifold labels"),
+            trades=("licensed mechanical engineer", "HVAC installer", "energy/envelope reviewer"),
+            duration="0.5-3 days per zone",
+            risks=("condensation", "poor winterization", "unverified heat-loss assumptions"),
+            mistakes=(
+                "compressing insulation",
+                "puncturing vapor barriers without sealed penetrations",
+            ),
+        )
+    elif any(word in text for word in ("interior", "flooring")):
+        profile.update(
+            materials=(
+                "room finish schedule",
+                "substrate primers, boards, fasteners, adhesives, and trim",
+                "manufacturer installation instructions",
+            ),
+            tools=("straightedge", "moisture meter", "dust control equipment"),
+            trades=("finish carpenter", "drywall installer", "flooring installer"),
+            duration="0.5-2 days per room group",
+            risks=("trapping moisture", "covering unresolved MEP defects"),
+            mistakes=("starting finishes before commissioning tests", "ignoring expansion gaps"),
+        )
+    elif "terrace" in text:
+        zone_names = ", ".join(zone.name for zone in config.terrace.zones)
+        profile.update(
+            materials=(
+                f"terrace zones: {zone_names}",
+                "decking, guards, drainage, waterproofing, and exterior-rated fixings",
+                "jacuzzi/fire-pit placeholders only after structural and fire review",
+            ),
+            tools=("fall protection", "slope level", "exterior fastening tools"),
+            trades=(
+                "structural engineer",
+                "waterproofing specialist",
+                "qualified terrace installer",
+            ),
+            duration="1-4 days depending on zone and weather",
+            risks=("fall from edge", "ponding water", "overloading jacuzzi-ready area"),
+            mistakes=(
+                "not confirming guard requirements",
+                "blocking drainage with decking or furniture",
+            ),
+        )
+    elif any(word in text for word in ("commissioning", "inspection", "handover", "maintenance")):
+        profile.update(
+            materials=(
+                "commissioning forms and test certificates",
+                "manufacturer manuals and warranties",
+                "handover binder with as-built notes and maintenance schedule",
+            ),
+            tools=("document register", "defect list", "label printer", "maintenance calendar"),
+            trades=(
+                "owner",
+                "site supervisor",
+                "licensed trades",
+                "local authority where required",
+            ),
+            duration="1-5 days depending on defects and inspection availability",
+            risks=("occupying before required approvals", "missing safety or warranty documents"),
+            mistakes=(
+                "not collecting test certificates",
+                "not documenting shutoff locations and backups",
+            ),
+        )
+    return profile
+
+
+def _self_build_step_name(phase_title: str, task_label: str) -> str:
+    return f"{phase_title} - {task_label}"
+
+
+def _self_build_stop_point(phase_title: str, task_label: str) -> str:
+    return (
+        f"Stop after {phase_title.lower()} {task_label}; obtain the required licensed "
+        "trade, engineer, architect, site supervisor, or authority review before "
+        "covering work, ordering final materials, energizing systems, or moving to "
+        "the next dependent phase."
+    )
+
+
+def _profile_tuple(profile: dict[str, object], key: str) -> tuple[str, ...]:
+    return cast(tuple[str, ...], profile[key])
+
+
+def _self_build_steps(config: MountainRetreatConfig, large_mode: bool) -> tuple[SelfBuildStep, ...]:
+    task_labels = SELF_BUILD_LARGE_TASKS if large_mode else SELF_BUILD_NORMAL_TASKS
+    steps: list[SelfBuildStep] = []
+    step_number = 1
+    for phase_number, phase_title in enumerate(SELF_BUILD_PHASES, start=1):
+        profile = _phase_detail_profile(phase_title, config)
+        for task_label in task_labels:
+            materials = _profile_tuple(profile, "materials")
+            tools = _profile_tuple(profile, "tools")
+            trades = _profile_tuple(profile, "trades")
+            risks = _profile_tuple(profile, "risks")
+            mistakes = _profile_tuple(profile, "mistakes")
+            checks = _profile_tuple(profile, "checks")
+            documents = _profile_tuple(profile, "documents")
+            steps.append(
+                SelfBuildStep(
+                    number=step_number,
+                    phase_number=phase_number,
+                    phase_title=phase_title,
+                    name=_self_build_step_name(phase_title, task_label),
+                    objective=(
+                        f"Plan and control the {task_label} for {phase_title.lower()} "
+                        "without treating preliminary documents as approved construction "
+                        "instructions."
+                    ),
+                    prerequisites=(
+                        f"Latest {config.project.project_code} YAML assumptions reviewed.",
+                        "Relevant preliminary drawings/checklists available on site.",
+                        (
+                            "Required licensed reviewer or qualified trade identified "
+                            "before work starts."
+                        ),
+                    ),
+                    materials=materials,
+                    tools=tools,
+                    people_trades_required=trades,
+                    approximate_duration=str(profile["duration"]),
+                    procedure=(
+                        f"Review the {phase_title.lower()} scope against current drawings, "
+                        "BOM, schedule, and inspection requirements.",
+                        (
+                            "Confirm dimensions, quantities, product selections, weather window, "
+                            "and access constraints before physical work or procurement."
+                        ),
+                        (
+                            "Execute only owner-appropriate tasks; reserve regulated, structural, "
+                            "electrical, mechanical, fire, and wastewater work for "
+                            "qualified trades."
+                        ),
+                        (
+                            "Record deviations immediately and route them back to the "
+                            "design/review team."
+                        ),
+                    ),
+                    quality_checks=checks,
+                    safety_risks=risks,
+                    common_mistakes=mistakes,
+                    professional_stop_point=_self_build_stop_point(phase_title, task_label),
+                    photos_documents=documents,
+                )
+            )
+            step_number += 1
+    return tuple(steps)
+
+
+def _self_build_context(
+    config: MountainRetreatConfig,
+    large_mode: bool,
+) -> dict[str, object]:
+    steps = _self_build_steps(config, large_mode)
+    return {
+        "project": config.project,
+        "site": config.site,
+        "building": config.building,
+        "terrace": config.terrace,
+        "smart_home": config.smart_home,
+        "off_grid": config.off_grid,
+        "assumptions": _shared_assumptions(config),
+        "limitations": _shared_limitations(config),
+        "phases": SELF_BUILD_PHASES,
+        "steps": steps,
+        "step_count": len(steps),
+        "large_mode": large_mode,
+    }
+
+
 def all_config_rooms(config: MountainRetreatConfig) -> list[Room]:
     """Return all configured room models."""
     return [*config.rooms_ground_floor.rooms, *config.rooms_gallery.rooms]
@@ -1890,6 +2335,8 @@ def generate_markdown_volumes(
     config: MountainRetreatConfig,
     output_dir: Path,
     template_dir: Path = DEFAULT_TEMPLATE_DIR,
+    *,
+    large_mode: bool = False,
 ) -> list[Path]:
     """Generate all Markdown source volumes and return their paths."""
     markdown_dir = output_dir / MARKDOWN_OUTPUT_DIR
@@ -1904,6 +2351,7 @@ def generate_markdown_volumes(
     hvac_template = env.get_template(HVAC_TEMPLATE_NAME)
     smart_home_template = env.get_template(SMART_HOME_TEMPLATE_NAME)
     off_grid_template = env.get_template(OFF_GRID_TEMPLATE_NAME)
+    self_build_template = env.get_template(SELF_BUILD_TEMPLATE_NAME)
     paths: list[Path] = []
     for volume in _volume_specs(config):
         if volume.filename == "02_architectural_package.md":
@@ -1920,6 +2368,10 @@ def generate_markdown_volumes(
             rendered = smart_home_template.render(**_smart_home_context(config))
         elif volume.filename == "08_off_grid_package.md":
             rendered = off_grid_template.render(**_off_grid_context(config))
+        elif volume.filename == "13_self_build_guide.md":
+            rendered = self_build_template.render(
+                **_self_build_context(config, large_mode),
+            )
         else:
             rendered = template.render(project=config.project, volume=volume)
         path = markdown_dir / volume.filename

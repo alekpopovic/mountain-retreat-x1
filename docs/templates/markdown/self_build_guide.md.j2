@@ -1,0 +1,123 @@
+# 13 Self-Build Guide
+
+**Project code:** {{ project.project_code }}  
+**Project:** {{ project.project_name }}  
+**Version:** {{ project.version }}  
+**Status:** {{ project.status }}  
+**Revision date:** {{ project.revision_date }}  
+**Language:** {{ project.language }}  
+**Mode:** {% if large_mode %}Large step-by-step planning mode{% else %}Normal step-by-step planning mode{% endif %}  
+**Generated step count:** {{ step_count }}  
+
+## Revision History
+
+| Version | Date | Author | Notes |
+|---|---|---|---|
+| {{ project.version }} | {{ project.revision_date }} | {{ project.author }} | Generated preliminary self-build planning guide. |
+
+## Mandatory Notice
+
+{{ project.disclaimer }}
+
+This guide is **PRELIMINARY**, **not for construction**, and is not a replacement for professional supervision, permits, inspections, licensed architects, licensed engineers, licensed electricians, licensed mechanical/plumbing professionals, fire-safety reviewers, or local authorities.
+
+Every step below includes a professional stop point. Stop points are mandatory planning reminders; they do not create approvals and they do not confirm legal compliance.
+
+## Required Professional Review
+
+{% for reviewer in project.review_required_by -%}
+- {{ reviewer }}
+{% endfor %}
+- Licensed architect
+- Licensed structural engineer
+- Licensed electrical engineer or electrician
+- Licensed mechanical/plumbing professional
+- Qualified contractor or site supervisor
+- Local permitting and inspection authority
+
+## Assumptions
+
+{% for assumption in assumptions -%}
+- {{ assumption }}
+{% endfor %}
+- Self-builder work is limited to tasks allowed by local law, insurance, permit conditions, and professional supervision.
+- All regulated trades, structural works, utility connections, fire-safety items, and wastewater systems require qualified review.
+
+## Limitations
+
+{% for limitation in limitations -%}
+- {{ limitation }}
+{% endfor %}
+- This guide does not authorize construction.
+- This guide does not provide final structural, electrical, HVAC, plumbing, fire, wastewater, or legal instructions.
+- Placeholder values must be replaced only by qualified professionals or verified project documents.
+
+## Guide Structure
+
+The guide follows 35 planning phases from project preparation through maintenance start. Normal mode produces at least 100 useful steps. Large mode expands phase-specific procedures, records, trade interfaces, logistics checks, and professional hold points to at least 300 useful steps.
+
+{% for phase in phases %}
+## {{ loop.index }}. {{ phase }}
+
+{% for step in steps if step.phase_title == phase %}
+### Step {{ "%03d"|format(step.number) }} - {{ step.name }}
+
+**Objective:** {{ step.objective }}
+
+**Prerequisites:**
+{% for item in step.prerequisites -%}
+- {{ item }}
+{% endfor %}
+
+**Materials:**
+{% for item in step.materials -%}
+- {{ item }}
+{% endfor %}
+
+**Tools:**
+{% for item in step.tools -%}
+- {{ item }}
+{% endfor %}
+
+**People/trades required:**
+{% for item in step.people_trades_required -%}
+- {{ item }}
+{% endfor %}
+
+**Approximate duration:** {{ step.approximate_duration }}
+
+**Procedure:**
+{% for item in step.procedure -%}
+- {{ item }}
+{% endfor %}
+
+**Quality checks:**
+{% for item in step.quality_checks -%}
+- {{ item }}
+{% endfor %}
+
+**Safety risks:**
+{% for item in step.safety_risks -%}
+- {{ item }}
+{% endfor %}
+
+**Common mistakes:**
+{% for item in step.common_mistakes -%}
+- {{ item }}
+{% endfor %}
+
+**Stop point requiring professional review:** {{ step.professional_stop_point }}
+
+**Photos/documents to collect:**
+{% for item in step.photos_documents -%}
+- {{ item }}
+{% endfor %}
+
+{% endfor %}
+{% endfor %}
+
+## QA Notes
+
+- Keep this guide conservative and safety-first.
+- Do not remove professional stop points during editing.
+- Do not convert placeholder planning notes into approvals, stamps, signatures, or final construction instructions.

@@ -302,11 +302,16 @@ def generate_all(
 def generate_markdown(
     config_dir: ConfigDirOption = Path("config"),
     output_dir: OutputDirOption = Path("output"),
+    large: bool = typer.Option(
+        False,
+        "--large",
+        help="Expand supported Markdown volumes with large-mode detail.",
+    ),
 ) -> None:
     """Generate preliminary Markdown source volumes."""
     _ensure_output_dirs(output_dir)
     config = _load_config_or_exit(config_dir)
-    paths = generate_markdown_volumes(config, output_dir)
+    paths = generate_markdown_volumes(config, output_dir, large_mode=large)
 
     table = Table(title="Generated Markdown Volumes")
     table.add_column("File", style="cyan")

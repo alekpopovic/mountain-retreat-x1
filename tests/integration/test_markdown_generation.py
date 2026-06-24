@@ -25,6 +25,10 @@ EXPECTED_MARKDOWN_FILES = (
 runner = CliRunner()
 
 
+def _self_build_step_count(text: str) -> int:
+    return sum(1 for line in text.splitlines() if line.startswith("### Step "))
+
+
 def test_generate_markdown_creates_all_expected_files(tmp_path: Path) -> None:
     output_dir = tmp_path / "output"
 
@@ -52,20 +56,49 @@ def test_generated_markdown_contains_required_safety_language(tmp_path: Path) ->
         assert "## Limitations" in text
 
 
+def test_self_build_guide_contains_at_least_100_normal_steps(
+    tmp_path: Path,
+) -> None:
+    output_dir = tmp_path / "output"
+
+    result = runner.invoke(app, ["generate", "markdown", "--output-dir", str(output_dir)])
+
+    assert result.exit_code == 0
+    text = (output_dir / "markdown" / "13_self_build_guide.md").read_text(encoding="utf-8")
+    assert _self_build_step_count(text) >= 100
+    assert "Stop point requiring professional review" in text
+    assert "Licensed structural engineer" in text
+    assert "not for construction" in text.lower()
+
+
+def test_self_build_guide_large_mode_contains_at_least_300_steps(
+    tmp_path: Path,
+) -> None:
+    output_dir = tmp_path / "output"
+
+    result = runner.invoke(
+        app,
+        ["generate", "markdown", "--large", "--output-dir", str(output_dir)],
+    )
+
+    assert result.exit_code == 0
+    text = (output_dir / "markdown" / "13_self_build_guide.md").read_text(encoding="utf-8")
+    assert _self_build_step_count(text) >= 300
+    assert "Large step-by-step planning mode" in text
+    assert "Stop point requiring professional review" in text
+
+
 def test_architectural_package_contains_all_room_names(tmp_path: Path) -> None:
     output_dir = tmp_path / "output"
     config = load_config("config")
     room_names = [
-        room.name
-        for room in [*config.rooms_ground_floor.rooms, *config.rooms_gallery.rooms]
+        room.name for room in [*config.rooms_ground_floor.rooms, *config.rooms_gallery.rooms]
     ]
 
     result = runner.invoke(app, ["generate", "markdown", "--output-dir", str(output_dir)])
 
     assert result.exit_code == 0
-    text = (output_dir / "markdown" / "02_architectural_package.md").read_text(
-        encoding="utf-8"
-    )
+    text = (output_dir / "markdown" / "02_architectural_package.md").read_text(encoding="utf-8")
     for room_name in room_names:
         assert room_name in text
 
@@ -76,9 +109,7 @@ def test_architectural_package_contains_required_sections_and_schedules(tmp_path
     result = runner.invoke(app, ["generate", "markdown", "--output-dir", str(output_dir)])
 
     assert result.exit_code == 0
-    text = (output_dir / "markdown" / "02_architectural_package.md").read_text(
-        encoding="utf-8"
-    )
+    text = (output_dir / "markdown" / "02_architectural_package.md").read_text(encoding="utf-8")
     for section in (
         "## 1. Design Intent",
         "## 2. Mountain Cabin Concept",
@@ -115,9 +146,7 @@ def test_structural_concept_contains_required_sections_and_review_language(
     result = runner.invoke(app, ["generate", "markdown", "--output-dir", str(output_dir)])
 
     assert result.exit_code == 0
-    text = (output_dir / "markdown" / "03_structural_concept.md").read_text(
-        encoding="utf-8"
-    )
+    text = (output_dir / "markdown" / "03_structural_concept.md").read_text(encoding="utf-8")
     for section in (
         "## 1. Structural Design Philosophy",
         "## 2. Required Geotechnical Investigation",
@@ -158,9 +187,7 @@ def test_electrical_package_contains_required_sections_and_placeholder_language(
     result = runner.invoke(app, ["generate", "markdown", "--output-dir", str(output_dir)])
 
     assert result.exit_code == 0
-    text = (output_dir / "markdown" / "04_electrical_package.md").read_text(
-        encoding="utf-8"
-    )
+    text = (output_dir / "markdown" / "04_electrical_package.md").read_text(encoding="utf-8")
     for section in (
         "## 1. Electrical Design Concept",
         "## 2. Grid Connection Assumptions",
@@ -208,9 +235,7 @@ def test_electrical_package_covers_major_rooms(tmp_path: Path) -> None:
     result = runner.invoke(app, ["generate", "markdown", "--output-dir", str(output_dir)])
 
     assert result.exit_code == 0
-    text = (output_dir / "markdown" / "04_electrical_package.md").read_text(
-        encoding="utf-8"
-    )
+    text = (output_dir / "markdown" / "04_electrical_package.md").read_text(encoding="utf-8")
     for room_name in major_rooms:
         assert room_name in text
 
@@ -223,9 +248,7 @@ def test_plumbing_package_contains_required_sections_fixture_schedule_and_warnin
     result = runner.invoke(app, ["generate", "markdown", "--output-dir", str(output_dir)])
 
     assert result.exit_code == 0
-    text = (output_dir / "markdown" / "05_plumbing_wastewater.md").read_text(
-        encoding="utf-8"
-    )
+    text = (output_dir / "markdown" / "05_plumbing_wastewater.md").read_text(encoding="utf-8")
     for section in (
         "## 1. Water Supply Concept",
         "## 2. Mains Water Option",
@@ -272,9 +295,7 @@ def test_plumbing_package_includes_all_configured_wet_rooms(tmp_path: Path) -> N
     result = runner.invoke(app, ["generate", "markdown", "--output-dir", str(output_dir)])
 
     assert result.exit_code == 0
-    text = (output_dir / "markdown" / "05_plumbing_wastewater.md").read_text(
-        encoding="utf-8"
-    )
+    text = (output_dir / "markdown" / "05_plumbing_wastewater.md").read_text(encoding="utf-8")
     for room_name in wet_room_names:
         assert room_name in text
 
@@ -291,9 +312,7 @@ def test_hvac_package_contains_required_sections_tables_and_review_language(
     result = runner.invoke(app, ["generate", "markdown", "--output-dir", str(output_dir)])
 
     assert result.exit_code == 0
-    text = (output_dir / "markdown" / "06_hvac_package.md").read_text(
-        encoding="utf-8"
-    )
+    text = (output_dir / "markdown" / "06_hvac_package.md").read_text(encoding="utf-8")
     for section in (
         "## 1. Heating and Cooling Concept",
         "## 2. Mountain Climate Assumptions",
@@ -330,16 +349,13 @@ def test_hvac_package_includes_all_rooms_in_zone_considerations(
     output_dir = tmp_path / "output"
     config = load_config("config")
     room_names = [
-        room.name
-        for room in [*config.rooms_ground_floor.rooms, *config.rooms_gallery.rooms]
+        room.name for room in [*config.rooms_ground_floor.rooms, *config.rooms_gallery.rooms]
     ]
 
     result = runner.invoke(app, ["generate", "markdown", "--output-dir", str(output_dir)])
 
     assert result.exit_code == 0
-    text = (output_dir / "markdown" / "06_hvac_package.md").read_text(
-        encoding="utf-8"
-    )
+    text = (output_dir / "markdown" / "06_hvac_package.md").read_text(encoding="utf-8")
     for room_name in room_names:
         assert room_name in text
 
@@ -352,9 +368,7 @@ def test_smart_home_package_contains_required_sections_tables_and_warnings(
     result = runner.invoke(app, ["generate", "markdown", "--output-dir", str(output_dir)])
 
     assert result.exit_code == 0
-    text = (output_dir / "markdown" / "07_smart_home_security.md").read_text(
-        encoding="utf-8"
-    )
+    text = (output_dir / "markdown" / "07_smart_home_security.md").read_text(encoding="utf-8")
     for section in (
         "## 1. Smart Home Architecture",
         "## 2. Local-First Control Philosophy",
@@ -398,9 +412,7 @@ def test_smart_home_package_contains_required_automation_examples(
     result = runner.invoke(app, ["generate", "markdown", "--output-dir", str(output_dir)])
 
     assert result.exit_code == 0
-    text = (output_dir / "markdown" / "07_smart_home_security.md").read_text(
-        encoding="utf-8"
-    )
+    text = (output_dir / "markdown" / "07_smart_home_security.md").read_text(encoding="utf-8")
     for automation in (
         "Winter freeze protection",
         "Water leak shutoff",
@@ -422,9 +434,7 @@ def test_off_grid_package_contains_required_sections_tables_and_warnings(
     result = runner.invoke(app, ["generate", "markdown", "--output-dir", str(output_dir)])
 
     assert result.exit_code == 0
-    text = (output_dir / "markdown" / "08_off_grid_package.md").read_text(
-        encoding="utf-8"
-    )
+    text = (output_dir / "markdown" / "08_off_grid_package.md").read_text(encoding="utf-8")
     for section in (
         "## 1. Off-grid Design Philosophy",
         "## 2. Grid-connected Versus Off-grid Modes",
@@ -465,9 +475,7 @@ def test_off_grid_package_contains_loads_and_failure_scenarios(
     result = runner.invoke(app, ["generate", "markdown", "--output-dir", str(output_dir)])
 
     assert result.exit_code == 0
-    text = (output_dir / "markdown" / "08_off_grid_package.md").read_text(
-        encoding="utf-8"
-    )
+    text = (output_dir / "markdown" / "08_off_grid_package.md").read_text(encoding="utf-8")
     for expected in (
         "Heating controls and circulation pumps",
         "Network, router, Home Assistant, and sensors",
