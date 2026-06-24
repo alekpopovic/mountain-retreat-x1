@@ -6,6 +6,7 @@ from mountain_retreat_x1.config.loader import (
     load_config,
     load_typed_yaml,
     load_yaml_file,
+    with_variant,
 )
 
 __all__ = [
@@ -14,5 +15,5 @@ __all__ = [
     "load_config",
     "load_typed_yaml",
     "load_yaml_file",
+    "with_variant",
 ]
-

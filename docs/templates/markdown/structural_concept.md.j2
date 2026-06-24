@@ -52,6 +52,12 @@ This is a **PRELIMINARY structural concept document only**. It is not a final st
 - Favor clear load paths, robust moisture separation, reliable drainage, and buildable interfaces between structure, terrace, roof, and envelope.
 - Treat the large panoramic terrace, large glazing, snow exposure, wind exposure, frost, slope, and site access as primary risk drivers.
 - Use this document to brief licensed professionals, not to size or approve structural members.
+- Active construction variant: {{ active_variant.name }} (`{{ active_variant.code }}`).
+- Active variant assumption source: `config/variants/{{ active_variant.code }}.yaml`.
+- Active variant structural concept note: {{ active_variant.structural_concept_note }}
+- Procurement complexity: {{ active_variant.procurement_complexity }}
+- Self-build difficulty: {{ active_variant.self_build_difficulty }}
+- No variant in this document is structurally approved.
 
 ## 2. Required Geotechnical Investigation
 
@@ -194,6 +200,7 @@ This is a **PRELIMINARY structural concept document only**. It is not a final st
 | Rebar | {{ quantities["qty.rebar.mass"].value }} {{ quantities["qty.rebar.mass"].unit }} | {{ quantities["qty.rebar.mass"].formula_note }} | {{ quantities["qty.rebar.mass"].assumptions_used | join(", ") }} |
 | Gravel/tampon | {{ quantities["qty.gravel.volume"].value }} {{ quantities["qty.gravel.volume"].unit }} | {{ quantities["qty.gravel.volume"].formula_note }} | {{ quantities["qty.gravel.volume"].assumptions_used | join(", ") }} |
 | Waterproofing | {{ quantities["qty.waterproofing.area"].value }} {{ quantities["qty.waterproofing.area"].unit }} | {{ quantities["qty.waterproofing.area"].formula_note }} | {{ quantities["qty.waterproofing.area"].assumptions_used | join(", ") }} |
+| Active structural variant quantity | {{ quantities["qty.structure.active_variant"].value }} {{ quantities["qty.structure.active_variant"].unit }} | {{ quantities["qty.structure.active_variant"].formula_note }} | {{ quantities["qty.structure.active_variant"].assumptions_used | join(", ") }} |
 | Standard hybrid timber | {{ quantities["qty.timber.standard_hybrid"].value }} {{ quantities["qty.timber.standard_hybrid"].unit }} | {{ quantities["qty.timber.standard_hybrid"].formula_note }} | {{ quantities["qty.timber.standard_hybrid"].assumptions_used | join(", ") }} |
 | Premium CLT | {{ quantities["qty.clt.premium_clt"].value }} {{ quantities["qty.clt.premium_clt"].unit }} | {{ quantities["qty.clt.premium_clt"].formula_note }} | {{ quantities["qty.clt.premium_clt"].assumptions_used | join(", ") }} |
 | Masonry blocks | {{ quantities["qty.masonry.blocks"].value }} {{ quantities["qty.masonry.blocks"].unit }} | {{ quantities["qty.masonry.blocks"].formula_note }} | {{ quantities["qty.masonry.blocks"].assumptions_used | join(", ") }} |
@@ -215,4 +222,3 @@ This is a **PRELIMINARY structural concept document only**. It is not a final st
 - This volume must remain conservative and concept-only.
 - Beam sizing, reinforcement drawings, and safety-compliance claims are intentionally excluded.
 - Licensed structural engineer review is mandatory before any real-world structural use.
-

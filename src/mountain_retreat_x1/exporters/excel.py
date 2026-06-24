@@ -350,7 +350,12 @@ def _all_materials(
     *,
     large_mode: bool = False,
 ) -> list[MaterialItem]:
-    materials = [*config.materials_core.materials, *config.materials_mep.materials]
+    materials = [
+        item
+        for item in [*config.materials_core.materials, *config.materials_mep.materials]
+        if item.code != "MAT-CORE-002"
+    ]
+    materials.extend(config.variant.material_items)
     if large_mode:
         materials.extend(_large_mode_materials(config))
     return materials
@@ -554,6 +559,11 @@ def _assumption_rows(config: MountainRetreatConfig) -> tuple[tuple[str, str], ..
         ("Net area m2", f"{config.building.net_area_m2:g}"),
         ("Terrace area m2", f"{config.terrace.terrace_area_m2:g}"),
         ("Construction variant", config.building.construction_variant),
+        ("Active variant name", config.variant.name),
+        ("Variant description", config.variant.description),
+        ("Variant procurement complexity", config.variant.procurement_complexity),
+        ("Variant self-build difficulty", config.variant.self_build_difficulty),
+        ("Variant structural note", config.variant.structural_concept_note),
         ("Roof type", config.building.roof_type),
         ("Facade type", config.building.facade_type),
         ("Site", config.site.location_name),
@@ -632,7 +642,12 @@ def generate_bom_workbook(
 
 
 def _cost_items(config: MountainRetreatConfig) -> list[CostItem]:
-    return config.cost_assumptions_serbia_2026.cost_items
+    common_items = [
+        item
+        for item in config.cost_assumptions_serbia_2026.cost_items
+        if item.code != "COST-002"
+    ]
+    return [*common_items, *config.variant.cost_items]
 
 
 def _configure_cost_table_sheet(sheet: Worksheet) -> None:
@@ -961,9 +976,12 @@ def _build_cost_assumptions_sheet(sheet: Worksheet, config: MountainRetreatConfi
         ("VAT included", str(cost_config.vat_included)),
         ("Default contingency", f"{cost_config.contingency_percent:g}%"),
         ("Regional adjustment note", cost_config.regional_adjustment_note),
-        ("Estimate warning", cost_config.estimate_warning),
         ("Gross area m2", f"{config.building.gross_area_m2:g}"),
         ("Net area m2", f"{config.building.net_area_m2:g}"),
+        ("Estimate warning", cost_config.estimate_warning),
+        ("Construction variant", config.variant.code),
+        ("Active variant name", config.variant.name),
+        ("Variant procurement complexity", config.variant.procurement_complexity),
         ("Off-grid PV kWp", f"{config.off_grid.pv_kwp:g}"),
         ("Off-grid battery kWh", f"{config.off_grid.battery_kwh:g}"),
         ("Professional limit", config.project.disclaimer),

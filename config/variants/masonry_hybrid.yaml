@@ -1,0 +1,62 @@
+code: masonry_hybrid
+name: Masonry hybrid
+status: PRELIMINARY
+description: >
+  Masonry-heavy concept with reinforced concrete foundations, masonry wall
+  placeholders, engineered lintels/ring beams, and hybrid roof/terrace support
+  coordination.
+structural_concept_note: >
+  Masonry hybrid may use familiar trades and robust wall mass, but the heavier
+  structure increases foundation, frost, moisture, and seismic coordination.
+  No reinforcement, lintel, wall, or seismic detailing is approved.
+quantity_reference: qty.masonry.blocks
+quantity_multiplier: 1.05
+procurement_complexity: Medium; common materials but higher engineering coordination for openings, seismic detailing, and foundations.
+self_build_difficulty: High; structural masonry work requires qualified supervision and inspection hold points.
+self_build_warnings:
+  - Do not build structural masonry walls from generated block counts.
+  - Lintels, ring beams, vertical reinforcement, anchorage, and seismic details require licensed engineering.
+  - Thermal bridges, condensation, and waterproofing at terrace/foundation interfaces are high-risk.
+risk_register:
+  - id: VAR-MAS-001
+    risk: Heavier walls may increase foundation and seismic design demand.
+    level: High
+    mitigation: Require geotechnical confirmation and structural seismic/foundation design.
+    professional_review_required: Geotechnical professional and licensed structural engineer.
+  - id: VAR-MAS-002
+    risk: Thermal bridges and moisture paths at concrete/masonry interfaces.
+    level: Medium
+    mitigation: Coordinate insulation continuity, damp proofing, flashings, and drying strategy.
+    professional_review_required: Architect, envelope specialist, and structural engineer.
+material_items:
+  - code: VAR-MAS-MAT-001
+    category: structure
+    subcategory: masonry
+    name: Masonry block structural package
+    specification: Masonry block wall placeholder with engineered reinforcement/lintel requirements.
+    unit: pcs
+    base_quantity: 2520
+    waste_percent: 10
+    unit_price_low: 2.2
+    unit_price_standard: 3.1
+    unit_price_premium: 4.4
+    supplier_placeholder: Masonry supplier TBD
+    formula_note: Perimeter x wall height x blocks per m2 x variant quantity multiplier.
+    assumption_ref: variants.masonry_hybrid.quantity_reference
+    notes: Active only for masonry_hybrid planning variant; not approved for procurement.
+cost_items:
+  - code: VAR-MAS-COST-001
+    phase: shell
+    category: structure
+    description: Masonry hybrid structural wall package placeholder
+    quantity: 2520
+    unit: pcs
+    material_unit_cost: 3.1
+    labor_unit_cost: 2.4
+    machinery_unit_cost: 0.5
+    contingency_percent: 22
+    notes: Static planning rate for masonry_hybrid only; engineering and contractor quote required.
+comparison_notes:
+  - Familiar material path for many local trades.
+  - Heavier structure increases foundation/seismic review importance.
+  - Thermal bridge and moisture detailing are key risks.

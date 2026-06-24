@@ -33,6 +33,9 @@ Mountain Retreat X1 is ready as a preliminary planning documentation generator.
 - `mrx1 generate excel` now generates all Excel workbooks by default.
 - Generation commands consistently support the `--output` / `--output-dir` aliases.
 - QA/QC workbooks now include a visible assumptions and professional-limit sheet.
+- Added config-backed construction variants for `standard_hybrid`, `premium_clt`,
+  and `masonry_hybrid`, with CLI selection, variant BOM/cost rows, active
+  structural quantities, self-build warnings, and risk-register entries.
 
 ### QA Status
 

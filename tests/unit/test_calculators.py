@@ -4,7 +4,7 @@ import pytest
 
 from mountain_retreat_x1.calculators import area, cost, quantity
 from mountain_retreat_x1.calculators.results import CalculatedQuantity
-from mountain_retreat_x1.config import load_config
+from mountain_retreat_x1.config import load_config, with_variant
 
 
 @pytest.fixture
@@ -109,6 +109,18 @@ def test_variant_quantity_formulas(config) -> None:
         * config.calculator_assumptions.masonry_wall_height_m
         * config.calculator_assumptions.masonry_blocks_per_m2_wall
     )
+
+
+def test_active_variant_quantity_uses_selected_variant_multiplier(config) -> None:
+    premium_config = with_variant(config, "premium_clt")
+    active = quantity.quantity_summary(premium_config)["qty.structure.active_variant"]
+    clt = quantity.clt_estimate_premium_clt(premium_config)
+
+    assert active.value == pytest.approx(
+        clt.value * premium_config.variant.quantity_multiplier
+    )
+    assert active.unit == clt.unit
+    assert "variants.premium_clt.quantity_multiplier" in active.assumptions_used
 
 
 def test_envelope_and_terrace_quantity_formulas(config) -> None:

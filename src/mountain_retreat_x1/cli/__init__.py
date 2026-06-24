@@ -13,7 +13,7 @@ from rich.table import Table
 from mountain_retreat_x1 import __version__
 from mountain_retreat_x1.calculators import area_summary, cost_summary, quantity_summary
 from mountain_retreat_x1.calculators.results import QuantityMap
-from mountain_retreat_x1.config import ConfigLoadError, load_config
+from mountain_retreat_x1.config import ConfigLoadError, load_config, with_variant
 from mountain_retreat_x1.config.loader import MountainRetreatConfig
 from mountain_retreat_x1.exporters import (
     generate_bom_workbook,
@@ -111,6 +111,17 @@ def _load_config_or_exit(config_dir: Path) -> MountainRetreatConfig:
         raise typer.Exit(code=1) from exc
 
 
+def _apply_variant_or_exit(
+    config: MountainRetreatConfig,
+    variant: str | None,
+) -> MountainRetreatConfig:
+    try:
+        return with_variant(config, variant)
+    except ConfigLoadError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1) from exc
+
+
 def _room_count(config: MountainRetreatConfig) -> int:
     return len(config.rooms_ground_floor.rooms) + len(config.rooms_gallery.rooms)
 
@@ -166,6 +177,11 @@ def _config_summary_table(config: MountainRetreatConfig) -> Table:
     table.add_row("Materials", "valid", f"{_material_count(config)} catalog items")
     table.add_row("Costs", "valid", f"{len(config.cost_assumptions_serbia_2026.cost_items)} items")
     table.add_row("Phases", "valid", f"{len(config.construction_phases.phases)} phases")
+    table.add_row(
+        "Variants",
+        "valid",
+        f"{len(config.variants)} variants; active {config.variant.code}",
+    )
     table.add_row("Calculator assumptions", "valid", config.calculator_assumptions.status)
     table.add_row(
         "Checklists",
@@ -226,8 +242,9 @@ def _assumptions_table(config: MountainRetreatConfig) -> Table:
     table = Table(title="Key Assumptions")
     table.add_column("Topic", style="cyan")
     table.add_column("Assumption")
-    table.add_row("Construction variant", config.building.construction_variant)
-    table.add_row("Alternatives", "premium_clt, masonry_hybrid")
+    table.add_row("Construction variant", config.variant.name)
+    table.add_row("Variant code", config.variant.code)
+    table.add_row("Procurement complexity", config.variant.procurement_complexity)
     table.add_row("Roof", config.building.roof_type)
     table.add_row("Facade", config.building.facade_type)
     table.add_row("Heating", "air-to-water heat pump + underfloor heating + fireplace")
@@ -402,6 +419,8 @@ def _write_assumptions_summary(
         f"- Net area: {config.building.net_area_m2:g} m2",
         f"- Terrace area: {config.terrace.terrace_area_m2:g} m2",
         f"- Construction variant: {config.building.construction_variant}",
+        f"- Active variant: {config.variant.name}",
+        f"- Variant procurement complexity: {config.variant.procurement_complexity}",
         "",
         "## Calculated Planning Quantities",
         "",
@@ -417,6 +436,7 @@ def _write_assumptions_summary(
     for key in (
         "qty.concrete.volume",
         "qty.rebar.mass",
+        "qty.structure.active_variant",
         "qty.roof.covering",
         "qty.terrace.decking",
     ):
@@ -516,7 +536,10 @@ def _write_build_manifest(
 
 def _package_file_names(output_dir: Path, config_dir: Path) -> list[str]:
     names = [path.relative_to(output_dir).as_posix() for path in _relative_output_files(output_dir)]
-    names.extend(f"config/{path.name}" for path in sorted(config_dir.glob("*.yaml")))
+    names.extend(
+        path.relative_to(config_dir.parent).as_posix()
+        for path in sorted(config_dir.rglob("*.yaml"))
+    )
     for root_file_name in ("README.md", "LEGAL_AND_PROFESSIONAL_LIMITS.md"):
         if Path(root_file_name).exists():
             names.append(root_file_name)
@@ -535,8 +558,12 @@ def _zip_package(
     with ZipFile(zip_path, "w", ZIP_DEFLATED) as archive:
         for path in sorted(output_files):
             _write_zip_file(archive, path, path.relative_to(output_dir).as_posix())
-        for yaml_path in sorted(config_dir.glob("*.yaml")):
-            _write_zip_file(archive, yaml_path, f"config/{yaml_path.name}")
+        for yaml_path in sorted(config_dir.rglob("*.yaml")):
+            _write_zip_file(
+                archive,
+                yaml_path,
+                yaml_path.relative_to(config_dir.parent).as_posix(),
+            )
         for root_file_name in ("README.md", "LEGAL_AND_PROFESSIONAL_LIMITS.md"):
             root_file = Path(root_file_name)
             if root_file.exists():
@@ -581,6 +608,11 @@ def generate_all(
         "--clean",
         help="Clean generated output folders before building.",
     ),
+    variant: str = typer.Option(
+        "standard_hybrid",
+        "--variant",
+        help="Construction variant: standard_hybrid, premium_clt, or masonry_hybrid.",
+    ),
 ) -> None:
     """Generate all preliminary planning artifacts."""
     active_config_dir = _config_dir_from_project(project, config_dir)
@@ -591,7 +623,9 @@ def generate_all(
         )
     _ensure_output_dirs(output_dir)
     language = _language_or_exit(lang)
-    config = _localized_config_or_exit(_load_config_or_exit(active_config_dir), language)
+    config = _load_config_or_exit(active_config_dir)
+    config = _apply_variant_or_exit(config, variant)
+    config = _localized_config_or_exit(config, language)
     assumptions_path = _write_assumptions_summary(config, output_dir, language, large)
     markdown_paths = generate_markdown_volumes(
         config,

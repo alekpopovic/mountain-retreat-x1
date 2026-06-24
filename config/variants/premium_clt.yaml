@@ -1,0 +1,62 @@
+code: premium_clt
+name: Premium CLT/glulam
+status: PRELIMINARY
+description: >
+  Prefabricated CLT/glulam concept with high coordination requirements,
+  engineered panels, crane/logistics planning, and early opening/penetration
+  decisions.
+structural_concept_note: >
+  Premium CLT/glulam can accelerate enclosure if panel procurement, transport,
+  crane access, moisture protection, and engineering coordination are feasible.
+  No panel thickness, lifting plan, or structural approval is generated.
+quantity_reference: qty.clt.premium_clt
+quantity_multiplier: 1.08
+procurement_complexity: High; specialist CLT/glulam supplier, shop drawings, transport, and crane planning required.
+self_build_difficulty: Very high; structural CLT/glulam assembly is not suitable for informal self-build work.
+self_build_warnings:
+  - Do not order CLT panels from generated quantities; panel design requires final shop drawings.
+  - Crane access, lifting points, temporary bracing, and weather protection require specialist planning.
+  - Penetrations and openings must be frozen only after licensed professional review.
+risk_register:
+  - id: VAR-CLT-001
+    risk: Supplier lead times and shop drawing coordination may control the schedule.
+    level: High
+    mitigation: Add early procurement review, transport study, and design freeze milestones.
+    professional_review_required: Architect, structural engineer, CLT supplier, and contractor.
+  - id: VAR-CLT-002
+    risk: CLT moisture exposure before dry-in can compromise quality.
+    level: High
+    mitigation: Require moisture protection plan, delivery sequencing, and inspection records.
+    professional_review_required: Structural engineer and envelope specialist.
+material_items:
+  - code: VAR-CLT-MAT-001
+    category: structure
+    subcategory: CLT
+    name: Premium CLT/glulam structural package
+    specification: CLT panel and glulam placeholder; final panel design by licensed engineer and supplier.
+    unit: m3
+    base_quantity: 31.1
+    waste_percent: 8
+    unit_price_low: 950
+    unit_price_standard: 1250
+    unit_price_premium: 1650
+    supplier_placeholder: Specialist CLT/glulam supplier TBD
+    formula_note: Gross area x premium_clt factor x variant quantity multiplier.
+    assumption_ref: variants.premium_clt.quantity_reference
+    notes: Active only for premium_clt planning variant; not approved for procurement.
+cost_items:
+  - code: VAR-CLT-COST-001
+    phase: shell
+    category: structure
+    description: Premium CLT/glulam structural package placeholder
+    quantity: 31.1
+    unit: m3
+    material_unit_cost: 1250
+    labor_unit_cost: 360
+    machinery_unit_cost: 140
+    contingency_percent: 22
+    notes: Static planning rate for premium_clt only; supplier quote and engineering required.
+comparison_notes:
+  - Highest prefabrication potential.
+  - Highest procurement and logistics complexity.
+  - Moisture protection and design freeze are major risks.

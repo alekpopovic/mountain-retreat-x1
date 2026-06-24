@@ -50,6 +50,9 @@ mrx1 generate excel --qa --large
 mrx1 generate excel --maintenance
 mrx1 generate all --lang sr-Latn
 mrx1 generate all --lang sr-Latn --large --clean
+mrx1 generate all --variant standard_hybrid
+mrx1 generate all --variant premium_clt
+mrx1 generate all --variant masonry_hybrid
 ```
 
 All generation commands accept `--output` or `--output-dir`. `mrx1 generate excel`
@@ -84,6 +87,7 @@ Important files:
 - `config/terrace.yaml`: terrace zones and utility assumptions
 - `config/materials_core.yaml` and `config/materials_mep.yaml`: BOM seed items
 - `config/cost_assumptions_serbia_2026.yaml`: static planning prices and warnings
+- `config/variants/*.yaml`: construction variant assumptions, risks, BOM rows, and cost rows
 
 After edits:
 
@@ -91,6 +95,23 @@ After edits:
 mrx1 validate
 mrx1 generate all --project config/project.yaml --output output --lang sr-Latn --large --clean
 ```
+
+## Construction Variants
+
+The default construction variant is `standard_hybrid`. The final pipeline can
+generate the same package for each supported preliminary variant:
+
+```bash
+mrx1 generate all --variant standard_hybrid
+mrx1 generate all --variant premium_clt
+mrx1 generate all --variant masonry_hybrid
+```
+
+Variant files live under `config/variants/` and affect structural concept text,
+active structural quantity calculations, BOM rows, cost rows, self-build warnings,
+procurement complexity, and construction-management risk registers. Variant
+comparison appears in the Project Charter. No variant is claimed to be
+structurally approved.
 
 ## Localization
 

@@ -1,0 +1,62 @@
+code: standard_hybrid
+name: Standard timber hybrid
+status: PRELIMINARY
+description: >
+  Hybrid timber frame concept with reinforced concrete foundation/slab zones,
+  engineered timber members, selected steel connectors, and coordinated roof,
+  facade, and terrace interfaces.
+structural_concept_note: >
+  Standard hybrid is the default planning variant. It may combine timber
+  framing, glulam/LVL where needed, concrete foundations, and local steel
+  connectors. No member sizing or structural approval is implied.
+quantity_reference: qty.timber.standard_hybrid
+quantity_multiplier: 1.0
+procurement_complexity: Medium; regional timber supplier, connector package, and engineer coordination required.
+self_build_difficulty: High; self-builder work should stay outside structural assembly unless qualified and approved.
+self_build_warnings:
+  - Do not cut, notch, drill, or alter structural timber without engineer approval.
+  - Temporary bracing, lifting, moisture protection, and connection installation require qualified supervision.
+  - Terrace, roof, and panoramic glazing interfaces are high-risk hold points.
+risk_register:
+  - id: VAR-STD-001
+    risk: Moisture exposure during timber delivery and erection.
+    level: Medium
+    mitigation: Plan covered storage, fast dry-in, moisture readings, and envelope sequencing.
+    professional_review_required: Structural engineer and envelope specialist.
+  - id: VAR-STD-002
+    risk: Connector and hold-down assumptions remain preliminary.
+    level: High
+    mitigation: Replace placeholder connectors with engineered connection schedule.
+    professional_review_required: Licensed structural engineer.
+material_items:
+  - code: VAR-STD-MAT-001
+    category: structure
+    subcategory: timber
+    name: Hybrid timber frame package
+    specification: Glulam/LVL and dimensional timber placeholder; structural engineer review required.
+    unit: m3
+    base_quantity: 38
+    waste_percent: 12
+    unit_price_low: 650
+    unit_price_standard: 850
+    unit_price_premium: 1150
+    supplier_placeholder: Regional timber supplier TBD
+    formula_note: Approximate frame volume from gross area and standard_hybrid factor.
+    assumption_ref: variants.standard_hybrid.quantity_reference
+    notes: Active only for standard_hybrid planning variant; not approved for procurement.
+cost_items:
+  - code: VAR-STD-COST-001
+    phase: shell
+    category: structure
+    description: Hybrid timber frame placeholder
+    quantity: 38
+    unit: m3
+    material_unit_cost: 850
+    labor_unit_cost: 280
+    machinery_unit_cost: 60
+    contingency_percent: 20
+    notes: Static planning rate for standard_hybrid only; contractor quotes required.
+comparison_notes:
+  - Default balanced option for planning.
+  - Medium procurement complexity relative to CLT.
+  - Moisture and connection detailing remain key risks.

@@ -29,6 +29,12 @@ Mountain Retreat X1 is a deterministic document-generation pipeline. It converts
 
 YAML files are the source of truth. Templates and exporters must not hide assumptions or invent final approvals. Calculated quantities include formula notes and assumption references where practical. Generated outputs repeat the preliminary status and professional review requirements.
 
+Construction variants are loaded from `config/variants/*.yaml`. The active
+variant updates the building variant assumption, active structural quantity,
+variant-specific BOM and cost rows, self-build warnings, procurement complexity,
+and construction-management risk register. The CLI override is applied in memory
+so `building.yaml` does not need to be edited for one-off variant packages.
+
 ## Large Mode
 
 Large mode is deterministic and expands useful planning content:

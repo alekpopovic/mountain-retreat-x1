@@ -46,7 +46,13 @@
 ### {{ section.heading }}
 
 {% for line in section.lines -%}
+{% if line.startswith("|") %}
+{{ line }}
+{% elif line == "" %}
+
+{% else %}
 - {{ line }}
+{% endif %}
 {% endfor %}
 
 {% endfor -%}

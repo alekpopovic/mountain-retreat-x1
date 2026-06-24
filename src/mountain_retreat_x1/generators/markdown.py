@@ -277,8 +277,28 @@ def _shared_assumptions(config: MountainRetreatConfig) -> tuple[str, ...]:
         f"Configured net area is {config.building.net_area_m2:g} m2.",
         f"Configured terrace area is {config.terrace.terrace_area_m2:g} m2.",
         f"Construction variant is {config.building.construction_variant}.",
+        f"Active variant name is {config.variant.name}.",
+        f"Variant assumption source is config/variants/{config.variant.code}.yaml.",
+        f"Variant procurement complexity: {config.variant.procurement_complexity}.",
         config.calculator_assumptions.warning,
     )
+
+
+def _variant_comparison_table(config: MountainRetreatConfig) -> tuple[str, ...]:
+    rows = [
+        "| Variant | Procurement Complexity | Self-Build Difficulty | Preliminary Notes |",
+        "|---|---|---|---|",
+    ]
+    for variant in config.variants.values():
+        active = "Active. " if variant.code == config.variant.code else ""
+        rows.append(
+            "| "
+            f"{variant.name} (`{variant.code}`) | "
+            f"{variant.procurement_complexity} | "
+            f"{variant.self_build_difficulty} | "
+            f"{active}{'; '.join(variant.comparison_notes)} |"
+        )
+    return tuple(rows)
 
 
 def _material_lines(config: MountainRetreatConfig, group: str) -> tuple[str, ...]:
@@ -564,6 +584,7 @@ def _structural_context(config: MountainRetreatConfig) -> dict[str, object]:
         "project": config.project,
         "site": config.site,
         "building": config.building,
+        "active_variant": config.variant,
         "terrace": config.terrace,
         "assumptions": _shared_assumptions(config),
         "limitations": _shared_limitations(config),
@@ -1908,6 +1929,19 @@ def _construction_management_sections(
                 ),
             ),
         ),
+        MarkdownSection(
+            "Active Variant Risk Register",
+            (
+                f"Active variant: {config.variant.name} (`{config.variant.code}`).",
+                *tuple(
+                    (
+                        f"{risk.id}: {risk.risk}; level: {risk.level}; mitigation: "
+                        f"{risk.mitigation}; review: {risk.professional_review_required}."
+                    )
+                    for risk in config.variant.risk_register
+                ),
+            ),
+        ),
     )
     if not large_mode:
         return base_sections
@@ -1920,13 +1954,25 @@ def _construction_management_sections(
         )
         for phase in config.construction_phases.phases
     )
+    variant_risk_lines = tuple(
+        (
+            f"{risk.id} ({config.variant.name}): level {risk.level}; "
+            f"{risk.risk} Mitigation: {risk.mitigation} Review required: "
+            f"{risk.professional_review_required}."
+        )
+        for risk in config.variant.risk_register
+    )
     procurement_lines = tuple(
         (
             f"{item.code}: procure {item.name} ({item.specification}) as "
             f"{item.base_quantity:g} {item.unit} plus {item.waste_percent:g}% waste; "
             f"assumption ref {item.assumption_ref}; supplier remains placeholder."
         )
-        for item in [*config.materials_core.materials, *config.materials_mep.materials]
+        for item in [
+            *config.materials_core.materials,
+            *config.materials_mep.materials,
+            *config.variant.material_items,
+        ]
     )
     inspection_lines = tuple(
         (
@@ -1953,7 +1999,7 @@ def _construction_management_sections(
     )
     return (
         *base_sections,
-        MarkdownSection("Large-Mode Risk Register", phase_lines),
+        MarkdownSection("Large-Mode Risk Register", (*phase_lines, *variant_risk_lines)),
         MarkdownSection("Large-Mode Procurement Log", procurement_lines),
         MarkdownSection("Large-Mode Inspection Log", inspection_lines),
         MarkdownSection("Large-Mode Document Register", document_lines),
@@ -2378,6 +2424,7 @@ def _self_build_context(
         "project": config.project,
         "site": config.site,
         "building": config.building,
+        "active_variant": config.variant,
         "terrace": config.terrace,
         "smart_home": config.smart_home,
         "off_grid": config.off_grid,
@@ -2452,6 +2499,7 @@ def _volume_specs(
     costs = cost_summary(config)
     room_count = len(config.rooms_ground_floor.rooms) + len(config.rooms_gallery.rooms)
     terrace_zones = ", ".join(zone.name for zone in config.terrace.zones)
+    active_structural_quantity = quantities["qty.structure.active_variant"]
 
     return (
         MarkdownVolume(
@@ -2478,6 +2526,17 @@ def _volume_specs(
                         f"Currency: {config.project.currency}.",
                         f"Language: {config.project.language}.",
                         f"Rooms configured: {room_count}.",
+                    ),
+                ),
+                MarkdownSection(
+                    "Construction Variant Comparison",
+                    (
+                        *_variant_comparison_table(config),
+                        "",
+                        (
+                            "Variant comparison is preliminary only and does not approve "
+                            "any structural system."
+                        ),
                     ),
                 ),
             ),
@@ -2533,9 +2592,11 @@ def _volume_specs(
                         f"Concrete estimate: {quantities['qty.concrete.volume'].value:g} m3.",
                         f"Rebar estimate: {quantities['qty.rebar.mass'].value:g} kg.",
                         (
-                            "Timber framing estimate: "
-                            f"{quantities['qty.timber.standard_hybrid'].value:g} m3."
+                            "Active structural variant quantity: "
+                            f"{active_structural_quantity.value:g} "
+                            f"{active_structural_quantity.unit}."
                         ),
+                        f"Active variant note: {config.variant.structural_concept_note}",
                     ),
                 ),
                 MarkdownSection(

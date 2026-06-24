@@ -2,7 +2,13 @@ from pathlib import Path
 
 import pytest
 
-from mountain_retreat_x1.config import ConfigLoadError, load_config, load_typed_yaml, load_yaml_file
+from mountain_retreat_x1.config import (
+    ConfigLoadError,
+    load_config,
+    load_typed_yaml,
+    load_yaml_file,
+    with_variant,
+)
 from mountain_retreat_x1.models import ProjectConfig
 
 
@@ -20,6 +26,16 @@ def test_load_default_config_returns_typed_objects() -> None:
     assert config.off_grid.pv_kwp == 15
     assert config.localization.default_language == "sr-Latn"
     assert config.calculator_assumptions.rebar_kg_per_m3 == 95
+    assert set(config.variants) == {"standard_hybrid", "premium_clt", "masonry_hybrid"}
+    assert config.variant.code == "standard_hybrid"
+
+
+def test_with_variant_switches_active_variant_without_editing_yaml() -> None:
+    config = with_variant(load_config(Path("config")), "premium_clt")
+
+    assert config.building.construction_variant == "premium_clt"
+    assert config.variant.code == "premium_clt"
+    assert config.variant.name == "Premium CLT/glulam"
 
 
 def test_invalid_yaml_syntax_raises_clear_error(tmp_path: Path) -> None:

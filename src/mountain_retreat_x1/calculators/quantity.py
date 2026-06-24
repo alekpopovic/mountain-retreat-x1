@@ -140,6 +140,27 @@ def masonry_block_estimate_masonry_hybrid(config: MountainRetreatConfig) -> Calc
     )
 
 
+def active_structural_variant_quantity(config: MountainRetreatConfig) -> CalculatedQuantity:
+    """Return the active variant's primary structural quantity with variant multiplier."""
+    base_quantities = quantity_summary_without_active(config)
+    base = base_quantities[config.variant.quantity_reference]
+    return _quantity(
+        config,
+        "qty.structure.active_variant",
+        f"Active structural quantity for {config.variant.code}",
+        base.value * config.variant.quantity_multiplier,
+        base.unit,
+        (
+            f"{config.variant.quantity_reference} x "
+            "variant.quantity_multiplier."
+        ),
+        (
+            config.variant.quantity_reference,
+            f"variants.{config.variant.code}.quantity_multiplier",
+        ),
+    )
+
+
 def roof_covering_area(config: MountainRetreatConfig) -> CalculatedQuantity:
     roof = area.roof_rough_area_estimate(config)
     return _quantity(
@@ -234,8 +255,8 @@ def membrane_area(config: MountainRetreatConfig) -> CalculatedQuantity:
     )
 
 
-def quantity_summary(config: MountainRetreatConfig) -> QuantityMap:
-    """Return key preliminary quantity estimates."""
+def quantity_summary_without_active(config: MountainRetreatConfig) -> QuantityMap:
+    """Return base preliminary quantity estimates before active variant roll-up."""
     quantities = [
         concrete_volume_estimate(config),
         rebar_estimate(config),
@@ -253,3 +274,11 @@ def quantity_summary(config: MountainRetreatConfig) -> QuantityMap:
         membrane_area(config),
     ]
     return {quantity.code: quantity for quantity in quantities}
+
+
+def quantity_summary(config: MountainRetreatConfig) -> QuantityMap:
+    """Return key preliminary quantity estimates."""
+    quantities = quantity_summary_without_active(config)
+    active = active_structural_variant_quantity(config)
+    quantities[active.code] = active
+    return quantities

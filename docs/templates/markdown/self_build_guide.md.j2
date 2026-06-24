@@ -42,6 +42,16 @@ Every step below includes a professional stop point. Stop points are mandatory p
 {% endfor %}
 - Self-builder work is limited to tasks allowed by local law, insurance, permit conditions, and professional supervision.
 - All regulated trades, structural works, utility connections, fire-safety items, and wastewater systems require qualified review.
+- Active construction variant: {{ active_variant.name }} (`{{ active_variant.code }}`).
+- Variant procurement complexity: {{ active_variant.procurement_complexity }}.
+- Variant self-build difficulty: {{ active_variant.self_build_difficulty }}.
+
+## Active Variant Self-Build Warnings
+
+{% for warning in active_variant.self_build_warnings -%}
+- {{ warning }}
+{% endfor %}
+- These warnings are planning reminders only and do not approve or authorize self-performed structural work.
 
 ## Limitations
 

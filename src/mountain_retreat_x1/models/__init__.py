@@ -22,6 +22,7 @@ from mountain_retreat_x1.models.project import ProjectConfig
 from mountain_retreat_x1.models.rooms import Room
 from mountain_retreat_x1.models.schedule import ConstructionPhase
 from mountain_retreat_x1.models.site import SiteConfig
+from mountain_retreat_x1.models.variants import VariantConfig, VariantRisk
 
 __all__ = [
     "BuildingConfig",
@@ -45,4 +46,6 @@ __all__ = [
     "SmartHomeConfig",
     "TerraceConfig",
     "TerraceZone",
+    "VariantConfig",
+    "VariantRisk",
 ]
