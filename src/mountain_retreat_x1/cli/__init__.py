@@ -1,7 +1,10 @@
 """Command line interface for Mountain Retreat X1."""
 
+import json
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated
+from zipfile import ZIP_DEFLATED, ZipFile
 
 import typer
 from rich.console import Console
@@ -38,6 +41,10 @@ generate_app = typer.Typer(help="Generate preliminary planning artifacts.")
 app.add_typer(generate_app, name="generate")
 console = Console()
 OUTPUT_SUBDIRS = ("markdown", "pdf", "excel", "drawings", "zip")
+ZIP_FILENAME = "Mountain_Retreat_X1_Professional_Documentation_Package.zip"
+MANIFEST_FILENAME = "BUILD_MANIFEST.json"
+INDEX_FILENAME = "INDEX.md"
+ASSUMPTIONS_SUMMARY_FILENAME = "ASSUMPTIONS_SUMMARY.md"
 
 
 ConfigDirOption = Annotated[
@@ -55,6 +62,19 @@ ConfigDirOption = Annotated[
 OutputDirOption = Annotated[
     Path,
     typer.Option(
+        "--output-dir",
+        "-o",
+        file_okay=False,
+        dir_okay=True,
+        writable=True,
+        help="Directory for generated artifacts.",
+    ),
+]
+
+PipelineOutputOption = Annotated[
+    Path,
+    typer.Option(
+        "--output",
         "--output-dir",
         "-o",
         file_okay=False,
@@ -101,6 +121,30 @@ def _ensure_output_dirs(output_dir: Path) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     for subdir in OUTPUT_SUBDIRS:
         (output_dir / subdir).mkdir(parents=True, exist_ok=True)
+
+
+def _clean_generated_outputs(output_dir: Path) -> int:
+    _ensure_output_dirs(output_dir)
+    removed_count = 0
+    for path in sorted(output_dir.rglob("*"), reverse=True):
+        if path.name == ".gitkeep":
+            continue
+        if path.is_file():
+            path.unlink()
+            removed_count += 1
+        elif path.is_dir() and path.name not in OUTPUT_SUBDIRS and not any(path.iterdir()):
+            path.rmdir()
+    _ensure_output_dirs(output_dir)
+    return removed_count
+
+
+def _config_dir_from_project(project: Path | None, config_dir: Path) -> Path:
+    if project is None:
+        return config_dir
+    if project.name != "project.yaml":
+        console.print("[red]--project must point to a project.yaml file.[/red]")
+        raise typer.Exit(1)
+    return project.parent
 
 
 def _config_summary_table(config: MountainRetreatConfig) -> Table:
@@ -285,10 +329,205 @@ def _language_or_exit(language: str | None) -> str:
         raise typer.Exit(1) from exc
 
 
+def _relative_output_files(output_dir: Path) -> list[Path]:
+    files: list[Path] = []
+    for subdir in ("markdown", "pdf", "excel", "drawings"):
+        root = output_dir / subdir
+        if root.exists():
+            files.extend(path for path in root.rglob("*") if path.is_file())
+    for filename in (INDEX_FILENAME, ASSUMPTIONS_SUMMARY_FILENAME, MANIFEST_FILENAME):
+        path = output_dir / filename
+        if path.exists():
+            files.append(path)
+    return sorted(files)
+
+
+def _write_assumptions_summary(
+    config: MountainRetreatConfig,
+    output_dir: Path,
+    language: str,
+    large_mode: bool,
+) -> Path:
+    areas = area_summary(config)
+    quantities = quantity_summary(config)
+    costs = cost_summary(config)
+    path = output_dir / ASSUMPTIONS_SUMMARY_FILENAME
+    lines = [
+        "# Assumptions Summary",
+        "",
+        f"Project: {config.project.project_name}",
+        f"Version: {config.project.version}",
+        f"Language: {language}",
+        f"Large mode: {large_mode}",
+        f"Status: {config.project.status}",
+        "",
+        "## Mandatory Notice",
+        "",
+        config.project.disclaimer,
+        "",
+        "## Key Geometry",
+        "",
+        f"- Gross area: {config.building.gross_area_m2:g} m2",
+        f"- Net area: {config.building.net_area_m2:g} m2",
+        f"- Terrace area: {config.terrace.terrace_area_m2:g} m2",
+        f"- Construction variant: {config.building.construction_variant}",
+        "",
+        "## Calculated Planning Quantities",
+        "",
+    ]
+    for key in (
+        "calculated_net_area",
+        "net_area_difference",
+        "facade_rough_area",
+        "roof_rough_area",
+    ):
+        result = areas[key]
+        lines.append(f"- {result.label}: {result.value:g} {result.unit}; {result.formula_note}")
+    for key in (
+        "qty.concrete.volume",
+        "qty.rebar.mass",
+        "qty.roof.covering",
+        "qty.terrace.decking",
+    ):
+        result = quantities[key]
+        lines.append(f"- {result.label}: {result.value:g} {result.unit}; {result.formula_note}")
+    lines.extend(
+        [
+            "",
+            "## Cost Metrics",
+            "",
+            f"- Total preliminary cost: {costs['cost.total'].value:g} {costs['cost.total'].unit}",
+            (
+                "- Cost per gross m2: "
+                f"{costs['cost.per_m2.gross'].value:g} {costs['cost.per_m2.gross'].unit}"
+            ),
+            (
+                "- Cost per net m2: "
+                f"{costs['cost.per_m2.net'].value:g} {costs['cost.per_m2.net'].unit}"
+            ),
+            "",
+            "## Professional Review Required",
+            "",
+        ]
+    )
+    lines.extend(f"- {reviewer}" for reviewer in config.project.review_required_by)
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return path
+
+
+def _write_index_file(
+    config: MountainRetreatConfig,
+    output_dir: Path,
+    language: str,
+    large_mode: bool,
+    generated_paths: list[Path],
+) -> Path:
+    path = output_dir / INDEX_FILENAME
+    lines = [
+        "# Mountain Retreat X1 Generated Package Index",
+        "",
+        f"Project: {config.project.project_name}",
+        f"Version: {config.project.version}",
+        f"Language: {language}",
+        f"Large mode: {large_mode}",
+        f"Status: {config.project.status}",
+        "",
+        "This package is PRELIMINARY and not for construction, permitting, or legal reliance.",
+        "",
+        "## Files",
+        "",
+    ]
+    for generated_path in sorted(generated_paths):
+        lines.append(f"- {generated_path.relative_to(output_dir)}")
+    lines.extend(
+        [
+            "",
+            "## Required Professional Review",
+            "",
+            *[f"- {reviewer}" for reviewer in config.project.review_required_by],
+        ]
+    )
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return path
+
+
+def _write_build_manifest(
+    config: MountainRetreatConfig,
+    output_dir: Path,
+    language: str,
+    large_mode: bool,
+    files: list[str],
+) -> Path:
+    manifest_path = output_dir / MANIFEST_FILENAME
+    manifest = {
+        "project_name": config.project.project_name,
+        "version": config.project.version,
+        "generated_at": datetime.now(UTC).isoformat(),
+        "language": language,
+        "large_mode": large_mode,
+        "files": sorted(files),
+        "warnings": [
+            config.project.disclaimer,
+            "Generated documents are preliminary planning documents only.",
+            (
+                "No generated document is a permit, approval, stamp, signature, "
+                "or final engineering calculation."
+            ),
+        ],
+        "professional_review_required": list(config.project.review_required_by),
+    }
+    manifest_path.write_text(
+        json.dumps(manifest, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    return manifest_path
+
+
+def _package_file_names(output_dir: Path, config_dir: Path) -> list[str]:
+    names = [path.relative_to(output_dir).as_posix() for path in _relative_output_files(output_dir)]
+    names.extend(f"config/{path.name}" for path in sorted(config_dir.glob("*.yaml")))
+    for root_file_name in ("README.md", "LEGAL_AND_PROFESSIONAL_LIMITS.md"):
+        if Path(root_file_name).exists():
+            names.append(root_file_name)
+    names.append(MANIFEST_FILENAME)
+    names.append(f"zip/{ZIP_FILENAME}")
+    return sorted(set(names))
+
+
+def _zip_package(
+    output_dir: Path,
+    config_dir: Path,
+    output_files: list[Path],
+) -> Path:
+    zip_path = output_dir / "zip" / ZIP_FILENAME
+    zip_path.parent.mkdir(parents=True, exist_ok=True)
+    with ZipFile(zip_path, "w", ZIP_DEFLATED) as archive:
+        for path in sorted(output_files):
+            archive.write(path, path.relative_to(output_dir).as_posix())
+        for yaml_path in sorted(config_dir.glob("*.yaml")):
+            archive.write(yaml_path, f"config/{yaml_path.name}")
+        for root_file_name in ("README.md", "LEGAL_AND_PROFESSIONAL_LIMITS.md"):
+            root_file = Path(root_file_name)
+            if root_file.exists():
+                archive.write(root_file, root_file.name)
+    return zip_path
+
+
 @generate_app.command("all")
 def generate_all(
     config_dir: ConfigDirOption = Path("config"),
-    output_dir: OutputDirOption = Path("output"),
+    project: Annotated[
+        Path | None,
+        typer.Option(
+            "--project",
+            exists=True,
+            file_okay=True,
+            dir_okay=False,
+            readable=True,
+            help="Path to project.yaml; its parent is used as the config directory.",
+        ),
+    ] = None,
+    output_dir: PipelineOutputOption = Path("output"),
     lang: str = typer.Option(
         "sr-Latn",
         "--lang",
@@ -299,11 +538,23 @@ def generate_all(
         "--large",
         help="Generate expanded planning binder artifacts.",
     ),
+    clean: bool = typer.Option(
+        False,
+        "--clean",
+        help="Clean generated output folders before building.",
+    ),
 ) -> None:
     """Generate all preliminary planning artifacts."""
+    active_config_dir = _config_dir_from_project(project, config_dir)
+    if clean:
+        removed_count = _clean_generated_outputs(output_dir)
+        console.print(
+            f"[yellow]Cleaned generated outputs.[/yellow] Removed {removed_count} file(s)."
+        )
     _ensure_output_dirs(output_dir)
-    config = _load_config_or_exit(config_dir)
+    config = _load_config_or_exit(active_config_dir)
     language = _language_or_exit(lang)
+    assumptions_path = _write_assumptions_summary(config, output_dir, language, large)
     markdown_paths = generate_markdown_volumes(
         config,
         output_dir,
@@ -319,6 +570,18 @@ def generate_all(
     ]
     drawing_paths = generate_svg_drawings(config, output_dir)
     pdf_paths = generate_pdf_volumes(config, output_dir)
+    generated_paths = [*markdown_paths, *excel_paths, *drawing_paths, *pdf_paths, assumptions_path]
+    index_path = _write_index_file(config, output_dir, language, large, generated_paths)
+    files_for_manifest = _package_file_names(output_dir, active_config_dir)
+    manifest_path = _write_build_manifest(
+        config,
+        output_dir,
+        language,
+        large,
+        files_for_manifest,
+    )
+    package_files = _relative_output_files(output_dir)
+    zip_path = _zip_package(output_dir, active_config_dir, package_files)
 
     table = Table(title="Generated Planning Binder")
     table.add_column("Artifact", style="cyan")
@@ -327,6 +590,9 @@ def generate_all(
     table.add_row("PDF", f"{len(pdf_paths)} preliminary documentation PDFs generated")
     table.add_row("Excel", f"{len(excel_paths)} planning workbooks generated")
     table.add_row("Drawings", f"{len(drawing_paths)} schematic SVG drawings generated")
+    table.add_row("Index", str(index_path))
+    table.add_row("Manifest", str(manifest_path))
+    table.add_row("ZIP", str(zip_path))
     table.add_row("Mode", "large" if large else "normal")
     console.print(table)
     console.print(
