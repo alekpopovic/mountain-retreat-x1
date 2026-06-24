@@ -1,0 +1,178 @@
+# 08 Off-Grid Systems Package
+
+**Project code:** {{ project.project_code }}  
+**Project:** {{ project.project_name }}  
+**Version:** {{ project.version }}  
+**Status:** {{ project.status }}  
+**Revision date:** {{ project.revision_date }}  
+**Language:** {{ project.language }}  
+
+## Revision History
+
+| Version | Date | Author | Notes |
+|---|---|---|---|
+| {{ project.version }} | {{ project.revision_date }} | {{ project.author }} | Generated preliminary off-grid systems package from YAML assumptions and planning load placeholders. |
+
+## Mandatory Notice
+
+{{ project.disclaimer }}
+
+This off-grid systems package is **PRELIMINARY** and not for construction. It does not promise full off-grid autonomy, does not certify energy independence, and does not provide final electrical, mechanical, water, wastewater, generator, PV, battery, or inverter design.
+
+## Required Professional Review
+
+- Licensed electrical engineer
+- Licensed mechanical/plumbing engineer
+- Qualified PV, battery, inverter, and generator installers
+- Local utility/grid operator where grid connection or export is involved
+- Water/wastewater authority and environmental/permitting authority
+- Fire-safety and fuel-storage reviewer where required
+
+## Assumptions
+
+{% for assumption in assumptions -%}
+- {{ assumption }}
+{% endfor %}
+- Optional off-grid package enabled: {{ off_grid.enabled_optional_package }}.
+- Solar PV planning assumption: {{ off_grid.pv_kwp }} kWp.
+- Battery planning assumption: {{ off_grid.battery_kwh }} kWh.
+- Generator assumption: {{ off_grid.generator }}.
+- Water storage planning assumption: {{ off_grid.water_tank_l }} L.
+- Load estimate rows: {{ load_count }}.
+- Failure scenario rows: {{ failure_count }}.
+
+## Limitations
+
+{% for limitation in limitations -%}
+- {{ limitation }}
+{% endfor %}
+- All energy values are planning assumptions and placeholders only.
+- No solar yield simulation, winter autonomy calculation, battery degradation model, generator runtime guarantee, load-flow study, protection study, or commissioning result is included.
+- Winter snow cover, short days, low sun angle, cold battery behavior, access constraints, and generator reliability can severely reduce performance.
+- This document must not be used as an electrical design, utility approval, environmental permit, fuel-storage approval, wastewater approval, or autonomy guarantee.
+
+## 1. Off-grid Design Philosophy
+
+- Treat off-grid capability as resilience planning, not as a promise of full autonomy.
+- Prioritize life-safety, frost protection, monitoring, water pressure, limited lighting, communications, and safe shutdown before comfort or amenity loads.
+- Keep all assumptions visible so licensed professionals can replace placeholders with engineered values.
+
+## 2. Grid-connected Versus Off-grid Modes
+
+- Grid-connected mode may support normal loads, battery charging, monitoring, and export/import if permitted by the utility.
+- Off-grid/islanded mode should be limited to defined critical loads unless engineered otherwise.
+- Transfer switching, anti-islanding, earthing/neutral handling, protection coordination, and grid approval are TBD by licensed professionals.
+
+## 3. Solar PV Concept
+
+- PV placeholder: {{ off_grid.pv_kwp }} kWp.
+- PV layout must consider roof structure, standing seam attachment, snow sliding, wind uplift, shading, access, fire setbacks, cable routing, grounding/bonding, and inverter compatibility.
+- No annual yield, winter yield, or autonomy calculation is certified in this package.
+
+## 4. Battery Concept
+
+- Battery placeholder: {{ off_grid.battery_kwh }} kWh.
+- Usable capacity, depth of discharge, reserve limits, degradation, cold-temperature behavior, fire separation, ventilation, BMS, and emergency shutdown are TBD.
+- Battery reserve should be protected for critical loads, alarms, controls, and safe shutdown.
+
+## 5. Inverter/Charger Concept
+
+- Inverter/charger selection must coordinate PV, battery, generator, grid, critical-load panel, peak loads, motor starting currents, grounding, protection, and monitoring.
+- Final inverter capacity, surge rating, phase arrangement, backup panel design, transfer sequence, and fault behavior are placeholders.
+- Inverter settings must be commissioned by qualified parties and documented for owner handover.
+
+## 6. Backup Generator Concept
+
+- Generator assumption: {{ off_grid.generator }}.
+- Generator runtime depends on load, fuel, altitude, temperature, maintenance, starting reliability, noise limits, exhaust routing, and transfer design.
+- This package does not approve generator sizing, fuel storage, exhaust routing, automatic transfer, or runtime claims.
+
+## 7. Critical Loads
+
+{% for load in critical_loads -%}
+- {{ load.load_code }} {{ load.device_system }}: {{ load.daily_kwh_placeholder }}; priority {{ load.backup_priority }}.
+{% endfor %}
+
+## 8. Non-critical Loads
+
+{% for load in non_critical_loads -%}
+- {{ load.load_code }} {{ load.device_system }}: {{ load.daily_kwh_placeholder }}; backup priority {{ load.backup_priority }}.
+{% endfor %}
+- Non-critical loads should be disabled or manually approved during low solar, low battery, generator fault, or emergency mode.
+
+## 9. Load Estimate Table
+
+| Load code | Device/system | Power W placeholder | Hours/day placeholder | Daily kWh placeholder | Critical yes/no | Backup priority | Notes |
+|---|---|---|---|---|---|---|---|
+{% for load in loads -%}
+| {{ load.load_code }} | {{ load.device_system }} | {{ load.power_w_placeholder }} | {{ load.hours_day_placeholder }} | {{ load.daily_kwh_placeholder }} | {{ load.critical }} | {{ load.backup_priority }} | {{ load.notes }} |
+{% endfor %}
+
+## 10. Winter Solar Risk
+
+- Winter performance is the major risk for a mountain cabin: snow cover, low sun angle, short days, cold equipment, fog, shading, and limited access can sharply reduce PV production.
+- Battery capacity and charging/discharging capability may be reduced in cold conditions unless equipment is installed in a suitable protected environment.
+- The system must include conservative winter operation modes and must not promise full off-grid autonomy.
+
+## 11. Generator Runtime Concept
+
+- Generator runtime is a planning topic only and depends on real loads, fuel capacity, altitude derating, maintenance, start reliability, noise restrictions, and weather access.
+- Generator operation should focus on battery charging, water system support, frost protection, and critical loads before comfort loads.
+- Fuel storage, exhaust safety, CO risk, ventilation, grounding/neutral treatment, and transfer equipment require professional design.
+
+## 12. Water Storage
+
+- Water storage placeholder: {{ off_grid.water_tank_l }} L.
+- Storage may improve resilience but does not guarantee water independence because pumps, filters, freezing risk, water quality, refill logistics, access, and maintenance remain constraints.
+- Tank location, overflow, venting, cleaning access, structural support, drain-down, and frost protection require plumbing/mechanical review.
+
+## 13. Wastewater Independence
+
+{% for option in off_grid.wastewater_options -%}
+- {{ option }}.
+{% endfor %}
+- Wastewater independence depends on local approval, soil/geotechnical findings, groundwater, setbacks, access for servicing, power reliability, and environmental rules.
+- This package does not create wastewater approval or environmental permitting.
+
+## 14. Internet Connectivity
+
+- Internet connectivity supports monitoring, alerts, remote access, weather data, solar/battery notifications, and maintenance visibility.
+- Local-first operation must remain available during internet outages.
+- Cellular, satellite, or secondary WAN failover can be considered, but no provider availability or uptime is guaranteed.
+
+## 15. Emergency Modes
+
+- Critical-load mode: preserve heating controls, pumps, monitoring, refrigerator/freezer, limited lighting, communications, and alarms.
+- Low-battery mode: disable DHW boost, laundry, terrace comfort loads, exterior amenities, and discretionary outlets.
+- Generator-fault mode: reduce to minimum frost/safety loads and alert owner/service provider.
+- Winter-vacancy mode: combine low setpoints, freeze monitoring, leak detection, UPS-backed network, and manual inspection plan.
+
+## 16. Maintenance Schedule
+
+- Monthly/seasonal: inspect PV surface access, visible wiring, inverter/battery status, generator readiness, fuel condition, water tank/pump status, and network alerts.
+- Before winter: test generator start/transfer sequence, verify battery reserve settings, check heating/frost protection, clean gutters/drainage, and confirm remote monitoring.
+- After outages/faults: record battery state, generator runtime, alarms, load shedding, water system status, and corrective actions.
+- Annual: licensed professional review of PV, battery, inverter, generator, protection devices, water storage, and wastewater equipment.
+
+## 17. Failure Scenario Table
+
+| Scenario | Likely impact | Manual response | Automation/monitoring | Professional review |
+|---|---|---|---|---|
+{% for scenario in failure_scenarios -%}
+| {{ scenario.scenario }} | {{ scenario.likely_impact }} | {{ scenario.manual_response }} | {{ scenario.automation_monitoring }} | {{ scenario.professional_review }} |
+{% endfor %}
+
+## 18. Licensed Electrical/Mechanical Review Checklist
+
+- Confirm final load study, critical-load panel, PV yield model, winter operation assumptions, and autonomy targets.
+- Confirm PV mounting, wiring, grounding/bonding, inverter/charger, battery, generator, transfer switching, protection, labeling, and commissioning.
+- Confirm battery location, fire separation, ventilation, BMS, emergency shutdown, maintenance access, and cold-weather behavior.
+- Confirm generator sizing, fuel storage, exhaust/CO safety, noise, transfer sequence, runtime assumptions, and service access.
+- Confirm water tank, pumps, filters, freeze protection, wastewater option, and environmental/local authority requirements.
+- Confirm that all energy values are planning assumptions and that this package does not promise full off-grid autonomy.
+
+## QA Notes
+
+- Energy numbers must remain visibly marked as placeholders until replaced by engineered calculations.
+- Winter performance warnings must remain in the generated package.
+- Off-grid operation must be framed as resilience planning, not a guarantee of independence.

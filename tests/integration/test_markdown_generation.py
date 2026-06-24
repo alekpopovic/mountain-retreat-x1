@@ -412,3 +412,71 @@ def test_smart_home_package_contains_required_automation_examples(
         "Solar production notification",
     ):
         assert automation in text
+
+
+def test_off_grid_package_contains_required_sections_tables_and_warnings(
+    tmp_path: Path,
+) -> None:
+    output_dir = tmp_path / "output"
+
+    result = runner.invoke(app, ["generate", "markdown", "--output-dir", str(output_dir)])
+
+    assert result.exit_code == 0
+    text = (output_dir / "markdown" / "08_off_grid_package.md").read_text(
+        encoding="utf-8"
+    )
+    for section in (
+        "## 1. Off-grid Design Philosophy",
+        "## 2. Grid-connected Versus Off-grid Modes",
+        "## 3. Solar PV Concept",
+        "## 4. Battery Concept",
+        "## 5. Inverter/Charger Concept",
+        "## 6. Backup Generator Concept",
+        "## 7. Critical Loads",
+        "## 8. Non-critical Loads",
+        "## 9. Load Estimate Table",
+        "## 10. Winter Solar Risk",
+        "## 11. Generator Runtime Concept",
+        "## 12. Water Storage",
+        "## 13. Wastewater Independence",
+        "## 14. Internet Connectivity",
+        "## 15. Emergency Modes",
+        "## 16. Maintenance Schedule",
+        "## 17. Failure Scenario Table",
+        "## 18. Licensed Electrical/Mechanical Review Checklist",
+    ):
+        assert section in text
+
+    assert "Load code" in text
+    assert "Power W placeholder" in text
+    assert "Daily kWh placeholder" in text
+    assert "Failure Scenario Table" in text
+    assert "does not promise full off-grid autonomy" in text
+    assert "All energy values are planning assumptions" in text
+    assert "Winter performance is the major risk" in text
+    assert "Extended snow cover on PV array" in text
+
+
+def test_off_grid_package_contains_loads_and_failure_scenarios(
+    tmp_path: Path,
+) -> None:
+    output_dir = tmp_path / "output"
+
+    result = runner.invoke(app, ["generate", "markdown", "--output-dir", str(output_dir)])
+
+    assert result.exit_code == 0
+    text = (output_dir / "markdown" / "08_off_grid_package.md").read_text(
+        encoding="utf-8"
+    )
+    for expected in (
+        "Heating controls and circulation pumps",
+        "Network, router, Home Assistant, and sensors",
+        "Water pump / pressure system",
+        "PoE cameras and security devices",
+        "Domestic hot water backup element",
+        "EV charging placeholder",
+        "Backup generator fails to start",
+        "Inverter/charger fault",
+        "Internet outage",
+    ):
+        assert expected in text

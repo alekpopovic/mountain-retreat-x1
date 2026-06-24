@@ -18,6 +18,7 @@ ELECTRICAL_TEMPLATE_NAME = "electrical_package.md.j2"
 PLUMBING_TEMPLATE_NAME = "plumbing_wastewater.md.j2"
 HVAC_TEMPLATE_NAME = "hvac_package.md.j2"
 SMART_HOME_TEMPLATE_NAME = "smart_home_security.md.j2"
+OFF_GRID_TEMPLATE_NAME = "off_grid_package.md.j2"
 DEFAULT_TEMPLATE_DIR = Path("docs/templates/markdown")
 
 
@@ -188,6 +189,31 @@ class AutomationItem:
     action: str
     dependencies: str
     safety_note: str
+
+
+@dataclass(frozen=True)
+class LoadEstimateItem:
+    """Preliminary off-grid load estimate item."""
+
+    load_code: str
+    device_system: str
+    power_w_placeholder: str
+    hours_day_placeholder: str
+    daily_kwh_placeholder: str
+    critical: str
+    backup_priority: str
+    notes: str
+
+
+@dataclass(frozen=True)
+class FailureScenarioItem:
+    """Preliminary off-grid failure scenario item."""
+
+    scenario: str
+    likely_impact: str
+    manual_response: str
+    automation_monitoring: str
+    professional_review: str
 
 
 def _shared_limitations(config: MountainRetreatConfig) -> tuple[str, ...]:
@@ -1259,6 +1285,200 @@ def _smart_home_context(config: MountainRetreatConfig) -> dict[str, object]:
     }
 
 
+def _load_estimates() -> tuple[LoadEstimateItem, ...]:
+    rows = (
+        (
+            "LD-001",
+            "Heating controls and circulation pumps",
+            "150 W placeholder",
+            "12 h/day placeholder",
+            "1.8 kWh/day planning assumption",
+            "Yes",
+            "1",
+            "Keep heat distribution and frost protection available during outages.",
+        ),
+        (
+            "LD-002",
+            "Refrigerator/freezer",
+            "120 W placeholder average",
+            "10 h/day equivalent placeholder",
+            "1.2 kWh/day planning assumption",
+            "Yes",
+            "1",
+            "Food safety load; actual use depends on appliance selection and ambient temperature.",
+        ),
+        (
+            "LD-003",
+            "Network, router, Home Assistant, and sensors",
+            "80 W placeholder",
+            "24 h/day placeholder",
+            "1.9 kWh/day planning assumption",
+            "Yes",
+            "1",
+            "UPS-backed monitoring and alerts; actual power depends on equipment.",
+        ),
+        (
+            "LD-004",
+            "Water pump / pressure system",
+            "750 W placeholder",
+            "1 h/day placeholder",
+            "0.75 kWh/day planning assumption",
+            "Yes",
+            "2",
+            "Pump starting current and pressure-vessel sizing require professional review.",
+        ),
+        (
+            "LD-005",
+            "Lighting critical circuits",
+            "250 W placeholder",
+            "4 h/day placeholder",
+            "1.0 kWh/day planning assumption",
+            "Yes",
+            "2",
+            "Critical lighting should be limited to safety/pathway/task zones.",
+        ),
+        (
+            "LD-006",
+            "Mechanical ventilation / bathroom extract",
+            "120 W placeholder",
+            "6 h/day placeholder",
+            "0.72 kWh/day planning assumption",
+            "Yes",
+            "2",
+            "Humidity control remains important in winter and during vacancy.",
+        ),
+        (
+            "LD-007",
+            "PoE cameras and security devices",
+            "100 W placeholder",
+            "24 h/day placeholder",
+            "2.4 kWh/day planning assumption",
+            "Yes",
+            "2",
+            "Can be reduced in emergency mode if battery state becomes critical.",
+        ),
+        (
+            "LD-008",
+            "Domestic hot water backup element",
+            "2000 W placeholder",
+            "1 h/day placeholder",
+            "2.0 kWh/day planning assumption",
+            "No",
+            "3",
+            "High load; may be disabled during islanded or low-battery operation.",
+        ),
+        (
+            "LD-009",
+            "Cooking / kitchen appliances",
+            "3000 W placeholder",
+            "1 h/day placeholder",
+            "3.0 kWh/day planning assumption",
+            "No",
+            "4",
+            "Use pattern dominates energy demand; not guaranteed by battery reserve.",
+        ),
+        (
+            "LD-010",
+            "Laundry appliances",
+            "2500 W placeholder",
+            "0.5 h/day placeholder",
+            "1.25 kWh/day planning assumption",
+            "No",
+            "5",
+            "Defer during low solar, generator faults, or emergency mode.",
+        ),
+        (
+            "LD-011",
+            "Terrace / exterior comfort loads",
+            "1000 W placeholder",
+            "1 h/day placeholder",
+            "1.0 kWh/day planning assumption",
+            "No",
+            "5",
+            "Includes optional exterior amenities; disable during off-grid constraints.",
+        ),
+        (
+            "LD-012",
+            "EV charging placeholder",
+            "7000 W placeholder",
+            "0 h/day default placeholder",
+            "0 kWh/day default planning assumption",
+            "No",
+            "Lowest",
+            "Not included in autonomy assumptions unless explicitly engineered.",
+        ),
+    )
+    return tuple(LoadEstimateItem(*row) for row in rows)
+
+
+def _failure_scenarios() -> tuple[FailureScenarioItem, ...]:
+    rows = (
+        (
+            "Extended snow cover on PV array",
+            "Solar production can fall sharply for multiple days.",
+            "Clear snow only if safe; switch to critical loads and generator plan.",
+            "Solar production notification and low battery warning.",
+            "PV layout, snow guards, roof access, and winter maintenance review.",
+        ),
+        (
+            "Battery reaches low state of charge",
+            "Non-critical loads must be shed to preserve monitoring and frost protection.",
+            "Disable DHW boost, laundry, terrace loads, and other low-priority circuits.",
+            "Battery monitoring, load-shed notification, and owner alert.",
+            "Electrical engineer to define thresholds, interlocks, and safe load shedding.",
+        ),
+        (
+            "Backup generator fails to start",
+            "Autonomy is not guaranteed; cabin may lose critical loads after battery depletion.",
+            "Use manual troubleshooting checklist and arrange service.",
+            "Generator fault alert and outage event log.",
+            "Generator professional to review fuel, starting, transfer, exhaust, and maintenance.",
+        ),
+        (
+            "Inverter/charger fault",
+            "Islanded power may be unavailable or unstable.",
+            "Move to safe shutdown and manual backup plan.",
+            "Inverter fault notification where supported.",
+            "Licensed electrical review of bypass, transfer, protection, and commissioning.",
+        ),
+        (
+            "Water tank/pump unavailable",
+            "Water service may stop even if electrical power remains available.",
+            "Conserve water, check pump protection, and use manual supply plan if available.",
+            "Pump power monitoring and leak/pressure alert placeholder.",
+            "Plumbing/mechanical review of pump, filtration, drain-down, and access.",
+        ),
+        (
+            "Internet outage",
+            "Remote monitoring and notifications may fail.",
+            "Rely on local control, local alarms, and manual checks.",
+            "Local dashboard remains preferred; cellular backup TBD.",
+            "Network integrator to review WAN failover, VPN, and alert routes.",
+        ),
+    )
+    return tuple(FailureScenarioItem(*row) for row in rows)
+
+
+def _off_grid_context(config: MountainRetreatConfig) -> dict[str, object]:
+    loads = _load_estimates()
+    failures = _failure_scenarios()
+    return {
+        "project": config.project,
+        "site": config.site,
+        "building": config.building,
+        "off_grid": config.off_grid,
+        "smart_home": config.smart_home,
+        "assumptions": (*_shared_assumptions(config), *tuple(config.off_grid.limitations)),
+        "limitations": (*_shared_limitations(config), *tuple(config.off_grid.limitations)),
+        "loads": loads,
+        "failure_scenarios": failures,
+        "critical_loads": tuple(load for load in loads if load.critical == "Yes"),
+        "non_critical_loads": tuple(load for load in loads if load.critical == "No"),
+        "load_count": len(loads),
+        "failure_count": len(failures),
+    }
+
+
 def all_config_rooms(config: MountainRetreatConfig) -> list[Room]:
     """Return all configured room models."""
     return [*config.rooms_ground_floor.rooms, *config.rooms_gallery.rooms]
@@ -1683,6 +1903,7 @@ def generate_markdown_volumes(
     plumbing_template = env.get_template(PLUMBING_TEMPLATE_NAME)
     hvac_template = env.get_template(HVAC_TEMPLATE_NAME)
     smart_home_template = env.get_template(SMART_HOME_TEMPLATE_NAME)
+    off_grid_template = env.get_template(OFF_GRID_TEMPLATE_NAME)
     paths: list[Path] = []
     for volume in _volume_specs(config):
         if volume.filename == "02_architectural_package.md":
@@ -1697,6 +1918,8 @@ def generate_markdown_volumes(
             rendered = hvac_template.render(**_hvac_context(config))
         elif volume.filename == "07_smart_home_security.md":
             rendered = smart_home_template.render(**_smart_home_context(config))
+        elif volume.filename == "08_off_grid_package.md":
+            rendered = off_grid_template.render(**_off_grid_context(config))
         else:
             rendered = template.render(project=config.project, volume=volume)
         path = markdown_dir / volume.filename
