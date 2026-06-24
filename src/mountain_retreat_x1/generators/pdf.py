@@ -4,6 +4,7 @@ from html import escape
 from pathlib import Path
 from re import sub
 from typing import Any
+from warnings import warn
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
@@ -71,6 +72,14 @@ def _volume_title(markdown_text: str, fallback: str) -> str:
         if line.startswith("# "):
             return line[2:].strip()
     return fallback.replace("_", " ").removesuffix(".pdf")
+
+
+def _safety_notice(config: MountainRetreatConfig) -> str:
+    return (
+        f"{config.project.disclaimer} PRELIMINARY - not for construction, permitting, "
+        "procurement, financing, or legal reliance. Licensed professional and local "
+        "authority review required."
+    )
 
 
 def _inline_markdown(text: str) -> str:
@@ -143,6 +152,7 @@ def _render_with_weasyprint(
         project=config.project,
         volume_title=_volume_title(markdown_text, pdf_path.name),
         body_html=_markdown_to_html(markdown_text),
+        safety_notice=_safety_notice(config),
     )
     HTML(string=html, base_url=str(template_dir.resolve())).write_pdf(pdf_path)
 
@@ -217,7 +227,7 @@ def _reportlab_story(
         Paragraph(f"<b>Status:</b> {escape(config.project.status)}", body),
         Paragraph(f"<b>Revision date:</b> {config.project.revision_date}", body),
         Spacer(1, 12 * mm),
-        Paragraph("PRELIMINARY - schematic planning document only - not for construction.", notice),
+        Paragraph(escape(_safety_notice(config)), notice),
         Paragraph(
             "No fake stamps, fake signatures, or construction approvals are included.",
             notice,
@@ -271,7 +281,8 @@ def _draw_footer(canvas: Any, doc: object, config: MountainRetreatConfig) -> Non
     width, _height = A4
     page_number = canvas.getPageNumber()
     footer = (
-        "PRELIMINARY - not for construction - licensed professional review required - "
+        "PRELIMINARY - not for construction/permitting/procurement/legal reliance - "
+        "licensed professional review required - "
         f"page {page_number}"
     )
     canvas.drawCentredString(width / 2, 10 * mm, footer)
@@ -355,7 +366,8 @@ def _basic_pdf_page_stream(
         commands.append(f"({_pdf_escape(line[:120])}) Tj")
         commands.append("T*")
     footer = (
-        "PRELIMINARY - not for construction - licensed professional review "
+        "PRELIMINARY - not for construction/permitting/procurement/legal reliance - "
+        "licensed professional review "
         f"required - page {page_number} of {total_pages}"
     )
     commands.extend(
@@ -384,7 +396,7 @@ def _render_with_basic_pdf(
         f"Version: {config.project.version}",
         f"Status: {config.project.status}",
         f"Revision date: {config.project.revision_date}",
-        "PRELIMINARY - schematic planning document only - not for construction.",
+        _safety_notice(config),
         "Licensed professional review required before construction or permitting use.",
         "No fake stamps, fake signatures, or construction approvals are included.",
         "",
@@ -466,8 +478,12 @@ def _render_with_available_backend(
         try:
             _render_with_weasyprint(config, markdown_path, pdf_path, template_dir)
             return
-        except Exception:
-            pass
+        except Exception as exc:
+            warn(
+                f"WeasyPrint PDF rendering failed for {markdown_path.name}; "
+                f"falling back to local PDF renderer: {exc}",
+                stacklevel=2,
+            )
     if REPORTLAB_AVAILABLE:
         _render_with_reportlab(config, markdown_path, pdf_path)
         return
@@ -478,11 +494,13 @@ def generate_pdf_volumes(
     config: MountainRetreatConfig,
     output_dir: Path,
     template_dir: Path = PDF_TEMPLATE_DIR,
+    *,
+    large_mode: bool = False,
+    language: str | None = None,
 ) -> list[Path]:
     """Generate PDF volumes from Markdown sources and return their paths."""
     markdown_dir = output_dir / MARKDOWN_OUTPUT_DIR
-    if not markdown_dir.exists() or not any(markdown_dir.glob("*.md")):
-        generate_markdown_volumes(config, output_dir)
+    generate_markdown_volumes(config, output_dir, large_mode=large_mode, language=language)
 
     pdf_dir = output_dir / PDF_OUTPUT_DIR
     pdf_dir.mkdir(parents=True, exist_ok=True)

@@ -35,6 +35,12 @@ class CostAssumptionsConfig(StrictModel):
     source_policy: str
     vat_included: bool
     contingency_percent: float = Field(ge=0, le=100)
+    contingency_sensitivity_percents: list[float] = Field(
+        default_factory=lambda: [10.0, 15.0, 20.0]
+    )
+    scenario_factors: dict[str, float] = Field(default_factory=dict)
+    scenario_contingency_percents: dict[str, float] = Field(default_factory=dict)
+    off_grid_addons: list[dict[str, str | float]] = Field(default_factory=list)
     regional_adjustment_note: str
     estimate_warning: str
     cost_items: list[CostItem]

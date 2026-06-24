@@ -7,19 +7,19 @@
 **Revision date:** {{ project.revision_date }}  
 **Language:** {{ project.language }}  
 
-## Revision History
+## {{ labels.revision_history }}
 
 | Version | Date | Author | Notes |
 |---|---|---|---|
-| {{ project.version }} | {{ project.revision_date }} | {{ project.author }} | Generated preliminary planning source volume. |
+| {{ project.version }} | {{ project.revision_date }} | {{ project.author }} | {{ labels.generated_note }} |
 
-## Mandatory Notice
+## {{ labels.mandatory_notice }}
 
 {{ project.disclaimer }}
 
-This Markdown source volume is **PRELIMINARY** and requires professional review before any real-world use.
+{{ labels.preliminary_review_sentence }}
 
-## Required Professional Review
+## {{ labels.required_professional_review }}
 
 {% for reviewer in project.review_required_by -%}
 - {{ reviewer }}
@@ -28,19 +28,19 @@ This Markdown source volume is **PRELIMINARY** and requires professional review 
 - {{ reviewer }}
 {% endfor %}
 
-## Assumptions
+## {{ labels.assumptions }}
 
 {% for assumption in volume.assumptions -%}
 - {{ assumption }}
 {% endfor %}
 
-## Limitations
+## {{ labels.limitations }}
 
 {% for limitation in volume.limitations -%}
 - {{ limitation }}
 {% endfor %}
 
-## Main Content
+## {{ labels.main_content }}
 
 {% for section in volume.sections -%}
 ### {{ section.heading }}
@@ -52,10 +52,9 @@ This Markdown source volume is **PRELIMINARY** and requires professional review 
 {% endfor -%}
 
 {% if volume.qa_notes %}
-## QA Notes
+## {{ labels.qa_notes }}
 
 {% for note in volume.qa_notes -%}
 - {{ note }}
 {% endfor %}
 {% endif %}
-

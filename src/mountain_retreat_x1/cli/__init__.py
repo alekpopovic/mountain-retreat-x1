@@ -1,10 +1,10 @@
 """Command line interface for Mountain Retreat X1."""
 
 import json
-from datetime import UTC, datetime
+from dataclasses import replace
 from pathlib import Path
 from typing import Annotated
-from zipfile import ZIP_DEFLATED, ZipFile
+from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 import typer
 from rich.console import Console
@@ -27,7 +27,7 @@ from mountain_retreat_x1.generators import (
     generate_pdf_volumes,
     generate_svg_drawings,
 )
-from mountain_retreat_x1.localization import LocalizationError, normalize_language
+from mountain_retreat_x1.localization import LocalizationError, load_translator, normalize_language
 
 app = typer.Typer(
     name="mrx1",
@@ -45,6 +45,7 @@ ZIP_FILENAME = "Mountain_Retreat_X1_Professional_Documentation_Package.zip"
 MANIFEST_FILENAME = "BUILD_MANIFEST.json"
 INDEX_FILENAME = "INDEX.md"
 ASSUMPTIONS_SUMMARY_FILENAME = "ASSUMPTIONS_SUMMARY.md"
+DETERMINISTIC_ZIP_TIMESTAMP = (2026, 6, 24, 0, 0, 0)
 
 
 ConfigDirOption = Annotated[
@@ -62,6 +63,7 @@ ConfigDirOption = Annotated[
 OutputDirOption = Annotated[
     Path,
     typer.Option(
+        "--output",
         "--output-dir",
         "-o",
         file_okay=False,
@@ -329,6 +331,35 @@ def _language_or_exit(language: str | None) -> str:
         raise typer.Exit(1) from exc
 
 
+def _localized_config_or_exit(
+    config: MountainRetreatConfig,
+    language: str,
+) -> MountainRetreatConfig:
+    try:
+        translator = load_translator(language)
+    except LocalizationError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1) from exc
+    review_notes = translator.list_text("professional_review_notes")
+    project = config.project.model_copy(
+        update={
+            "language": translator.language,
+            "disclaimer": translator.text("disclaimer_text", config.project.disclaimer),
+            "review_required_by": review_notes or config.project.review_required_by,
+        }
+    )
+    return replace(config, project=project)
+
+
+def _mandatory_notice(config: MountainRetreatConfig) -> str:
+    return (
+        f"{config.project.disclaimer} Generated documents are preliminary planning "
+        "documents only. They are not permits, approvals, stamped or signed engineering "
+        "documents, final calculations, procurement instructions, financing-grade "
+        "estimates, or documents for legal reliance."
+    )
+
+
 def _relative_output_files(output_dir: Path) -> list[Path]:
     files: list[Path] = []
     for subdir in ("markdown", "pdf", "excel", "drawings"):
@@ -363,7 +394,7 @@ def _write_assumptions_summary(
         "",
         "## Mandatory Notice",
         "",
-        config.project.disclaimer,
+        _mandatory_notice(config),
         "",
         "## Key Geometry",
         "",
@@ -432,7 +463,7 @@ def _write_index_file(
         f"Large mode: {large_mode}",
         f"Status: {config.project.status}",
         "",
-        "This package is PRELIMINARY and not for construction, permitting, or legal reliance.",
+        _mandatory_notice(config),
         "",
         "## Files",
         "",
@@ -462,12 +493,12 @@ def _write_build_manifest(
     manifest = {
         "project_name": config.project.project_name,
         "version": config.project.version,
-        "generated_at": datetime.now(UTC).isoformat(),
+        "generated_at": f"{config.project.revision_date.isoformat()}T00:00:00+00:00",
         "language": language,
         "large_mode": large_mode,
         "files": sorted(files),
         "warnings": [
-            config.project.disclaimer,
+            _mandatory_notice(config),
             "Generated documents are preliminary planning documents only.",
             (
                 "No generated document is a permit, approval, stamp, signature, "
@@ -503,14 +534,21 @@ def _zip_package(
     zip_path.parent.mkdir(parents=True, exist_ok=True)
     with ZipFile(zip_path, "w", ZIP_DEFLATED) as archive:
         for path in sorted(output_files):
-            archive.write(path, path.relative_to(output_dir).as_posix())
+            _write_zip_file(archive, path, path.relative_to(output_dir).as_posix())
         for yaml_path in sorted(config_dir.glob("*.yaml")):
-            archive.write(yaml_path, f"config/{yaml_path.name}")
+            _write_zip_file(archive, yaml_path, f"config/{yaml_path.name}")
         for root_file_name in ("README.md", "LEGAL_AND_PROFESSIONAL_LIMITS.md"):
             root_file = Path(root_file_name)
             if root_file.exists():
-                archive.write(root_file, root_file.name)
+                _write_zip_file(archive, root_file, root_file.name)
     return zip_path
+
+
+def _write_zip_file(archive: ZipFile, source_path: Path, archive_name: str) -> None:
+    info = ZipInfo(archive_name, DETERMINISTIC_ZIP_TIMESTAMP)
+    info.compress_type = ZIP_DEFLATED
+    info.external_attr = 0o644 << 16
+    archive.writestr(info, source_path.read_bytes())
 
 
 @generate_app.command("all")
@@ -552,8 +590,8 @@ def generate_all(
             f"[yellow]Cleaned generated outputs.[/yellow] Removed {removed_count} file(s)."
         )
     _ensure_output_dirs(output_dir)
-    config = _load_config_or_exit(active_config_dir)
     language = _language_or_exit(lang)
+    config = _localized_config_or_exit(_load_config_or_exit(active_config_dir), language)
     assumptions_path = _write_assumptions_summary(config, output_dir, language, large)
     markdown_paths = generate_markdown_volumes(
         config,
@@ -569,7 +607,7 @@ def generate_all(
         generate_maintenance_calendar_workbook(config, output_dir),
     ]
     drawing_paths = generate_svg_drawings(config, output_dir)
-    pdf_paths = generate_pdf_volumes(config, output_dir)
+    pdf_paths = generate_pdf_volumes(config, output_dir, large_mode=large, language=language)
     generated_paths = [*markdown_paths, *excel_paths, *drawing_paths, *pdf_paths, assumptions_path]
     index_path = _write_index_file(config, output_dir, language, large, generated_paths)
     files_for_manifest = _package_file_names(output_dir, active_config_dir)
@@ -639,11 +677,22 @@ def generate_markdown(
 def generate_pdf(
     config_dir: ConfigDirOption = Path("config"),
     output_dir: OutputDirOption = Path("output"),
+    lang: str = typer.Option(
+        "sr-Latn",
+        "--lang",
+        help="Visible output language: sr-Latn or en.",
+    ),
+    large: bool = typer.Option(
+        False,
+        "--large",
+        help="Regenerate Markdown sources with large-mode detail before PDF rendering.",
+    ),
 ) -> None:
     """Generate preliminary PDF volumes."""
     _ensure_output_dirs(output_dir)
-    config = _load_config_or_exit(config_dir)
-    paths = generate_pdf_volumes(config, output_dir)
+    language = _language_or_exit(lang)
+    config = _localized_config_or_exit(_load_config_or_exit(config_dir), language)
+    paths = generate_pdf_volumes(config, output_dir, large_mode=large, language=language)
 
     table = Table(title="Generated PDF Volumes")
     table.add_column("File", style="cyan")
@@ -658,6 +707,11 @@ def generate_pdf(
 def generate_excel(
     config_dir: ConfigDirOption = Path("config"),
     output_dir: OutputDirOption = Path("output"),
+    lang: str = typer.Option(
+        "sr-Latn",
+        "--lang",
+        help="Visible safety language for workbook assumptions: sr-Latn or en.",
+    ),
     bom: Annotated[
         bool,
         typer.Option(
@@ -702,43 +756,46 @@ def generate_excel(
     ] = False,
 ) -> None:
     """Generate preliminary Excel workbooks."""
-    if bom or cost or gantt or qa or maintenance:
-        _ensure_output_dirs(output_dir)
-        config = _load_config_or_exit(config_dir)
-        generated_paths: list[Path] = []
-        if bom:
-            generated_paths.append(generate_bom_workbook(config, output_dir, large_mode=large))
-        if cost:
-            generated_paths.append(generate_cost_estimate_workbook(config, output_dir))
-        if gantt:
-            generated_paths.append(generate_gantt_schedule_workbook(config, output_dir))
-        if qa:
-            generated_paths.append(
-                generate_qa_checklist_workbook(config, output_dir, large_mode=large)
-            )
-        if maintenance:
-            generated_paths.append(generate_maintenance_calendar_workbook(config, output_dir))
-        table = Table(title="Generated Excel Workbooks")
-        table.add_column("File", style="cyan")
-        table.add_column("Status")
-        for path in generated_paths:
-            table.add_row(str(path), "generated")
-        console.print(table)
-        console.print(
-            f"[green]Excel generation completed.[/green] {len(generated_paths)} workbook(s)."
+    _ensure_output_dirs(output_dir)
+    language = _language_or_exit(lang)
+    config = _localized_config_or_exit(_load_config_or_exit(config_dir), language)
+    generate_all_excel = not any((bom, cost, gantt, qa, maintenance))
+    generated_paths: list[Path] = []
+    if bom or generate_all_excel:
+        generated_paths.append(generate_bom_workbook(config, output_dir, large_mode=large))
+    if cost or generate_all_excel:
+        generated_paths.append(generate_cost_estimate_workbook(config, output_dir))
+    if gantt or generate_all_excel:
+        generated_paths.append(generate_gantt_schedule_workbook(config, output_dir))
+    if qa or generate_all_excel:
+        generated_paths.append(
+            generate_qa_checklist_workbook(config, output_dir, large_mode=large)
         )
-        return
-    _print_placeholder_generation("Excel", output_dir)
+    if maintenance or generate_all_excel:
+        generated_paths.append(generate_maintenance_calendar_workbook(config, output_dir))
+    table = Table(title="Generated Excel Workbooks")
+    table.add_column("File", style="cyan")
+    table.add_column("Status")
+    for path in generated_paths:
+        table.add_row(str(path), "generated")
+    console.print(table)
+    console.print(f"[green]Excel generation completed.[/green] {len(generated_paths)} workbook(s).")
 
 
 @generate_app.command("drawings")
 def generate_drawings(
     config_dir: ConfigDirOption = Path("config"),
     output_dir: OutputDirOption = Path("output"),
+    lang: str = typer.Option(
+        "sr-Latn",
+        "--lang",
+        help="Visible safety language for drawing metadata: sr-Latn or en.",
+    ),
 ) -> None:
     """Generate preliminary schematic drawings."""
     _ensure_output_dirs(output_dir)
-    config = _load_config_or_exit(config_dir)
+    language = _language_or_exit(lang)
+    config = _localized_config_or_exit(_load_config_or_exit(config_dir), language)
     paths = generate_svg_drawings(config, output_dir)
 
     table = Table(title="Generated SVG Schematic Drawings")

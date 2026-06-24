@@ -12,8 +12,8 @@
       <p><strong>Version:</strong> {{ project.version }}</p>
       <p><strong>Status:</strong> {{ project.status }}</p>
       <p><strong>Revision date:</strong> {{ project.revision_date }}</p>
-      <p class="notice">PRELIMINARY - schematic planning document only - not for construction.</p>
-      <p class="notice">Licensed professional review is required before permitting, procurement, or construction use.</p>
+      <p class="notice">{{ safety_notice }}</p>
+      <p class="notice">No fake stamps, fake signatures, construction approvals, or legally binding permits are included.</p>
     </section>
     <main>
       {{ body_html | safe }}

@@ -5,7 +5,12 @@ from typer.testing import CliRunner
 
 from mountain_retreat_x1.cli import app
 from mountain_retreat_x1.exporters import QA_FILENAME
-from mountain_retreat_x1.exporters.excel import QA_HEADERS, QA_STATUS_VALUES, QA_WORKBOOK_SHEETS
+from mountain_retreat_x1.exporters.excel import (
+    QA_ASSUMPTIONS_SHEET,
+    QA_HEADERS,
+    QA_STATUS_VALUES,
+    QA_WORKBOOK_SHEETS,
+)
 
 runner = CliRunner()
 
@@ -24,12 +29,16 @@ def test_generate_excel_qa_creates_expected_sheets_and_headers(tmp_path: Path) -
     assert workbook_path.exists()
 
     workbook = load_workbook(workbook_path, data_only=False)
-    assert workbook.sheetnames == list(QA_WORKBOOK_SHEETS)
+    assert workbook.sheetnames == [*QA_WORKBOOK_SHEETS, QA_ASSUMPTIONS_SHEET]
     for sheet_name in QA_WORKBOOK_SHEETS:
         sheet = workbook[sheet_name]
         assert [cell.value for cell in sheet[1]] == list(QA_HEADERS)
         assert sheet.freeze_panes == "A2"
         assert sheet.auto_filter.ref is not None
+    assumptions = workbook[QA_ASSUMPTIONS_SHEET]
+    assumption_text = "\n".join(str(cell.value) for row in assumptions.iter_rows() for cell in row)
+    assert "PRELIMINARY" in assumption_text
+    assert "approved construction documents" in assumption_text
 
 
 def test_generate_excel_qa_has_large_mode_rows_and_status_validation(

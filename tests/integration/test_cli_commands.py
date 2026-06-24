@@ -4,7 +4,13 @@ from shutil import copytree
 from typer.testing import CliRunner
 
 from mountain_retreat_x1.cli import app
-from mountain_retreat_x1.exporters import BOM_FILENAME, MAINTENANCE_FILENAME, QA_FILENAME
+from mountain_retreat_x1.exporters import (
+    BOM_FILENAME,
+    COST_FILENAME,
+    GANTT_FILENAME,
+    MAINTENANCE_FILENAME,
+    QA_FILENAME,
+)
 
 runner = CliRunner()
 
@@ -72,15 +78,29 @@ def test_generate_all_large_creates_expanded_binder_outputs(tmp_path: Path) -> N
     assert validate_result.exit_code == 0
 
 
-def test_generate_specific_placeholders_create_output_folders(tmp_path: Path) -> None:
-    for command in ("excel",):
-        output_dir = tmp_path / command
-        result = runner.invoke(app, ["generate", command, "--output-dir", str(output_dir)])
+def test_generate_excel_without_selector_generates_all_workbooks(tmp_path: Path) -> None:
+    output_dir = tmp_path / "excel"
+    result = runner.invoke(app, ["generate", "excel", "--output", str(output_dir)])
 
-        assert result.exit_code == 0
-        assert "placeholder completed" in result.output
-        for subdir in ("markdown", "pdf", "excel", "drawings", "zip"):
-            assert (output_dir / subdir).is_dir()
+    assert result.exit_code == 0
+    assert "Excel generation completed" in result.output
+    for filename in (
+        BOM_FILENAME,
+        COST_FILENAME,
+        GANTT_FILENAME,
+        QA_FILENAME,
+        MAINTENANCE_FILENAME,
+    ):
+        assert (output_dir / "excel" / filename).exists()
+
+
+def test_documented_output_alias_works_for_subcommands(tmp_path: Path) -> None:
+    output_dir = tmp_path / "markdown"
+
+    result = runner.invoke(app, ["generate", "markdown", "--output", str(output_dir)])
+
+    assert result.exit_code == 0
+    assert (output_dir / "markdown" / "01_project_charter.md").exists()
 
 
 def test_generate_pdf_creates_output_folders(tmp_path: Path) -> None:

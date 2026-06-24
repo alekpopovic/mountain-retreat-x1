@@ -82,7 +82,10 @@ def test_generated_markdown_contains_required_safety_language(tmp_path: Path) ->
     for filename in EXPECTED_MARKDOWN_FILES:
         text = (output_dir / "markdown" / filename).read_text(encoding="utf-8")
         assert "PRELIMINARY" in text
-        assert "Required Professional Review" in text
+        assert (
+            "Required Professional Review" in text
+            or "Obavezna stručna provera" in text
+        )
         assert (
             "licensed professionals" in text.lower()
             or "licensed" in text.lower()
@@ -92,8 +95,8 @@ def test_generated_markdown_contains_required_safety_language(tmp_path: Path) ->
             "not for construction" in text.lower()
             or "nije za izvođenje radova" in text.lower()
         )
-        assert "## Assumptions" in text
-        assert "## Limitations" in text
+        assert "## Assumptions" in text or "## Pretpostavke" in text
+        assert "## Limitations" in text or "## Ograničenja" in text
 
 
 def test_maintenance_manual_contains_year_based_sections(tmp_path: Path) -> None:

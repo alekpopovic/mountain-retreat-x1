@@ -2411,6 +2411,37 @@ def _localized_config(
     return replace(config, project=project)
 
 
+def _localized_labels(language: str | None) -> dict[str, str]:
+    translator = load_translator(language)
+    headings = translator.mapping("common_headings")
+    return {
+        "revision_history": headings.get("revision_history", "Revision History"),
+        "mandatory_notice": headings.get("mandatory_notice", "Mandatory Notice"),
+        "required_professional_review": headings.get(
+            "required_professional_review",
+            "Required Professional Review",
+        ),
+        "assumptions": headings.get("assumptions", "Assumptions"),
+        "limitations": headings.get("limitations", "Limitations"),
+        "main_content": headings.get("main_content", "Main Content"),
+        "qa_notes": headings.get("qa_notes", "QA Notes"),
+        "generated_note": (
+            "Generisana preliminarna planska izvorna sveska."
+            if translator.language == "sr-Latn"
+            else "Generated preliminary planning source volume."
+        ),
+        "preliminary_review_sentence": (
+            "Ova Markdown izvorna sveska je **PRELIMINARNA** i zahteva stručnu proveru "
+            "pre bilo kakve stvarne upotrebe."
+            if translator.language == "sr-Latn"
+            else (
+                "This Markdown source volume is **PRELIMINARY** and requires professional "
+                "review before any real-world use."
+            )
+        ),
+    }
+
+
 def _volume_specs(
     config: MountainRetreatConfig,
     *,
@@ -2812,6 +2843,7 @@ def generate_markdown_volumes(
 ) -> list[Path]:
     """Generate all Markdown source volumes and return their paths."""
     config = _localized_config(config, language)
+    labels = _localized_labels(config.project.language)
     markdown_dir = output_dir / MARKDOWN_OUTPUT_DIR
     markdown_dir.mkdir(parents=True, exist_ok=True)
 
@@ -2851,7 +2883,7 @@ def generate_markdown_volumes(
                 **_self_build_context(config, large_mode),
             )
         else:
-            rendered = template.render(project=config.project, volume=volume)
+            rendered = template.render(project=config.project, volume=volume, labels=labels)
         path = markdown_dir / volume.filename
         path.write_text(rendered, encoding="utf-8")
         paths.append(path)

@@ -18,6 +18,22 @@ Mountain Retreat X1 is ready as a preliminary planning documentation generator.
 - Large document mode with expanded room sheets, QA/QC rows, self-build guide, BOM, maintenance planning, and construction-management registers
 - Integration tests for final ZIP and manifest generation
 
+### Fixed
+
+- Cost estimate executive summary formulas now reference generated total rows once
+  instead of summing whole columns that include total rows.
+- Cash-flow formulas now use bounded denominators that exclude the total row.
+- Cost scenarios, contingency sensitivity rates, and off-grid add-on placeholders
+  are YAML-backed planning assumptions.
+- Gantt task rows are generated from `config/construction_phases.yaml`.
+- PDF generation regenerates current Markdown sources for the requested language.
+- Package-level assumptions, index, manifest warnings, and workbook safety notes
+  use localized preliminary-review language where supported.
+- ZIP and workbook metadata use deterministic project timestamps.
+- `mrx1 generate excel` now generates all Excel workbooks by default.
+- Generation commands consistently support the `--output` / `--output-dir` aliases.
+- QA/QC workbooks now include a visible assumptions and professional-limit sheet.
+
 ### QA Status
 
 Final QA command set:

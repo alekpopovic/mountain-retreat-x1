@@ -43,6 +43,8 @@ def test_generate_all_final_pipeline_creates_manifest_and_zip(tmp_path: Path) ->
     assert manifest["project_name"] == "Mountain Retreat X1"
     assert manifest["language"] == "sr-Latn"
     assert manifest["large_mode"] is True
+    assert manifest["generated_at"] == "2026-06-24T00:00:00+00:00"
+    assert "PRELIMINARNI planski dokument" in "\n".join(manifest["warnings"])
     assert "markdown/01_project_charter.md" in manifest["files"]
     assert "pdf/01_Project_Charter.pdf" in manifest["files"]
     assert "excel/Mountain_Retreat_X1_BOM.xlsx" in manifest["files"]
@@ -53,6 +55,7 @@ def test_generate_all_final_pipeline_creates_manifest_and_zip(tmp_path: Path) ->
 
     with ZipFile(package_path) as archive:
         names = set(archive.namelist())
+        zip_info = archive.getinfo("BUILD_MANIFEST.json")
 
     expected_names = {
         "pdf/01_Project_Charter.pdf",
@@ -68,3 +71,9 @@ def test_generate_all_final_pipeline_creates_manifest_and_zip(tmp_path: Path) ->
         "BUILD_MANIFEST.json",
     }
     assert expected_names.issubset(names)
+    assert zip_info.date_time == (2026, 6, 24, 0, 0, 0)
+
+    assumptions_text = (output_dir / "ASSUMPTIONS_SUMMARY.md").read_text(encoding="utf-8")
+    index_text = (output_dir / "INDEX.md").read_text(encoding="utf-8")
+    assert "PRELIMINARNI planski dokument" in assumptions_text
+    assert "PRELIMINARNI planski dokument" in index_text

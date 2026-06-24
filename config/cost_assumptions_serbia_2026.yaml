@@ -6,6 +6,49 @@ status: PRELIMINARY
 source_policy: Static planning assumptions only; do not scrape live prices.
 vat_included: false
 contingency_percent: 20
+contingency_sensitivity_percents:
+  - 10
+  - 15
+  - 20
+scenario_factors:
+  economy: 0.9
+  standard: 1.0
+  premium: 1.25
+scenario_contingency_percents:
+  economy: 10
+  standard: 15
+  premium: 20
+off_grid_addons:
+  - code: OG-001
+    system: Solar PV placeholder
+    quantity: 1
+    unit: system
+    unit_cost_placeholder: 18000
+    assumption_ref: off_grid.pv_kwp
+  - code: OG-002
+    system: Battery placeholder
+    quantity: 1
+    unit: system
+    unit_cost_placeholder: 24000
+    assumption_ref: off_grid.battery_kwh
+  - code: OG-003
+    system: Backup generator placeholder
+    quantity: 1
+    unit: system
+    unit_cost_placeholder: 6500
+    assumption_ref: off_grid.generator
+  - code: OG-004
+    system: Water tank placeholder
+    quantity: 1
+    unit: system
+    unit_cost_placeholder: 3200
+    assumption_ref: off_grid.water_tank_l
+  - code: OG-005
+    system: Wastewater independence placeholder
+    quantity: 1
+    unit: system
+    unit_cost_placeholder: 8000
+    assumption_ref: off_grid.wastewater_options
 regional_adjustment_note: Mountain access, winter logistics, and contractor availability may materially affect costs.
 estimate_warning: >
   Planning estimate only. Not a contractor quote, procurement instruction,

@@ -42,6 +42,7 @@ mrx1 generate markdown --lang sr-Latn
 mrx1 generate markdown --lang en --large
 mrx1 generate drawings
 mrx1 generate pdf
+mrx1 generate excel
 mrx1 generate excel --bom --large
 mrx1 generate excel --cost
 mrx1 generate excel --gantt
@@ -50,6 +51,10 @@ mrx1 generate excel --maintenance
 mrx1 generate all --lang sr-Latn
 mrx1 generate all --lang sr-Latn --large --clean
 ```
+
+All generation commands accept `--output` or `--output-dir`. `mrx1 generate excel`
+with no workbook selector generates all Excel workbooks; selectors such as `--bom`
+or `--cost` limit the command to specific workbooks.
 
 ## Generated Outputs
 
@@ -95,6 +100,17 @@ Default visible output language is Serbian Latin (`sr-Latn`). English (`en`) is 
 mrx1 generate all --lang sr-Latn
 mrx1 generate all --lang en
 ```
+
+Package-level files, PDF source regeneration, workbook safety assumptions, and
+manifest warnings use the requested language where supported. Technical file
+names and internal codes remain stable.
+
+## Deterministic Builds
+
+Generated manifests use the project revision date as the build timestamp, and ZIP
+entries use stable metadata. Static price assumptions, scenario factors,
+contingency sensitivity rates, and off-grid add-ons are stored in YAML rather
+than scraped or hidden in live lookups.
 
 ## Project Limitations
 

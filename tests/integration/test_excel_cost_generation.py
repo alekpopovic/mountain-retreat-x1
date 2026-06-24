@@ -58,7 +58,9 @@ def test_generate_excel_cost_contains_formulas_summary_totals_and_notes(
 
     summary = workbook["Executive_Summary"]
     summary_values = {summary[f"A{row}"].value: summary[f"B{row}"].value for row in range(2, 19)}
-    assert summary_values["Material subtotal"] == "=SUM(Materials!H:H)"
+    assert summary_values["Material subtotal"] == "=Materials!H5"
+    assert summary_values["Labor subtotal"] == "=Labor!H5"
+    assert summary_values["Machinery subtotal"] == "=Machinery!H5"
     assert summary_values["Subtotal before contingency"] == "=SUM(B2:B4)"
     assert summary_values["Contingency 10%"] == "=B5*10%"
     assert summary_values["Contingency 15%"] == "=B5*15%"
@@ -67,10 +69,14 @@ def test_generate_excel_cost_contains_formulas_summary_totals_and_notes(
     assert summary_values["Cost per gross m2"] == "=B9/Assumptions!$B$11"
     assert summary_values["Cost per net m2"] == "=B9/Assumptions!$B$12"
     assert summary_values["Optional off-grid add-on"] == "=Scenario_OffGrid_AddOn!F7"
+    assert summary_values["Economy scenario"] == "=Scenario_Economy!G5"
 
     off_grid = workbook["Scenario_OffGrid_AddOn"]
     assert off_grid["F2"].value == "=C2*E2"
     assert off_grid["F7"].value == "=SUM(F2:F6)"
+
+    cash_flow = workbook["Cash_Flow"]
+    assert cash_flow["C2"].value == "=B2/SUM($B$2:$B$4)"
 
     assumptions = workbook["Assumptions"]
     assumption_names = [cell.value for cell in assumptions["A"]]

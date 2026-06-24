@@ -35,3 +35,24 @@ def test_generate_pdf_command_exits_successfully_with_existing_markdown(
     assert markdown_result.exit_code == 0
     assert pdf_result.exit_code == 0
     assert (output_dir / "pdf" / "01_Project_Charter.pdf").exists()
+
+
+def test_generate_pdf_regenerates_markdown_for_requested_language(tmp_path: Path) -> None:
+    output_dir = tmp_path / "output"
+
+    markdown_result = runner.invoke(
+        app,
+        ["generate", "markdown", "--lang", "en", "--output-dir", str(output_dir)],
+    )
+    pdf_result = runner.invoke(
+        app,
+        ["generate", "pdf", "--lang", "sr-Latn", "--output-dir", str(output_dir)],
+    )
+
+    assert markdown_result.exit_code == 0
+    assert pdf_result.exit_code == 0
+    markdown_text = (output_dir / "markdown" / "01_project_charter.md").read_text(
+        encoding="utf-8"
+    )
+    assert "PRELIMINARNI planski dokument" in markdown_text
+    assert "Obavezna napomena" in markdown_text

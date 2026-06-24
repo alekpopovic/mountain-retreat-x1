@@ -10,7 +10,7 @@ Mountain Retreat X1 is a deterministic document-generation pipeline. It converts
 4. Render Markdown source volumes with Jinja2.
 5. Generate plain SVG schematic drawings.
 6. Export Excel workbooks with OpenPyXL.
-7. Render PDF volumes from Markdown.
+7. Regenerate current Markdown sources for the requested language and render PDF volumes.
 8. Generate `INDEX.md`, `ASSUMPTIONS_SUMMARY.md`, and `BUILD_MANIFEST.json`.
 9. Assemble the final ZIP package.
 
@@ -50,3 +50,13 @@ The final pipeline writes:
 - `output/zip/Mountain_Retreat_X1_Professional_Documentation_Package.zip`
 
 The ZIP includes generated artifacts, YAML configs, README, legal limits, assumptions summary, index, and manifest.
+Manifest timestamps are derived from the project revision date, and ZIP entries
+use stable metadata so repeated builds with the same inputs do not depend on the
+local clock. Excel workbook metadata is also fixed to deterministic project
+metadata.
+
+## Config-Backed Planning Data
+
+Cost scenario factors, contingency sensitivity rates, off-grid add-on placeholders,
+and Gantt task rows come from YAML configuration. Exporters may provide formatting
+and formulas, but pricing and schedule assumptions must remain visible in config.

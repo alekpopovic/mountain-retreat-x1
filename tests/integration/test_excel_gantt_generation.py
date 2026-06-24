@@ -1,4 +1,5 @@
 from pathlib import Path
+from shutil import copytree
 
 from openpyxl import load_workbook
 from typer.testing import CliRunner
@@ -63,3 +64,35 @@ def test_generate_excel_gantt_has_52_week_columns_and_timeline_fills(
     assumption_values = [cell.value for cell in assumptions["B"]]
     assert "12 months / 52 weeks" in assumption_values
     assert any("Snow, frost, rain, wind" in str(value) for value in assumption_values)
+
+
+def test_generate_excel_gantt_uses_yaml_construction_phases(tmp_path: Path) -> None:
+    config_dir = tmp_path / "config"
+    copytree("config", config_dir)
+    phases_file = config_dir / "construction_phases.yaml"
+    phases_file.write_text(
+        phases_file.read_text(encoding="utf-8").replace(
+            "Professional review and surveys",
+            "YAML controlled professional review",
+        ),
+        encoding="utf-8",
+    )
+    output_dir = tmp_path / "output"
+
+    result = runner.invoke(
+        app,
+        [
+            "generate",
+            "excel",
+            "--gantt",
+            "--config-dir",
+            str(config_dir),
+            "--output-dir",
+            str(output_dir),
+        ],
+    )
+
+    assert result.exit_code == 0
+    workbook = load_workbook(output_dir / "excel" / GANTT_FILENAME, data_only=False)
+    phases = [cell.value for cell in workbook["Gantt"]["B"]]
+    assert "YAML controlled professional review" in phases

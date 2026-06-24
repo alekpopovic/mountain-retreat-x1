@@ -2,6 +2,7 @@
 
 from collections.abc import Iterable
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 
 from openpyxl import Workbook  # type: ignore[import-untyped]
@@ -23,6 +24,7 @@ COST_OUTPUT_DIR = "excel"
 GANTT_OUTPUT_DIR = "excel"
 QA_OUTPUT_DIR = "excel"
 MAINTENANCE_OUTPUT_DIR = "excel"
+DETERMINISTIC_WORKBOOK_TIMESTAMP = datetime(2026, 6, 24, tzinfo=UTC)
 
 ITEM_HEADERS = (
     "Item Code",
@@ -117,6 +119,7 @@ QA_WORKBOOK_SHEETS = (
     "Photo_Log",
     "Document_Register",
 )
+QA_ASSUMPTIONS_SHEET = "Assumptions"
 
 COST_ITEM_HEADERS = (
     "Cost Code",
@@ -590,6 +593,8 @@ def _apply_workbook_metadata(workbook: Workbook, config: MountainRetreatConfig) 
     workbook.properties.subject = "Preliminary planning bill of materials"
     workbook.properties.creator = config.project.author
     workbook.properties.keywords = "PRELIMINARY, not for construction, Mountain Retreat X1"
+    workbook.properties.created = DETERMINISTIC_WORKBOOK_TIMESTAMP
+    workbook.properties.modified = DETERMINISTIC_WORKBOOK_TIMESTAMP
 
 
 def generate_bom_workbook(
@@ -696,7 +701,9 @@ def _build_cost_aggregation_sheet(
     labels: Iterable[str],
     lookup_column: str,
     title: str,
+    contingency_rates: tuple[float, float, float],
 ) -> None:
+    low_rate, standard_rate, high_rate = contingency_rates
     sheet.append(
         (
             title,
@@ -704,10 +711,10 @@ def _build_cost_aggregation_sheet(
             "Labor Subtotal",
             "Machinery Subtotal",
             "Subtotal Before Contingency",
-            "Contingency 10%",
-            "Contingency 15%",
-            "Contingency 20%",
-            "Total With 20% Contingency",
+            f"Contingency {low_rate:g}%",
+            f"Contingency {standard_rate:g}%",
+            f"Contingency {high_rate:g}%",
+            f"Total With {high_rate:g}% Contingency",
             "Cost per Gross m2",
             "Cost per Net m2",
         )
@@ -722,9 +729,9 @@ def _build_cost_aggregation_sheet(
                 f"={_phase_or_category_formula('Labor', lookup_column, lookup_cell)}",
                 f"={_phase_or_category_formula('Machinery', lookup_column, lookup_cell)}",
                 f"=SUM(B{row}:D{row})",
-                f"=E{row}*10%",
-                f"=E{row}*15%",
-                f"=E{row}*20%",
+                f"=E{row}*{low_rate:g}%",
+                f"=E{row}*{standard_rate:g}%",
+                f"=E{row}*{high_rate:g}%",
                 f"=E{row}+H{row}",
                 f"=I{row}/Assumptions!$B$11",
                 f"=I{row}/Assumptions!$B$12",
@@ -757,7 +764,12 @@ def _build_cost_aggregation_sheet(
     _set_widths(sheet, (22, 18, 16, 18, 24, 18, 18, 18, 24, 18, 18))
 
 
-def _build_contingency_sheet(sheet: Worksheet, items: list[CostItem]) -> None:
+def _build_contingency_sheet(
+    sheet: Worksheet,
+    items: list[CostItem],
+    contingency_rates: tuple[float, float, float],
+) -> None:
+    low_rate, standard_rate, high_rate = contingency_rates
     sheet.append(
         (
             "Cost Code",
@@ -765,9 +777,9 @@ def _build_contingency_sheet(sheet: Worksheet, items: list[CostItem]) -> None:
             "Subtotal Before Contingency",
             "Item Contingency %",
             "Item Contingency",
-            "Contingency 10%",
-            "Contingency 15%",
-            "Contingency 20%",
+            f"Contingency {low_rate:g}%",
+            f"Contingency {standard_rate:g}%",
+            f"Contingency {high_rate:g}%",
             "Total With Item Contingency",
         )
     )
@@ -781,9 +793,9 @@ def _build_contingency_sheet(sheet: Worksheet, items: list[CostItem]) -> None:
                 f"=Materials!H{source_row}+Labor!H{source_row}+Machinery!H{source_row}",
                 item.contingency_percent / 100,
                 f"=C{row}*D{row}",
-                f"=C{row}*10%",
-                f"=C{row}*15%",
-                f"=C{row}*20%",
+                f"=C{row}*{low_rate:g}%",
+                f"=C{row}*{standard_rate:g}%",
+                f"=C{row}*{high_rate:g}%",
                 f"=C{row}+E{row}",
             )
         )
@@ -871,23 +883,22 @@ def _build_off_grid_addon_sheet(sheet: Worksheet, config: MountainRetreatConfig)
         )
     )
     _style_header_row(sheet)
-    rows = (
-        ("OG-001", f"Solar PV {config.off_grid.pv_kwp:g} kWp placeholder", 1, "system", 18000),
-        ("OG-002", f"Battery {config.off_grid.battery_kwh:g} kWh placeholder", 1, "system", 24000),
-        ("OG-003", "Backup generator placeholder", 1, "system", 6500),
-        ("OG-004", f"Water tank {config.off_grid.water_tank_l:g} L placeholder", 1, "system", 3200),
-        ("OG-005", "Wastewater independence placeholder", 1, "system", 8000),
-    )
-    for row, (code, system, quantity, unit, unit_cost) in enumerate(rows, start=2):
+    rows = config.cost_assumptions_serbia_2026.off_grid_addons
+    for row, addon in enumerate(rows, start=2):
+        system = str(addon["system"])
+        assumption_ref = str(addon.get("assumption_ref", "cost_assumptions.off_grid_addons"))
         sheet.append(
             (
-                code,
+                str(addon["code"]),
                 system,
-                quantity,
-                unit,
-                unit_cost,
+                float(addon["quantity"]),
+                str(addon["unit"]),
+                float(addon["unit_cost_placeholder"]),
                 f"=C{row}*E{row}",
-                "Optional planning add-on only; professional design and quotes required.",
+                (
+                    "Optional planning add-on only; professional design and quotes required. "
+                    f"Assumption: {assumption_ref}."
+                ),
             )
         )
     total_row = sheet.max_row + 1
@@ -904,18 +915,21 @@ def _build_off_grid_addon_sheet(sheet: Worksheet, config: MountainRetreatConfig)
 
 
 def _build_cash_flow_sheet(sheet: Worksheet, phases: Iterable[str]) -> None:
-    sheet.append(("Phase", "Phase Total With 20% Contingency", "Cash Flow %", "Cash Flow EUR"))
+    sheet.append(
+        ("Phase", "Phase Total With Configured Contingency", "Cash Flow %", "Cash Flow EUR")
+    )
     _style_header_row(sheet)
-    for row, phase in enumerate(sorted(phases), start=2):
+    phase_list = sorted(phases)
+    total_row = len(phase_list) + 2
+    for row, phase in enumerate(phase_list, start=2):
         sheet.append(
             (
                 phase,
                 f"=SUMIF(Cost_By_Phase!$A:$A,A{row},Cost_By_Phase!$I:$I)",
-                f"=B{row}/SUM(B:B)",
+                f"=B{row}/SUM($B$2:$B${total_row - 1})",
                 f"=B{row}",
             )
         )
-    total_row = sheet.max_row + 1
     sheet.append(
         (
             "TOTAL",
@@ -990,25 +1004,66 @@ def _build_review_notes_sheet(sheet: Worksheet, config: MountainRetreatConfig) -
         cell.alignment = Alignment(wrap_text=True, vertical="top")
 
 
-def _build_executive_summary(sheet: Worksheet, config: MountainRetreatConfig) -> None:
+def _build_executive_summary(
+    sheet: Worksheet,
+    config: MountainRetreatConfig,
+    item_count: int,
+) -> None:
     sheet.append(("Metric", "Value", "Notes"))
     _style_header_row(sheet)
+    cost_config = config.cost_assumptions_serbia_2026
+    rates = _contingency_rates(cost_config.contingency_sensitivity_percents)
+    component_total_row = item_count + 2
+    scenario_total_row = item_count + 2
+    off_grid_total_row = len(cost_config.off_grid_addons) + 2
     rows = (
-        ("Material subtotal", "=SUM(Materials!H:H)", "Formula from Materials sheet."),
-        ("Labor subtotal", "=SUM(Labor!H:H)", "Formula from Labor sheet."),
-        ("Machinery subtotal", "=SUM(Machinery!H:H)", "Formula from Machinery sheet."),
+        (
+            "Material subtotal",
+            f"=Materials!H{component_total_row}",
+            "Formula references Materials total row once.",
+        ),
+        (
+            "Labor subtotal",
+            f"=Labor!H{component_total_row}",
+            "Formula references Labor total row once.",
+        ),
+        (
+            "Machinery subtotal",
+            f"=Machinery!H{component_total_row}",
+            "Formula references Machinery total row once.",
+        ),
         ("Subtotal before contingency", "=SUM(B2:B4)", "Materials + labor + machinery."),
-        ("Contingency 10%", "=B5*10%", "Planning sensitivity."),
-        ("Contingency 15%", "=B5*15%", "Planning sensitivity."),
-        ("Contingency 20%", "=B5*20%", "Planning sensitivity."),
-        ("Total with contingency", "=B5+B8", "Uses 20% contingency by default."),
+        (f"Contingency {rates[0]:g}%", f"=B5*{rates[0]:g}%", "YAML planning sensitivity."),
+        (f"Contingency {rates[1]:g}%", f"=B5*{rates[1]:g}%", "YAML planning sensitivity."),
+        (f"Contingency {rates[2]:g}%", f"=B5*{rates[2]:g}%", "YAML planning sensitivity."),
+        (
+            "Total with contingency",
+            "=B5+B8",
+            f"Uses configured high sensitivity of {rates[2]:g}%.",
+        ),
         ("Cost per gross m2", "=B9/Assumptions!$B$11", "Gross area denominator."),
         ("Cost per net m2", "=B9/Assumptions!$B$12", "Net area denominator."),
-        ("Optional off-grid add-on", "=Scenario_OffGrid_AddOn!F7", "Separate optional add-on."),
+        (
+            "Optional off-grid add-on",
+            f"=Scenario_OffGrid_AddOn!F{off_grid_total_row}",
+            "Separate optional add-on from YAML.",
+        ),
         ("Total with off-grid add-on", "=B9+B12", "Base total + optional add-on."),
-        ("Economy scenario", "=Scenario_Economy!G5", "Scenario comparison total."),
-        ("Standard scenario", "=Scenario_Standard!G5", "Scenario comparison total."),
-        ("Premium scenario", "=Scenario_Premium!G5", "Scenario comparison total."),
+        (
+            "Economy scenario",
+            f"=Scenario_Economy!G{scenario_total_row}",
+            "Scenario comparison total.",
+        ),
+        (
+            "Standard scenario",
+            f"=Scenario_Standard!G{scenario_total_row}",
+            "Scenario comparison total.",
+        ),
+        (
+            "Premium scenario",
+            f"=Scenario_Premium!G{scenario_total_row}",
+            "Scenario comparison total.",
+        ),
         (
             "last_updated",
             config.cost_assumptions_serbia_2026.last_updated.isoformat(),
@@ -1036,6 +1091,15 @@ def _apply_cost_workbook_metadata(workbook: Workbook, config: MountainRetreatCon
     workbook.properties.subject = "Preliminary planning cost estimate"
     workbook.properties.creator = config.project.author
     workbook.properties.keywords = "PRELIMINARY, placeholder prices, contractor quotes required"
+    workbook.properties.created = DETERMINISTIC_WORKBOOK_TIMESTAMP
+    workbook.properties.modified = DETERMINISTIC_WORKBOOK_TIMESTAMP
+
+
+def _contingency_rates(values: list[float]) -> tuple[float, float, float]:
+    if len(values) >= 3:
+        return (values[0], values[1], values[2])
+    padded = [*values, 10, 15, 20]
+    return (padded[0], padded[1], padded[2])
 
 
 def generate_cost_estimate_workbook(config: MountainRetreatConfig, output_dir: Path) -> Path:
@@ -1051,21 +1115,50 @@ def generate_cost_estimate_workbook(config: MountainRetreatConfig, output_dir: P
     items = _cost_items(config)
     phases = {item.phase for item in items}
     categories = {item.category for item in items}
+    cost_config = config.cost_assumptions_serbia_2026
+    contingency_rates = _contingency_rates(cost_config.contingency_sensitivity_percents)
 
     _build_cost_component_sheet(workbook["Materials"], items, "material_unit_cost")
     _build_cost_component_sheet(workbook["Labor"], items, "labor_unit_cost")
     _build_cost_component_sheet(workbook["Machinery"], items, "machinery_unit_cost")
-    _build_cost_aggregation_sheet(workbook["Cost_By_Phase"], phases, "B", "Phase")
-    _build_cost_aggregation_sheet(workbook["Cost_By_Category"], categories, "C", "Category")
-    _build_contingency_sheet(workbook["Contingency"], items)
+    _build_cost_aggregation_sheet(
+        workbook["Cost_By_Phase"],
+        phases,
+        "B",
+        "Phase",
+        contingency_rates,
+    )
+    _build_cost_aggregation_sheet(
+        workbook["Cost_By_Category"],
+        categories,
+        "C",
+        "Category",
+        contingency_rates,
+    )
+    _build_contingency_sheet(workbook["Contingency"], items, contingency_rates)
     _build_cash_flow_sheet(workbook["Cash_Flow"], phases)
-    _build_scenario_sheet(workbook["Scenario_Economy"], items, 0.9, 0.10)
-    _build_scenario_sheet(workbook["Scenario_Standard"], items, 1.0, 0.15)
-    _build_scenario_sheet(workbook["Scenario_Premium"], items, 1.25, 0.20)
+    _build_scenario_sheet(
+        workbook["Scenario_Economy"],
+        items,
+        cost_config.scenario_factors.get("economy", 0.9),
+        cost_config.scenario_contingency_percents.get("economy", 10) / 100,
+    )
+    _build_scenario_sheet(
+        workbook["Scenario_Standard"],
+        items,
+        cost_config.scenario_factors.get("standard", 1.0),
+        cost_config.scenario_contingency_percents.get("standard", 15) / 100,
+    )
+    _build_scenario_sheet(
+        workbook["Scenario_Premium"],
+        items,
+        cost_config.scenario_factors.get("premium", 1.25),
+        cost_config.scenario_contingency_percents.get("premium", 20) / 100,
+    )
     _build_off_grid_addon_sheet(workbook["Scenario_OffGrid_AddOn"], config)
     _build_cost_assumptions_sheet(workbook["Assumptions"], config)
     _build_review_notes_sheet(workbook["Review_Notes"], config)
-    _build_executive_summary(workbook["Executive_Summary"], config)
+    _build_executive_summary(workbook["Executive_Summary"], config, len(items))
     _apply_cost_workbook_metadata(workbook, config)
 
     path = excel_dir / COST_FILENAME
@@ -1585,6 +1678,43 @@ def _apply_gantt_workbook_metadata(workbook: Workbook, config: MountainRetreatCo
     workbook.properties.subject = "Preliminary 52-week planning schedule"
     workbook.properties.creator = config.project.author
     workbook.properties.keywords = "PRELIMINARY, Gantt, not a contractor baseline"
+    workbook.properties.created = DETERMINISTIC_WORKBOOK_TIMESTAMP
+    workbook.properties.modified = DETERMINISTIC_WORKBOOK_TIMESTAMP
+
+
+def _gantt_tasks_from_config(config: MountainRetreatConfig) -> tuple[GanttTask, ...]:
+    tasks: list[GanttTask] = []
+    current_week = 1
+    for phase in config.construction_phases.phases:
+        duration_weeks = max(1, round(phase.duration_days / 5))
+        start_week = min(current_week, 52)
+        end_week = min(52, start_week + duration_weeks - 1)
+        safety_text = " ".join(phase.safety_notes).lower()
+        weather_sensitive = (
+            "Yes"
+            if any(token in safety_text for token in ("weather", "snow", "frost", "mountain"))
+            else "No"
+        )
+        risk_level = "High" if phase.inspection_required or weather_sensitive == "Yes" else "Medium"
+        notes = " ".join(phase.safety_notes) if phase.safety_notes else phase.description
+        tasks.append(
+            GanttTask(
+                phase.wbs,
+                phase.name,
+                phase.description,
+                phase.duration_days,
+                start_week,
+                end_week,
+                ", ".join(phase.dependencies),
+                phase.responsible_party,
+                risk_level,
+                "Yes" if phase.inspection_required else "No",
+                weather_sensitive,
+                notes,
+            )
+        )
+        current_week = min(52, end_week + 1)
+    return tuple(tasks)
 
 
 def generate_gantt_schedule_workbook(config: MountainRetreatConfig, output_dir: Path) -> Path:
@@ -1597,7 +1727,7 @@ def generate_gantt_schedule_workbook(config: MountainRetreatConfig, output_dir: 
     for sheet_name in GANTT_WORKBOOK_SHEETS[1:]:
         workbook.create_sheet(sheet_name)
 
-    tasks = _default_gantt_tasks()
+    tasks = _gantt_tasks_from_config(config)
     _build_gantt_sheet(workbook["Gantt"], tasks)
     _build_phase_details_sheet(workbook["Phase_Details"], tasks)
     _build_milestones_sheet(workbook["Milestones"], tasks)
@@ -1885,6 +2015,44 @@ def _apply_qa_workbook_metadata(workbook: Workbook, config: MountainRetreatConfi
     workbook.properties.subject = "Preliminary construction QA/QC checklist workbook"
     workbook.properties.creator = config.project.author
     workbook.properties.keywords = "PRELIMINARY, QA/QC, not for construction"
+    workbook.properties.created = DETERMINISTIC_WORKBOOK_TIMESTAMP
+    workbook.properties.modified = DETERMINISTIC_WORKBOOK_TIMESTAMP
+
+
+def _build_qa_assumptions_sheet(sheet: Worksheet, config: MountainRetreatConfig) -> None:
+    sheet.append(("Assumption", "Value"))
+    _style_header_row(sheet)
+    rows = (
+        ("Project", config.project.project_name),
+        ("Status", config.project.status),
+        ("Mandatory disclaimer", config.project.disclaimer),
+        (
+            "Professional review",
+            ", ".join(config.project.review_required_by),
+        ),
+        (
+            "Use limitation",
+            (
+                "QA/QC rows are preliminary planning prompts only and must be checked "
+                "against approved construction documents, inspections, and local authority "
+                "requirements."
+            ),
+        ),
+        (
+            "No approvals",
+            (
+                "This workbook does not create permits, approvals, signed inspections, "
+                "or final acceptance."
+            ),
+        ),
+    )
+    for row in rows:
+        sheet.append(row)
+    sheet.freeze_panes = "A2"
+    sheet.auto_filter.ref = f"A1:B{sheet.max_row}"
+    _set_widths(sheet, (30, 110))
+    for cell in sheet["B"]:
+        cell.alignment = Alignment(wrap_text=True, vertical="top")
 
 
 def generate_qa_checklist_workbook(
@@ -1901,9 +2069,11 @@ def generate_qa_checklist_workbook(
     workbook.active.title = QA_WORKBOOK_SHEETS[0]
     for sheet_name in QA_WORKBOOK_SHEETS[1:]:
         workbook.create_sheet(sheet_name)
+    workbook.create_sheet(QA_ASSUMPTIONS_SHEET)
 
     for sheet_name in QA_WORKBOOK_SHEETS:
         _build_qa_sheet(workbook[sheet_name], config, sheet_name, large_mode=large_mode)
+    _build_qa_assumptions_sheet(workbook[QA_ASSUMPTIONS_SHEET], config)
     _apply_qa_workbook_metadata(workbook, config)
 
     path = excel_dir / QA_FILENAME
@@ -2407,6 +2577,8 @@ def _apply_maintenance_workbook_metadata(
     workbook.properties.subject = "Preliminary 30-year maintenance planning calendar"
     workbook.properties.creator = config.project.author
     workbook.properties.keywords = "PRELIMINARY, maintenance, not for construction"
+    workbook.properties.created = DETERMINISTIC_WORKBOOK_TIMESTAMP
+    workbook.properties.modified = DETERMINISTIC_WORKBOOK_TIMESTAMP
 
 
 def generate_maintenance_calendar_workbook(
