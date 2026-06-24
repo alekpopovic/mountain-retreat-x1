@@ -88,6 +88,7 @@ Important files:
 - `config/materials_core.yaml` and `config/materials_mep.yaml`: BOM seed items
 - `config/cost_assumptions_serbia_2026.yaml`: static planning prices and warnings
 - `config/variants/*.yaml`: construction variant assumptions, risks, BOM rows, and cost rows
+- `config/regulatory_placeholders_serbia.yaml`: Serbia/Balkan context placeholders and action checklists, not legal advice
 
 After edits:
 
@@ -149,6 +150,10 @@ Mountain Retreat X1 does not replace:
 - local permitting authorities
 
 The system must not generate fake permits, fake stamps, fake signatures, fake signed calculations, legally binding approvals, or claims that documents are approved for construction.
+
+The Serbia/Balkan context volume is a preliminary planning checklist only. It
+does not provide legal advice and does not cite specific laws unless verified
+legal text is supplied by the user and reviewed by qualified local professionals.
 
 ## Professional Review Requirements
 

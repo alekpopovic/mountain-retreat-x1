@@ -20,6 +20,7 @@ EXPECTED_MARKDOWN_FILES = (
     "12_maintenance_manual.md",
     "13_self_build_guide.md",
     "14_legal_and_professional_limits.md",
+    "15_serbia_balkan_context.md",
 )
 
 runner = CliRunner()
@@ -71,6 +72,40 @@ def test_generate_all_lang_en_uses_english_disclaimer(tmp_path: Path) -> None:
     )
     assert "Preliminary planning document only" in text
     assert "Not for construction" in text
+
+
+def test_serbia_balkan_context_is_planning_checklist_not_legal_advice(
+    tmp_path: Path,
+) -> None:
+    output_dir = tmp_path / "output"
+
+    result = runner.invoke(
+        app,
+        ["generate", "markdown", "--lang", "en", "--output", str(output_dir)],
+    )
+
+    assert result.exit_code == 0
+    text = (output_dir / "markdown" / "15_serbia_balkan_context.md").read_text(
+        encoding="utf-8"
+    )
+    for topic in (
+        "Permitting process placeholder",
+        "Need for licensed designer",
+        "Need for geodetic survey",
+        "Need for geotechnical report",
+        "Utility connection placeholders",
+        "Wastewater approval placeholders",
+        "Fire safety review placeholder",
+        "Energy efficiency certificate placeholder",
+        "Contractor quote process",
+        "Site supervision requirement",
+        "Municipality-specific variation warning",
+    ):
+        assert topic in text
+    assert "not legal advice" in text.lower()
+    assert "not a permit application" in text.lower()
+    assert "local municipality" in text.lower()
+    assert "Do not cite" in text
 
 
 def test_generated_markdown_contains_required_safety_language(tmp_path: Path) -> None:

@@ -58,6 +58,28 @@ class ChecklistSeedConfig(StrictModel):
     checklist_items: list[ChecklistItem]
 
 
+class RegulatoryPlaceholderItem(StrictModel):
+    """One Serbia/Balkan regulatory planning placeholder."""
+
+    code: str
+    topic: str
+    placeholder: str
+    action_checklist: list[str]
+    responsible_review: str
+    municipality_variation_note: str = ""
+
+
+class RegulatoryPlaceholdersConfig(StrictModel):
+    """Serbia/Balkan regulatory planning placeholders."""
+
+    status: str = "PRELIMINARY"
+    country: str
+    region_context: str
+    disclaimer: str
+    municipality_variation_warning: str
+    placeholders: list[RegulatoryPlaceholderItem]
+
+
 class TerraceZone(StrictModel):
     """Planning zone on the panoramic terrace."""
 

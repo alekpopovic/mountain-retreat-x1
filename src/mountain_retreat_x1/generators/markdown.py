@@ -301,6 +301,42 @@ def _variant_comparison_table(config: MountainRetreatConfig) -> tuple[str, ...]:
     return tuple(rows)
 
 
+def _regulatory_context_sections(config: MountainRetreatConfig) -> tuple[MarkdownSection, ...]:
+    regulatory = config.regulatory_placeholders_serbia
+    sections = [
+        MarkdownSection(
+            "Planning Checklist Scope",
+            (
+                regulatory.disclaimer,
+                regulatory.municipality_variation_warning,
+                (
+                    "This checklist intentionally does not cite specific laws because no "
+                    "verified legal text was supplied for legal review."
+                ),
+                (
+                    "Local municipality, licensed designers, utility providers, and required "
+                    "professionals must confirm the actual project requirements."
+                ),
+            ),
+        )
+    ]
+    for item in regulatory.placeholders:
+        lines = [
+            f"Code: {item.code}.",
+            item.placeholder,
+            f"Responsible confirmation: {item.responsible_review}.",
+        ]
+        if item.municipality_variation_note:
+            lines.append(f"Municipality variation note: {item.municipality_variation_note}.")
+        lines.append("Action checklist:")
+        lines.extend(f"- {action}" for action in item.action_checklist)
+        lines.append(
+            "This topic is a planning placeholder only and is not legal advice or approval."
+        )
+        sections.append(MarkdownSection(item.topic, tuple(lines)))
+    return tuple(sections)
+
+
 def _material_lines(config: MountainRetreatConfig, group: str) -> tuple[str, ...]:
     materials = (
         config.materials_core.materials if group == "core" else config.materials_mep.materials
@@ -2881,6 +2917,37 @@ def _volume_specs(
                 ),
             ),
             qa_notes=("This volume must remain present in every final document package.",),
+        ),
+        MarkdownVolume(
+            filename="15_serbia_balkan_context.md",
+            title="15 Serbia/Balkan Context",
+            assumptions=(
+                *_shared_assumptions(config),
+                f"Regulatory context source: {config.regulatory_placeholders_serbia.country}.",
+                (
+                    "No specific laws are cited because verified legal text was not "
+                    "provided for legal review."
+                ),
+            ),
+            limitations=(
+                *_shared_limitations(config),
+                config.regulatory_placeholders_serbia.disclaimer,
+                config.regulatory_placeholders_serbia.municipality_variation_warning,
+            ),
+            required_review=(
+                "Licensed designer",
+                "Licensed geodetic professional where required",
+                "Geotechnical professional where required",
+                "Utility providers",
+                "Fire-safety reviewer where required",
+                "Energy-efficiency professional where required",
+                "Local municipality and competent authorities",
+            ),
+            sections=_regulatory_context_sections(config),
+            qa_notes=(
+                "Keep this volume as an action checklist only.",
+                "Do not convert placeholders into legal advice or approvals.",
+            ),
         ),
     )
 

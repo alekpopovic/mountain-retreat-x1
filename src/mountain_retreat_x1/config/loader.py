@@ -18,6 +18,7 @@ from mountain_retreat_x1.models import (
     MaterialConfig,
     OffGridConfig,
     ProjectConfig,
+    RegulatoryPlaceholdersConfig,
     RoomConfig,
     SiteConfig,
     SmartHomeConfig,
@@ -57,6 +58,7 @@ class MountainRetreatConfig:
     calculator_assumptions: CalculatorAssumptionsConfig
     variants: dict[str, VariantConfig]
     variant: VariantConfig
+    regulatory_placeholders_serbia: RegulatoryPlaceholdersConfig
 
 
 def load_yaml_file(path: Path) -> object:
@@ -136,6 +138,10 @@ def load_config(config_dir: Path | str = Path("config")) -> MountainRetreatConfi
         ),
         variants=variants,
         variant=variant,
+        regulatory_placeholders_serbia=load_typed_yaml(
+            root / "regulatory_placeholders_serbia.yaml",
+            RegulatoryPlaceholdersConfig,
+        ),
     )
 
 

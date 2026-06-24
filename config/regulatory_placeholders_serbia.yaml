@@ -1,0 +1,129 @@
+status: PRELIMINARY
+country: Serbia
+region_context: Serbia/Balkan mountain-cabin planning context
+disclaimer: >
+  Preliminary planning checklist only. This is not legal advice, not a permit
+  application, not an approval, and not a substitute for licensed designers,
+  local municipality confirmation, utility providers, fire-safety reviewers, or
+  other competent authorities. Do not cite or rely on specific laws unless
+  verified legal text is supplied and reviewed by qualified local professionals.
+municipality_variation_warning: >
+  Requirements can vary by municipality, parcel status, zoning/planning
+  conditions, infrastructure availability, protected-area status, utility
+  capacity, road access, and authority interpretation. The local municipality
+  and licensed professionals must confirm the actual requirements.
+placeholders:
+  - code: REG-SRB-001
+    topic: Permitting process placeholder
+    placeholder: >
+      Map the local permitting path with the municipality and licensed designer
+      before treating any generated package as submission material.
+    action_checklist:
+      - Identify the competent municipality and planning/urbanism office.
+      - Request current submission checklist from the authority or licensed designer.
+      - Confirm whether conceptual, design, utility, and construction-stage documents are required.
+      - Record all authority responses in the project document register.
+    responsible_review: Licensed designer and local municipality.
+    municipality_variation_note: Municipal submission steps and terminology may differ.
+  - code: REG-SRB-002
+    topic: Need for licensed designer
+    placeholder: >
+      A licensed designer must confirm project scope, required design phases,
+      drawing content, professional responsibilities, and submission readiness.
+    action_checklist:
+      - Identify required design disciplines.
+      - Confirm who may sign or submit official design documents.
+      - Keep generated documents marked preliminary and separate from official design sets.
+    responsible_review: Licensed architect/designer and required engineers.
+  - code: REG-SRB-003
+    topic: Need for geodetic survey
+    placeholder: >
+      A geodetic survey or cadastral/topographic basis may be required before
+      design, siting, access, utility, or permitting decisions.
+    action_checklist:
+      - Confirm required survey type with designer and municipality.
+      - Verify parcel boundaries, terrain, access, existing services, and constraints.
+      - Store survey references in the project assumptions log.
+    responsible_review: Licensed geodetic professional and designer.
+  - code: REG-SRB-004
+    topic: Need for geotechnical report
+    placeholder: >
+      Mountain terrain, slope, frost, drainage, retaining, and foundation
+      decisions require geotechnical confirmation.
+    action_checklist:
+      - Confirm investigation scope before foundation design.
+      - Check groundwater, bearing, slope stability, frost, and drainage conditions.
+      - Replace all soil placeholders with verified report assumptions.
+    responsible_review: Geotechnical professional and structural engineer.
+  - code: REG-SRB-005
+    topic: Utility connection placeholders
+    placeholder: >
+      Electrical, water, telecom, road/access, and other utility connections must
+      be confirmed with relevant providers and authorities.
+    action_checklist:
+      - Identify available utilities and connection points.
+      - Request provider requirements, capacity limits, fees, and timelines.
+      - Coordinate meter, easement, trench, protection, and inspection requirements.
+    responsible_review: Utility providers, licensed designers, and municipality.
+  - code: REG-SRB-006
+    topic: Wastewater approval placeholders
+    placeholder: >
+      Septic, biological treatment, holding tank, or sewer options are planning
+      placeholders until local authority and professional review confirm feasibility.
+    action_checklist:
+      - Confirm whether public sewer is available.
+      - Confirm permitted on-site wastewater options if sewer is unavailable.
+      - Check setback, discharge, maintenance, and inspection requirements.
+    responsible_review: Licensed plumbing/mechanical designer and competent authority.
+    municipality_variation_note: Wastewater rules can be highly local and site-specific.
+  - code: REG-SRB-007
+    topic: Fire safety review placeholder
+    placeholder: >
+      Fire safety requirements, access, evacuation, fireplace, alarms, materials,
+      and systems must be reviewed by qualified professionals.
+    action_checklist:
+      - Confirm whether a formal fire-safety review is required.
+      - Review access for emergency response and winter conditions.
+      - Coordinate fireplace/chimney, detectors, escape routes, and material assumptions.
+    responsible_review: Fire-safety professional, licensed designer, and authority.
+  - code: REG-SRB-008
+    topic: Energy efficiency certificate placeholder
+    placeholder: >
+      Energy performance documentation or certification may be required and must
+      be prepared or confirmed by qualified local professionals.
+    action_checklist:
+      - Confirm applicable energy-performance documentation requirements.
+      - Replace envelope, glazing, HVAC, and renewable placeholders with verified inputs.
+      - Archive certificates or professional calculations separately from generated planning files.
+    responsible_review: Licensed energy-efficiency professional/designer.
+  - code: REG-SRB-009
+    topic: Contractor quote process
+    placeholder: >
+      Cost workbooks are static planning estimates only. Contractor quotes and
+      supplier offers are required before procurement, financing, or construction decisions.
+    action_checklist:
+      - Issue reviewed scope packages, not unreviewed generated drafts.
+      - Request comparable quotes with exclusions, assumptions, lead times, and VAT treatment.
+      - Track quote validity dates and substitutions in the procurement log.
+    responsible_review: Owner, cost estimator, designer, and qualified contractors.
+  - code: REG-SRB-010
+    topic: Site supervision requirement
+    placeholder: >
+      Required site supervision, inspection hold points, and professional
+      responsibilities must be confirmed before construction.
+    action_checklist:
+      - Confirm required supervising roles and inspection records.
+      - Define hold points for excavation, foundations, structure, MEP, waterproofing, and handover.
+      - Do not close concealed work before required inspection/review.
+    responsible_review: Licensed professionals, contractor, site supervisor, and authority.
+  - code: REG-SRB-011
+    topic: Municipality-specific variation warning
+    placeholder: >
+      The same cabin concept can face different requirements in different
+      municipalities or parcels. Treat this checklist as an action prompt only.
+    action_checklist:
+      - Confirm planning conditions for the exact parcel.
+      - Check protected-area, access-road, utility, slope, water, and wastewater constraints.
+      - Record municipality-specific requirements in YAML before regenerating documents.
+    responsible_review: Local municipality and licensed designer.
+    municipality_variation_note: This warning applies to every generated document package.

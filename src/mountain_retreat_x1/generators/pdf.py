@@ -64,6 +64,7 @@ PDF_FILES = {
     "12_maintenance_manual.md": "12_Maintenance_Manual.pdf",
     "13_self_build_guide.md": "13_Self_Build_Guide.pdf",
     "14_legal_and_professional_limits.md": "14_Legal_and_Professional_Limits.pdf",
+    "15_serbia_balkan_context.md": "15_Serbia_Balkan_Context.pdf",
 }
 
 

@@ -46,7 +46,9 @@ def test_generate_all_final_pipeline_creates_manifest_and_zip(tmp_path: Path) ->
     assert manifest["generated_at"] == "2026-06-24T00:00:00+00:00"
     assert "PRELIMINARNI planski dokument" in "\n".join(manifest["warnings"])
     assert "markdown/01_project_charter.md" in manifest["files"]
+    assert "markdown/15_serbia_balkan_context.md" in manifest["files"]
     assert "pdf/01_Project_Charter.pdf" in manifest["files"]
+    assert "pdf/15_Serbia_Balkan_Context.pdf" in manifest["files"]
     assert "excel/Mountain_Retreat_X1_BOM.xlsx" in manifest["files"]
     assert "drawings/A001_site_plan.svg" in manifest["files"]
     assert "config/project.yaml" in manifest["files"]
@@ -63,7 +65,10 @@ def test_generate_all_final_pipeline_creates_manifest_and_zip(tmp_path: Path) ->
         "excel/Mountain_Retreat_X1_QA_QC_Checklists.xlsx",
         "drawings/A001_site_plan.svg",
         "markdown/01_project_charter.md",
+        "markdown/15_serbia_balkan_context.md",
+        "pdf/15_Serbia_Balkan_Context.pdf",
         "config/project.yaml",
+        "config/regulatory_placeholders_serbia.yaml",
         "README.md",
         "LEGAL_AND_PROFESSIONAL_LIMITS.md",
         "ASSUMPTIONS_SUMMARY.md",
