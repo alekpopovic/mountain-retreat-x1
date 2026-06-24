@@ -5,9 +5,11 @@ from typing import Annotated
 
 import typer
 from rich.console import Console
+from rich.table import Table
 
 from mountain_retreat_x1 import __version__
 from mountain_retreat_x1.config import ConfigLoadError, load_config
+from mountain_retreat_x1.config.loader import MountainRetreatConfig
 
 app = typer.Typer(
     name="mrx1",
@@ -20,6 +22,32 @@ app = typer.Typer(
 generate_app = typer.Typer(help="Generate preliminary planning artifacts.")
 app.add_typer(generate_app, name="generate")
 console = Console()
+OUTPUT_SUBDIRS = ("pdf", "excel", "drawings", "zip")
+
+
+ConfigDirOption = Annotated[
+    Path,
+    typer.Option(
+        "--config-dir",
+        "-c",
+        exists=True,
+        file_okay=False,
+        dir_okay=True,
+        readable=True,
+        help="Directory containing Mountain Retreat X1 YAML configuration.",
+    ),
+]
+OutputDirOption = Annotated[
+    Path,
+    typer.Option(
+        "--output-dir",
+        "-o",
+        file_okay=False,
+        dir_okay=True,
+        writable=True,
+        help="Directory for generated artifacts.",
+    ),
+]
 
 
 def _version_callback(value: bool) -> None:
@@ -38,62 +66,215 @@ def main(
     """Run the Mountain Retreat X1 CLI."""
 
 
-@app.command()
-def validate(
-    config_dir: Annotated[
-        Path,
-        typer.Option(
-            "--config-dir",
-            "-c",
-            exists=True,
-            file_okay=False,
-            dir_okay=True,
-            readable=True,
-            help="Directory containing Mountain Retreat X1 YAML configuration.",
-        ),
-    ] = Path("config"),
-) -> None:
-    """Validate project YAML configuration files."""
+def _load_config_or_exit(config_dir: Path) -> MountainRetreatConfig:
     try:
-        config = load_config(config_dir)
+        return load_config(config_dir)
     except ConfigLoadError as exc:
         console.print(f"[red]Configuration validation failed:[/red]\n{exc}")
         raise typer.Exit(code=1) from exc
 
-    room_count = len(config.rooms_ground_floor.rooms) + len(config.rooms_gallery.rooms)
-    material_count = len(config.materials_core.materials) + len(config.materials_mep.materials)
+
+def _room_count(config: MountainRetreatConfig) -> int:
+    return len(config.rooms_ground_floor.rooms) + len(config.rooms_gallery.rooms)
+
+
+def _material_count(config: MountainRetreatConfig) -> int:
+    return len(config.materials_core.materials) + len(config.materials_mep.materials)
+
+
+def _ensure_output_dirs(output_dir: Path) -> None:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    for subdir in OUTPUT_SUBDIRS:
+        (output_dir / subdir).mkdir(parents=True, exist_ok=True)
+
+
+def _config_summary_table(config: MountainRetreatConfig) -> Table:
+    table = Table(title="Mountain Retreat X1 Configuration")
+    table.add_column("Area", style="cyan", no_wrap=True)
+    table.add_column("Status", style="green")
+    table.add_column("Details")
+    table.add_row("Project", "valid", f"{config.project.project_name} ({config.project.status})")
+    table.add_row("Site", "valid", f"{config.site.location_name}, {config.site.country}")
+    table.add_row(
+        "Building",
+        "valid",
+        f"{config.building.gross_area_m2:g} m2 gross, {config.building.floors} floors",
+    )
+    table.add_row("Rooms", "valid", f"{_room_count(config)} room data sheets")
+    table.add_row("Terrace", "valid", f"{config.terrace.terrace_area_m2:g} m2, preliminary")
+    table.add_row("Materials", "valid", f"{_material_count(config)} catalog items")
+    table.add_row("Costs", "valid", f"{len(config.cost_assumptions_serbia_2026.cost_items)} items")
+    table.add_row("Phases", "valid", f"{len(config.construction_phases.phases)} phases")
+    table.add_row(
+        "Checklists",
+        "valid",
+        f"{len(config.checklists_seed.checklist_items)} seed items",
+    )
+    table.add_row("Localization", "valid", config.localization.default_language)
+    return table
+
+
+def _project_summary_table(config: MountainRetreatConfig) -> Table:
+    table = Table(title="Project Summary")
+    table.add_column("Field", style="cyan", no_wrap=True)
+    table.add_column("Value")
+    table.add_row("Project", config.project.project_name)
+    table.add_row("Code", config.project.project_code)
+    table.add_row("Version", config.project.version)
+    table.add_row("Status", config.project.status)
+    table.add_row("Language", config.project.language)
+    table.add_row("Country", config.project.country)
+    table.add_row("Currency", config.project.currency)
+    table.add_row("Revision date", config.project.revision_date.isoformat())
+    return table
+
+
+def _area_summary_table(config: MountainRetreatConfig) -> Table:
+    table = Table(title="Area Summary")
+    table.add_column("Area", style="cyan")
+    table.add_column("Value", justify="right")
+    table.add_row("Gross area", f"{config.building.gross_area_m2:g} m2")
+    table.add_row("Net area", f"{config.building.net_area_m2:g} m2")
+    table.add_row("Terrace", f"{config.building.terrace_area_m2:g} m2")
+    table.add_row(
+        "Footprint",
+        f"{config.building.footprint_length_m:g} x {config.building.footprint_width_m:g} m",
+    )
+    return table
+
+
+def _room_summary_table(config: MountainRetreatConfig) -> Table:
+    ground_floor_area = sum(room.area_m2 for room in config.rooms_ground_floor.rooms)
+    gallery_area = sum(room.area_m2 for room in config.rooms_gallery.rooms)
+    table = Table(title="Room Summary")
+    table.add_column("Floor", style="cyan")
+    table.add_column("Rooms", justify="right")
+    table.add_column("Configured Area", justify="right")
+    table.add_row(
+        "ground_floor",
+        str(len(config.rooms_ground_floor.rooms)),
+        f"{ground_floor_area:.1f} m2",
+    )
+    table.add_row("gallery", str(len(config.rooms_gallery.rooms)), f"{gallery_area:.1f} m2")
+    table.add_row("total", str(_room_count(config)), f"{ground_floor_area + gallery_area:.1f} m2")
+    return table
+
+
+def _assumptions_table(config: MountainRetreatConfig) -> Table:
+    table = Table(title="Key Assumptions")
+    table.add_column("Topic", style="cyan")
+    table.add_column("Assumption")
+    table.add_row("Construction variant", config.building.construction_variant)
+    table.add_row("Alternatives", "premium_clt, masonry_hybrid")
+    table.add_row("Roof", config.building.roof_type)
+    table.add_row("Facade", config.building.facade_type)
+    table.add_row("Heating", "air-to-water heat pump + underfloor heating + fireplace")
+    table.add_row(
+        "Off-grid",
+        f"{config.off_grid.pv_kwp:g} kWp PV + {config.off_grid.battery_kwh:g} kWh battery",
+    )
+    table.add_row("Water", f"{config.off_grid.water_tank_l:,} L tank option")
+    table.add_row("Wastewater", "; ".join(config.off_grid.wastewater_options))
+    table.add_row(
+        "Smart home",
+        f"{config.smart_home.platform} + {', '.join(config.smart_home.protocols)}",
+    )
+    table.add_row("Professional limits", config.project.disclaimer)
+    return table
+
+
+@app.command()
+def validate(
+    config_dir: ConfigDirOption = Path("config"),
+) -> None:
+    """Validate project YAML configuration files."""
+    config = _load_config_or_exit(config_dir)
+    console.print(_config_summary_table(config))
     console.print(
         "[green]Configuration validation completed.[/green] "
-        f"{room_count} rooms, {material_count} materials, "
+        f"{_room_count(config)} rooms, {_material_count(config)} materials, "
         f"{len(config.construction_phases.phases)} phases."
     )
 
 
+@app.command()
+def summary(
+    config_dir: ConfigDirOption = Path("config"),
+) -> None:
+    """Print project, area, room, variant, and assumption summaries."""
+    config = _load_config_or_exit(config_dir)
+    console.print(_project_summary_table(config))
+    console.print(_area_summary_table(config))
+    console.print(_room_summary_table(config))
+    console.print(_assumptions_table(config))
+
+
+def _print_placeholder_generation(kind: str, output_dir: Path) -> None:
+    _ensure_output_dirs(output_dir)
+    console.print(f"[green]{kind} generation placeholder completed.[/green]")
+    console.print(f"Output directory prepared: {output_dir}")
+
+
 @generate_app.command("all")
-def generate_all() -> None:
+def generate_all(
+    output_dir: OutputDirOption = Path("output"),
+) -> None:
     """Generate all preliminary planning artifacts."""
-    console.print("[green]Generate-all placeholder completed.[/green]")
+    _ensure_output_dirs(output_dir)
+    table = Table(title="Planned Generators")
+    table.add_column("Artifact", style="cyan")
+    table.add_column("Future Output")
+    table.add_row("PDF", "Documentation volumes with disclaimers, revision history, page numbers")
+    table.add_row("Excel", "BOM, cost estimate, Gantt schedule, QA/QC checklists")
+    table.add_row("Drawings", "Plain SVG schematic drawings marked preliminary")
+    table.add_row("ZIP", "Final package with YAML, manifest, and generated artifacts")
+    console.print(table)
+    console.print(
+        f"[green]Generate-all placeholder completed.[/green] Output prepared: {output_dir}"
+    )
 
 
 @generate_app.command("pdf")
-def generate_pdf() -> None:
+def generate_pdf(
+    output_dir: OutputDirOption = Path("output"),
+) -> None:
     """Generate preliminary PDF volumes."""
-    console.print("[green]PDF generation placeholder completed.[/green]")
+    _print_placeholder_generation("PDF", output_dir)
 
 
 @generate_app.command("excel")
-def generate_excel() -> None:
+def generate_excel(
+    output_dir: OutputDirOption = Path("output"),
+) -> None:
     """Generate preliminary Excel workbooks."""
-    console.print("[green]Excel generation placeholder completed.[/green]")
+    _print_placeholder_generation("Excel", output_dir)
 
 
 @generate_app.command("drawings")
-def generate_drawings() -> None:
+def generate_drawings(
+    output_dir: OutputDirOption = Path("output"),
+) -> None:
     """Generate preliminary schematic drawings."""
-    console.print("[green]Drawing generation placeholder completed.[/green]")
+    _print_placeholder_generation("Drawing", output_dir)
 
 
 @app.command()
-def clean() -> None:
-    """Clean generated output placeholders."""
-    console.print("[green]Clean placeholder completed.[/green]")
+def clean(
+    output_dir: OutputDirOption = Path("output"),
+) -> None:
+    """Clean generated output folders while preserving .gitkeep files."""
+    _ensure_output_dirs(output_dir)
+    removed_count = 0
+    for path in output_dir.rglob("*"):
+        if path.name == ".gitkeep":
+            continue
+        if path.is_file() or path.is_symlink():
+            path.unlink()
+            removed_count += 1
+
+    for subdir in OUTPUT_SUBDIRS:
+        (output_dir / subdir).mkdir(parents=True, exist_ok=True)
+        keep_file = output_dir / subdir / ".gitkeep"
+        keep_file.touch(exist_ok=True)
+
+    console.print(f"[green]Clean completed.[/green] Removed {removed_count} generated paths.")

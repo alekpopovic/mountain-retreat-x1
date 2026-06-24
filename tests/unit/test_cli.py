@@ -17,6 +17,17 @@ def test_validate_default_config() -> None:
 
     assert result.exit_code == 0
     assert "Configuration validation completed" in result.output
+    assert "Mountain Retreat X1 Configuration" in result.output
+
+
+def test_summary_default_config() -> None:
+    result = runner.invoke(app, ["summary"])
+
+    assert result.exit_code == 0
+    assert "Project Summary" in result.output
+    assert "Area Summary" in result.output
+    assert "Room Summary" in result.output
+    assert "standard_hybrid" in result.output
 
 
 def test_validate_rejects_invalid_config_dir() -> None:
@@ -37,4 +48,4 @@ def test_clean_placeholder() -> None:
     result = runner.invoke(app, ["clean"])
 
     assert result.exit_code == 0
-    assert "Clean placeholder completed" in result.output
+    assert "Clean completed" in result.output
