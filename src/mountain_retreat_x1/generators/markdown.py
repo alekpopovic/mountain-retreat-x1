@@ -424,7 +424,11 @@ def _door_schedule(config: MountainRetreatConfig) -> tuple[ScheduleItem, ...]:
     return tuple(items)
 
 
-def _architectural_context(config: MountainRetreatConfig) -> dict[str, object]:
+def _architectural_context(
+    config: MountainRetreatConfig,
+    *,
+    large_mode: bool = False,
+) -> dict[str, object]:
     calculated_areas = area_summary(config)
     rooms = _architectural_room_sheets(config)
     ground_floor_rooms = tuple(room for room in rooms if room.floor == "ground_floor")
@@ -450,6 +454,7 @@ def _architectural_context(config: MountainRetreatConfig) -> dict[str, object]:
             sum(room.window_area_m2 for room in all_config_rooms(config)),
             1,
         ),
+        "large_mode": large_mode,
     }
 
 
@@ -1883,6 +1888,78 @@ def _maintenance_context(config: MountainRetreatConfig) -> dict[str, object]:
     }
 
 
+def _construction_management_sections(
+    config: MountainRetreatConfig,
+    *,
+    large_mode: bool,
+) -> tuple[MarkdownSection, ...]:
+    base_sections = (
+        MarkdownSection(
+            "Planning Phases",
+            _phase_lines(config),
+        ),
+        MarkdownSection(
+            "Safety Coordination",
+            (
+                "A real construction safety plan is required before work.",
+                (
+                    "Mountain access, weather, lifting, excavation, and terrace "
+                    "work require site-specific planning."
+                ),
+            ),
+        ),
+    )
+    if not large_mode:
+        return base_sections
+
+    phase_lines = tuple(
+        (
+            f"{phase.wbs} {phase.name}: risk owner {phase.responsible_party}; "
+            f"duration {phase.duration_days} days; inspection required: "
+            f"{phase.inspection_required}; safety note: {phase.safety_notes}"
+        )
+        for phase in config.construction_phases.phases
+    )
+    procurement_lines = tuple(
+        (
+            f"{item.code}: procure {item.name} ({item.specification}) as "
+            f"{item.base_quantity:g} {item.unit} plus {item.waste_percent:g}% waste; "
+            f"assumption ref {item.assumption_ref}; supplier remains placeholder."
+        )
+        for item in [*config.materials_core.materials, *config.materials_mep.materials]
+    )
+    inspection_lines = tuple(
+        (
+            f"{item.id}: {item.phase} / {item.discipline} - {item.inspection_item}; "
+            f"criteria: {item.acceptance_criteria}; responsible: {item.responsible_party}."
+        )
+        for item in config.checklists_seed.checklist_items
+    )
+    document_lines = (
+        "Register every drawing issue with date, version, author, reviewer, and superseded status.",
+        (
+            "Register every submittal with supplier placeholder, real supplier quote, "
+            "reviewer, and decision."
+        ),
+        (
+            "Register every inspection with required photo, required document, "
+            "reviewer, and closeout note."
+        ),
+        (
+            "Register every change with cost, schedule, safety, permitting, and "
+            "professional-review impact."
+        ),
+        "Register every assumption update back into YAML before regenerating planning documents.",
+    )
+    return (
+        *base_sections,
+        MarkdownSection("Large-Mode Risk Register", phase_lines),
+        MarkdownSection("Large-Mode Procurement Log", procurement_lines),
+        MarkdownSection("Large-Mode Inspection Log", inspection_lines),
+        MarkdownSection("Large-Mode Document Register", document_lines),
+    )
+
+
 SELF_BUILD_PHASES = (
     "Project preparation",
     "Professional review checklist",
@@ -2334,7 +2411,11 @@ def _localized_config(
     return replace(config, project=project)
 
 
-def _volume_specs(config: MountainRetreatConfig) -> tuple[MarkdownVolume, ...]:
+def _volume_specs(
+    config: MountainRetreatConfig,
+    *,
+    large_mode: bool = False,
+) -> tuple[MarkdownVolume, ...]:
     calculated_areas = area_summary(config)
     quantities = quantity_summary(config)
     costs = cost_summary(config)
@@ -2611,22 +2692,7 @@ def _volume_specs(config: MountainRetreatConfig) -> tuple[MarkdownVolume, ...]:
             assumptions=_shared_assumptions(config),
             limitations=_shared_limitations(config),
             required_review=("Contractor", "Site safety coordinator", "Licensed design team"),
-            sections=(
-                MarkdownSection(
-                    "Planning Phases",
-                    _phase_lines(config),
-                ),
-                MarkdownSection(
-                    "Safety Coordination",
-                    (
-                        "A real construction safety plan is required before work.",
-                        (
-                            "Mountain access, weather, lifting, excavation, and terrace "
-                            "work require site-specific planning."
-                        ),
-                    ),
-                ),
-            ),
+            sections=_construction_management_sections(config, large_mode=large_mode),
             qa_notes=("Confirm schedule remains a preliminary management aid.",),
         ),
         MarkdownVolume(
@@ -2761,9 +2827,11 @@ def generate_markdown_volumes(
     maintenance_template = env.get_template(MAINTENANCE_TEMPLATE_NAME)
     self_build_template = env.get_template(SELF_BUILD_TEMPLATE_NAME)
     paths: list[Path] = []
-    for volume in _volume_specs(config):
+    for volume in _volume_specs(config, large_mode=large_mode):
         if volume.filename == "02_architectural_package.md":
-            rendered = architectural_template.render(**_architectural_context(config))
+            rendered = architectural_template.render(
+                **_architectural_context(config, large_mode=large_mode)
+            )
         elif volume.filename == "03_structural_concept.md":
             rendered = structural_template.render(**_structural_context(config))
         elif volume.filename == "04_electrical_package.md":

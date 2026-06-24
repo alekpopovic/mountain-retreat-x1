@@ -39,7 +39,7 @@ def test_generate_excel_qa_has_large_mode_rows_and_status_validation(
 
     result = runner.invoke(
         app,
-        ["generate", "excel", "--qa", "--output-dir", str(output_dir)],
+        ["generate", "excel", "--qa", "--large", "--output-dir", str(output_dir)],
     )
 
     assert result.exit_code == 0
@@ -59,3 +59,32 @@ def test_generate_excel_qa_has_large_mode_rows_and_status_validation(
     inspection_items = [cell.value for cell in terrace_sheet["D"]]
     assert any("Membrane" in str(item) for item in inspection_items)
     assert any("Guard" in str(item) for item in inspection_items)
+
+
+def test_generate_excel_qa_large_mode_has_more_rows_than_normal(
+    tmp_path: Path,
+) -> None:
+    normal_dir = tmp_path / "normal"
+    large_dir = tmp_path / "large"
+
+    normal_result = runner.invoke(
+        app,
+        ["generate", "excel", "--qa", "--output-dir", str(normal_dir)],
+    )
+    large_result = runner.invoke(
+        app,
+        ["generate", "excel", "--qa", "--large", "--output-dir", str(large_dir)],
+    )
+
+    assert normal_result.exit_code == 0
+    assert large_result.exit_code == 0
+    normal_workbook = load_workbook(normal_dir / "excel" / QA_FILENAME, data_only=False)
+    large_workbook = load_workbook(large_dir / "excel" / QA_FILENAME, data_only=False)
+    normal_rows = sum(
+        normal_workbook[sheet_name].max_row - 1 for sheet_name in QA_WORKBOOK_SHEETS
+    )
+    large_rows = sum(
+        large_workbook[sheet_name].max_row - 1 for sheet_name in QA_WORKBOOK_SHEETS
+    )
+    assert normal_rows < large_rows
+    assert large_rows >= 1000

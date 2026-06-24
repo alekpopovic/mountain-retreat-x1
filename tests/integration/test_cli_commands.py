@@ -4,6 +4,7 @@ from shutil import copytree
 from typer.testing import CliRunner
 
 from mountain_retreat_x1.cli import app
+from mountain_retreat_x1.exporters import BOM_FILENAME, MAINTENANCE_FILENAME, QA_FILENAME
 
 runner = CliRunner()
 
@@ -44,10 +45,31 @@ def test_generate_all_creates_output_folders(tmp_path: Path) -> None:
     result = runner.invoke(app, ["generate", "all", "--output-dir", str(output_dir)])
 
     assert result.exit_code == 0
-    assert "Planned Generators" in result.output
+    assert "Generated Planning Binder" in result.output
     assert "Markdown" in result.output
     for subdir in ("markdown", "pdf", "excel", "drawings", "zip"):
         assert (output_dir / subdir).is_dir()
+
+
+def test_generate_all_large_creates_expanded_binder_outputs(tmp_path: Path) -> None:
+    output_dir = tmp_path / "output"
+
+    result = runner.invoke(
+        app,
+        ["generate", "all", "--large", "--output-dir", str(output_dir)],
+    )
+
+    assert result.exit_code == 0
+    assert "Mode" in result.output
+    assert "large" in result.output
+    assert (output_dir / "markdown" / "13_self_build_guide.md").exists()
+    assert (output_dir / "excel" / BOM_FILENAME).exists()
+    assert (output_dir / "excel" / QA_FILENAME).exists()
+    assert (output_dir / "excel" / MAINTENANCE_FILENAME).exists()
+    assert (output_dir / "pdf" / "13_Self_Build_Guide.pdf").exists()
+
+    validate_result = runner.invoke(app, ["validate"])
+    assert validate_result.exit_code == 0
 
 
 def test_generate_specific_placeholders_create_output_folders(tmp_path: Path) -> None:

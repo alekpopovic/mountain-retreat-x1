@@ -294,23 +294,43 @@ def generate_all(
         "--lang",
         help="Visible output language: sr-Latn or en.",
     ),
+    large: bool = typer.Option(
+        False,
+        "--large",
+        help="Generate expanded planning binder artifacts.",
+    ),
 ) -> None:
     """Generate all preliminary planning artifacts."""
     _ensure_output_dirs(output_dir)
     config = _load_config_or_exit(config_dir)
     language = _language_or_exit(lang)
-    markdown_paths = generate_markdown_volumes(config, output_dir, language=language)
-    table = Table(title="Planned Generators")
+    markdown_paths = generate_markdown_volumes(
+        config,
+        output_dir,
+        large_mode=large,
+        language=language,
+    )
+    excel_paths = [
+        generate_bom_workbook(config, output_dir, large_mode=large),
+        generate_cost_estimate_workbook(config, output_dir),
+        generate_gantt_schedule_workbook(config, output_dir),
+        generate_qa_checklist_workbook(config, output_dir, large_mode=large),
+        generate_maintenance_calendar_workbook(config, output_dir),
+    ]
+    drawing_paths = generate_svg_drawings(config, output_dir)
+    pdf_paths = generate_pdf_volumes(config, output_dir)
+
+    table = Table(title="Generated Planning Binder")
     table.add_column("Artifact", style="cyan")
-    table.add_column("Future Output")
+    table.add_column("Output")
     table.add_row("Markdown", f"{len(markdown_paths)} source volumes generated")
-    table.add_row("PDF", "Placeholder: documentation volumes with disclaimers and page numbers")
-    table.add_row("Excel", "BOM, cost estimate, Gantt schedule, QA/QC checklists")
-    table.add_row("Drawings", "Plain SVG schematic drawings marked preliminary")
-    table.add_row("ZIP", "Final package with YAML, manifest, and generated artifacts")
+    table.add_row("PDF", f"{len(pdf_paths)} preliminary documentation PDFs generated")
+    table.add_row("Excel", f"{len(excel_paths)} planning workbooks generated")
+    table.add_row("Drawings", f"{len(drawing_paths)} schematic SVG drawings generated")
+    table.add_row("Mode", "large" if large else "normal")
     console.print(table)
     console.print(
-        f"[green]Generate-all placeholder completed.[/green] Output prepared: {output_dir}"
+        f"[green]Generate-all completed.[/green] Output prepared: {output_dir}"
     )
 
 
@@ -407,6 +427,13 @@ def generate_excel(
             help="Generate the preliminary 30-year maintenance calendar workbook.",
         ),
     ] = False,
+    large: Annotated[
+        bool,
+        typer.Option(
+            "--large",
+            help="Use large-mode expansions where supported.",
+        ),
+    ] = False,
 ) -> None:
     """Generate preliminary Excel workbooks."""
     if bom or cost or gantt or qa or maintenance:
@@ -414,13 +441,15 @@ def generate_excel(
         config = _load_config_or_exit(config_dir)
         generated_paths: list[Path] = []
         if bom:
-            generated_paths.append(generate_bom_workbook(config, output_dir))
+            generated_paths.append(generate_bom_workbook(config, output_dir, large_mode=large))
         if cost:
             generated_paths.append(generate_cost_estimate_workbook(config, output_dir))
         if gantt:
             generated_paths.append(generate_gantt_schedule_workbook(config, output_dir))
         if qa:
-            generated_paths.append(generate_qa_checklist_workbook(config, output_dir))
+            generated_paths.append(
+                generate_qa_checklist_workbook(config, output_dir, large_mode=large)
+            )
         if maintenance:
             generated_paths.append(generate_maintenance_calendar_workbook(config, output_dir))
         table = Table(title="Generated Excel Workbooks")

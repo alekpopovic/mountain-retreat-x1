@@ -258,8 +258,99 @@ class MaintenanceCalendarTask:
     professional_review_required: str
 
 
-def _all_materials(config: MountainRetreatConfig) -> list[MaterialItem]:
-    return [*config.materials_core.materials, *config.materials_mep.materials]
+def _large_mode_materials(config: MountainRetreatConfig) -> list[MaterialItem]:
+    items: list[MaterialItem] = []
+    for index, room in enumerate(
+        [*config.rooms_ground_floor.rooms, *config.rooms_gallery.rooms],
+        start=1,
+    ):
+        items.extend(
+            (
+                MaterialItem(
+                    code=f"LM-RM-{index:03d}-FLOOR",
+                    category="Interior finishes",
+                    subcategory="Room finish",
+                    name=f"{room.name} floor finish allowance",
+                    specification=room.floor_finish,
+                    unit="m2",
+                    base_quantity=room.area_m2,
+                    waste_percent=8,
+                    unit_price_low=18,
+                    unit_price_standard=35,
+                    unit_price_premium=65,
+                    supplier_placeholder="Supplier TBD",
+                    formula_note="Room area from YAML room.area_m2.",
+                    assumption_ref=f"rooms.{room.code}.area_m2",
+                    notes="Large-mode planning line item; verify finish build-up.",
+                ),
+                MaterialItem(
+                    code=f"LM-RM-{index:03d}-WALL",
+                    category="Interior finishes",
+                    subcategory="Wall finish",
+                    name=f"{room.name} wall finish allowance",
+                    specification=room.wall_finish,
+                    unit="m2",
+                    base_quantity=2 * (room.length_m + room.width_m) * room.clear_height_m,
+                    waste_percent=10,
+                    unit_price_low=10,
+                    unit_price_standard=22,
+                    unit_price_premium=45,
+                    supplier_placeholder="Supplier TBD",
+                    formula_note="Perimeter x clear height from YAML room dimensions.",
+                    assumption_ref=f"rooms.{room.code}.dimensions",
+                    notes="Openings not deducted; preliminary only.",
+                ),
+                MaterialItem(
+                    code=f"LM-RM-{index:03d}-CEIL",
+                    category="Interior finishes",
+                    subcategory="Ceiling finish",
+                    name=f"{room.name} ceiling finish allowance",
+                    specification=room.ceiling_finish,
+                    unit="m2",
+                    base_quantity=room.area_m2,
+                    waste_percent=8,
+                    unit_price_low=12,
+                    unit_price_standard=25,
+                    unit_price_premium=50,
+                    supplier_placeholder="Supplier TBD",
+                    formula_note="Room area from YAML room.area_m2.",
+                    assumption_ref=f"rooms.{room.code}.area_m2",
+                    notes="Large-mode planning line item; coordinate lighting and HVAC.",
+                ),
+            )
+        )
+    for index, zone in enumerate(config.terrace.zones, start=1):
+        items.append(
+            MaterialItem(
+                code=f"LM-TER-{index:03d}",
+                category="Terrace",
+                subcategory="Zone finish",
+                name=f"{zone.name} terrace finish allowance",
+                specification=zone.surface_finish,
+                unit="m2",
+                base_quantity=zone.area_m2,
+                waste_percent=10,
+                unit_price_low=35,
+                unit_price_standard=70,
+                unit_price_premium=120,
+                supplier_placeholder="Supplier TBD",
+                formula_note="Terrace zone area from YAML terrace.zones.",
+                assumption_ref=f"terrace.{zone.code}.area_m2",
+                notes="Large-mode line item; waterproofing/drainage review required.",
+            )
+        )
+    return items
+
+
+def _all_materials(
+    config: MountainRetreatConfig,
+    *,
+    large_mode: bool = False,
+) -> list[MaterialItem]:
+    materials = [*config.materials_core.materials, *config.materials_mep.materials]
+    if large_mode:
+        materials.extend(_large_mode_materials(config))
+    return materials
 
 
 def _sheet_for_material(item: MaterialItem) -> str:
@@ -501,12 +592,17 @@ def _apply_workbook_metadata(workbook: Workbook, config: MountainRetreatConfig) 
     workbook.properties.keywords = "PRELIMINARY, not for construction, Mountain Retreat X1"
 
 
-def generate_bom_workbook(config: MountainRetreatConfig, output_dir: Path) -> Path:
+def generate_bom_workbook(
+    config: MountainRetreatConfig,
+    output_dir: Path,
+    *,
+    large_mode: bool = False,
+) -> Path:
     """Generate the preliminary BOM workbook and return its path."""
     excel_dir = output_dir / BOM_OUTPUT_DIR
     excel_dir.mkdir(parents=True, exist_ok=True)
 
-    materials = _all_materials(config)
+    materials = _all_materials(config, large_mode=large_mode)
     grouped = _materials_by_sheet(materials)
     workbook = Workbook()
     summary = workbook.active
@@ -1752,11 +1848,17 @@ def _qa_row_values(
     )
 
 
-def _build_qa_sheet(sheet: Worksheet, config: MountainRetreatConfig, sheet_name: str) -> None:
+def _build_qa_sheet(
+    sheet: Worksheet,
+    config: MountainRetreatConfig,
+    sheet_name: str,
+    *,
+    large_mode: bool = False,
+) -> None:
     _configure_qa_sheet(sheet)
     templates = _qa_templates(sheet_name)
     scopes = _qa_scope_names(config)
-    target_rows = 52
+    target_rows = 52 if large_mode else 16
     row_index = 1
     while row_index <= target_rows:
         scope = scopes[(row_index - 1) % len(scopes)]
@@ -1785,7 +1887,12 @@ def _apply_qa_workbook_metadata(workbook: Workbook, config: MountainRetreatConfi
     workbook.properties.keywords = "PRELIMINARY, QA/QC, not for construction"
 
 
-def generate_qa_checklist_workbook(config: MountainRetreatConfig, output_dir: Path) -> Path:
+def generate_qa_checklist_workbook(
+    config: MountainRetreatConfig,
+    output_dir: Path,
+    *,
+    large_mode: bool = False,
+) -> Path:
     """Generate the preliminary QA/QC checklist workbook and return its path."""
     excel_dir = output_dir / QA_OUTPUT_DIR
     excel_dir.mkdir(parents=True, exist_ok=True)
@@ -1796,7 +1903,7 @@ def generate_qa_checklist_workbook(config: MountainRetreatConfig, output_dir: Pa
         workbook.create_sheet(sheet_name)
 
     for sheet_name in QA_WORKBOOK_SHEETS:
-        _build_qa_sheet(workbook[sheet_name], config, sheet_name)
+        _build_qa_sheet(workbook[sheet_name], config, sheet_name, large_mode=large_mode)
     _apply_qa_workbook_metadata(workbook, config)
 
     path = excel_dir / QA_FILENAME

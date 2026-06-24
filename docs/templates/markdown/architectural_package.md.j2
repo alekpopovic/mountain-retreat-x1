@@ -122,6 +122,12 @@ This architectural package is **PRELIMINARY**. It is not for construction, permi
 | HVAC concept | Heating: {{ room.heating_type }}; ventilation: {{ room.ventilation_type }} |
 | Notes | {{ room.notes }} |
 | Required review | Licensed architect; MEP/fire/accessibility review where applicable |
+{% if large_mode %}
+| Large-mode coordination: circulation | Confirm furniture clearances, door swings, terrace access, cleaning access, and emergency egress routes for {{ room.name }}. |
+| Large-mode coordination: envelope | Confirm thermal bridge, air-sealing, vapor-control, and window/door interface assumptions for {{ room.name }} before procurement. |
+| Large-mode coordination: MEP | Confirm socket locations, light switching, HVAC emitter/control location, ventilation path, and maintenance access for {{ room.name }}. |
+| Large-mode QA record | Photograph rough-in, insulation/membrane continuity, finish substrate, and final condition for {{ room.name }}. |
+{% endif %}
 
 {% endfor %}
 
@@ -217,4 +223,3 @@ This architectural package is **PRELIMINARY**. It is not for construction, permi
 - No room from YAML should be omitted from the room data sheets.
 - Door and window schedules are derived from room-level YAML assumptions and remain preliminary.
 - Architect review is required before any permit, procurement, or construction use.
-

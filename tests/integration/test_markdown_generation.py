@@ -148,6 +148,79 @@ def test_self_build_guide_large_mode_contains_at_least_300_steps(
     assert "Stop point requiring professional review" in text
 
 
+def test_large_mode_creates_larger_self_build_guide_and_keeps_disclaimer(
+    tmp_path: Path,
+) -> None:
+    normal_dir = tmp_path / "normal"
+    large_dir = tmp_path / "large"
+
+    normal_result = runner.invoke(
+        app,
+        ["generate", "markdown", "--output-dir", str(normal_dir)],
+    )
+    large_result = runner.invoke(
+        app,
+        ["generate", "markdown", "--large", "--output-dir", str(large_dir)],
+    )
+
+    assert normal_result.exit_code == 0
+    assert large_result.exit_code == 0
+    normal_text = (normal_dir / "markdown" / "13_self_build_guide.md").read_text(
+        encoding="utf-8"
+    )
+    large_text = (large_dir / "markdown" / "13_self_build_guide.md").read_text(
+        encoding="utf-8"
+    )
+    assert len(large_text) > len(normal_text)
+    assert "PRELIMINARNI planski dokument" in large_text
+    assert _self_build_step_count(large_text) > _self_build_step_count(normal_text)
+
+
+def test_large_mode_expands_construction_management_registers(
+    tmp_path: Path,
+) -> None:
+    output_dir = tmp_path / "output"
+
+    result = runner.invoke(
+        app,
+        ["generate", "markdown", "--large", "--output-dir", str(output_dir)],
+    )
+
+    assert result.exit_code == 0
+    text = (output_dir / "markdown" / "11_construction_management.md").read_text(
+        encoding="utf-8"
+    )
+    assert "Large-Mode Risk Register" in text
+    assert "Large-Mode Procurement Log" in text
+    assert "Large-Mode Inspection Log" in text
+    assert "Large-Mode Document Register" in text
+    assert "PRELIMINARY" in text
+
+
+def test_large_mode_markdown_generation_is_deterministic(tmp_path: Path) -> None:
+    first_dir = tmp_path / "first"
+    second_dir = tmp_path / "second"
+
+    first_result = runner.invoke(
+        app,
+        ["generate", "markdown", "--large", "--output-dir", str(first_dir)],
+    )
+    second_result = runner.invoke(
+        app,
+        ["generate", "markdown", "--large", "--output-dir", str(second_dir)],
+    )
+
+    assert first_result.exit_code == 0
+    assert second_result.exit_code == 0
+    first_text = (first_dir / "markdown" / "11_construction_management.md").read_text(
+        encoding="utf-8"
+    )
+    second_text = (second_dir / "markdown" / "11_construction_management.md").read_text(
+        encoding="utf-8"
+    )
+    assert first_text == second_text
+
+
 def test_architectural_package_contains_all_room_names(tmp_path: Path) -> None:
     output_dir = tmp_path / "output"
     config = load_config("config")
