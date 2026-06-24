@@ -1,8 +1,0 @@
-cost_rates:
-  source_policy: "Static YAML assumptions only. Do not scrape live prices."
-  currency: "USD"
-  contingency:
-    planning_percentage: 20
-    note: "Planning contingency only, not a contractor quote."
-  line_items: []
-

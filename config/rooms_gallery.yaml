@@ -1,0 +1,148 @@
+rooms:
+  - code: GL-MST
+    name: Master bedroom
+    floor: gallery
+    zone: private
+    length_m: 4.4
+    width_m: 4.0
+    area_m2: 17.6
+    clear_height_m: 2.6
+    function: Primary sleeping room
+    floor_finish: Engineered wood
+    wall_finish: Painted gypsum board
+    ceiling_finish: Sloped painted board or timber
+    heating_type: Underfloor heating or low-temperature radiator
+    ventilation_type: Natural ventilation
+    window_area_m2: 4.5
+    door_count: 1
+    socket_count: 8
+    light_point_count: 3
+    plumbing_fixtures: []
+    notes: Preliminary.
+  - code: GL-MBA
+    name: Master bathroom
+    floor: gallery
+    zone: sanitary
+    length_m: 3.0
+    width_m: 2.6
+    area_m2: 7.8
+    clear_height_m: 2.4
+    function: Primary bathroom
+    floor_finish: Anti-slip porcelain tile
+    wall_finish: Ceramic tile wet zones
+    ceiling_finish: Moisture-resistant painted board
+    heating_type: Underfloor heating + towel warmer
+    ventilation_type: Mechanical extract
+    window_area_m2: 0.8
+    door_count: 1
+    socket_count: 2
+    light_point_count: 3
+    plumbing_fixtures:
+      - WC
+      - double washbasin
+      - shower
+    notes: Waterproofing and ventilation require detailed design.
+  - code: GL-WIC
+    name: Walk-in closet
+    floor: gallery
+    zone: private
+    length_m: 2.6
+    width_m: 2.0
+    area_m2: 5.2
+    clear_height_m: 2.4
+    function: Clothing storage
+    floor_finish: Engineered wood
+    wall_finish: Painted gypsum board
+    ceiling_finish: Painted gypsum board
+    heating_type: Adjacent zone heating
+    ventilation_type: Transfer air
+    window_area_m2: 0
+    door_count: 1
+    socket_count: 2
+    light_point_count: 2
+    plumbing_fixtures: []
+    notes: Preliminary.
+  - code: GL-BD2
+    name: Bedroom 2
+    floor: gallery
+    zone: private
+    length_m: 3.6
+    width_m: 3.4
+    area_m2: 12.2
+    clear_height_m: 2.5
+    function: Sleeping room
+    floor_finish: Engineered wood
+    wall_finish: Painted gypsum board
+    ceiling_finish: Sloped painted board
+    heating_type: Underfloor heating or low-temperature radiator
+    ventilation_type: Natural ventilation
+    window_area_m2: 3.0
+    door_count: 1
+    socket_count: 6
+    light_point_count: 2
+    plumbing_fixtures: []
+    notes: Preliminary.
+  - code: GL-BD3
+    name: Bedroom 3
+    floor: gallery
+    zone: private
+    length_m: 3.5
+    width_m: 3.3
+    area_m2: 11.6
+    clear_height_m: 2.5
+    function: Sleeping room
+    floor_finish: Engineered wood
+    wall_finish: Painted gypsum board
+    ceiling_finish: Sloped painted board
+    heating_type: Underfloor heating or low-temperature radiator
+    ventilation_type: Natural ventilation
+    window_area_m2: 2.8
+    door_count: 1
+    socket_count: 6
+    light_point_count: 2
+    plumbing_fixtures: []
+    notes: Preliminary.
+  - code: GL-LOU
+    name: Gallery lounge
+    floor: gallery
+    zone: day
+    length_m: 4.8
+    width_m: 3.0
+    area_m2: 14.4
+    clear_height_m: 2.5
+    function: Lounge, reading, overlook
+    floor_finish: Engineered wood
+    wall_finish: Painted gypsum board
+    ceiling_finish: Sloped painted board
+    heating_type: Adjacent zone heating
+    ventilation_type: Natural ventilation
+    window_area_m2: 4.0
+    door_count: 0
+    socket_count: 5
+    light_point_count: 3
+    plumbing_fixtures: []
+    notes: Guard height and opening limits require code review.
+  - code: GL-BTH2
+    name: Bathroom 2
+    floor: gallery
+    zone: sanitary
+    length_m: 2.8
+    width_m: 2.2
+    area_m2: 6.2
+    clear_height_m: 2.4
+    function: Shared bathroom
+    floor_finish: Anti-slip porcelain tile
+    wall_finish: Ceramic tile wet zones
+    ceiling_finish: Moisture-resistant painted board
+    heating_type: Underfloor heating + towel warmer
+    ventilation_type: Mechanical extract
+    window_area_m2: 0.6
+    door_count: 1
+    socket_count: 2
+    light_point_count: 3
+    plumbing_fixtures:
+      - WC
+      - washbasin
+      - shower
+    notes: Preliminary.
+

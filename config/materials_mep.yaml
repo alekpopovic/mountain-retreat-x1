@@ -1,0 +1,62 @@
+materials:
+  - code: MAT-MEP-001
+    category: mechanical
+    subcategory: heating
+    name: Air-to-water heat pump
+    specification: Preliminary capacity placeholder for low-temperature underfloor heating.
+    unit: system
+    base_quantity: 1
+    waste_percent: 0
+    unit_price_low: 6500
+    unit_price_standard: 9500
+    unit_price_premium: 14000
+    supplier_placeholder: HVAC supplier TBD
+    formula_note: Capacity must be calculated from heat-loss study.
+    assumption_ref: services.heating
+    notes: Requires licensed mechanical design.
+  - code: MAT-MEP-002
+    category: mechanical
+    subcategory: heating distribution
+    name: Underfloor heating system
+    specification: Low-temperature hydronic underfloor heating placeholder.
+    unit: m2
+    base_quantity: 145
+    waste_percent: 8
+    unit_price_low: 28
+    unit_price_standard: 42
+    unit_price_premium: 65
+    supplier_placeholder: HVAC installer TBD
+    formula_note: Net heated area from building.net_area_m2.
+    assumption_ref: building.net_area_m2
+    notes: Manifold zoning requires mechanical design.
+  - code: MAT-MEP-003
+    category: electrical
+    subcategory: smart home
+    name: Home Assistant + Zigbee + Matter + MQTT base package
+    specification: Preliminary smart-home controls and integration package.
+    unit: system
+    base_quantity: 1
+    waste_percent: 0
+    unit_price_low: 1200
+    unit_price_standard: 2500
+    unit_price_premium: 4500
+    supplier_placeholder: Smart home integrator TBD
+    formula_note: Base package plus device count from room schedules.
+    assumption_ref: smart_home.platform
+    notes: Electrical and network design required.
+  - code: MAT-MEP-004
+    category: plumbing
+    subcategory: water storage
+    name: 10000 L water tank option
+    specification: Optional potable or technical water storage tank placeholder.
+    unit: system
+    base_quantity: 1
+    waste_percent: 0
+    unit_price_low: 1800
+    unit_price_standard: 3200
+    unit_price_premium: 5200
+    supplier_placeholder: Tank supplier TBD
+    formula_note: Optional off-grid/resilience water assumption.
+    assumption_ref: off_grid.water_tank_l
+    notes: Water quality, frost protection, and pressure system require design.
+

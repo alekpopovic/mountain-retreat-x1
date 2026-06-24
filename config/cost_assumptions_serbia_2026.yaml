@@ -1,0 +1,46 @@
+country: Serbia
+currency: EUR
+assumption_year: 2026
+status: PRELIMINARY
+source_policy: Static planning assumptions only; do not scrape live prices.
+vat_included: false
+contingency_percent: 20
+regional_adjustment_note: Mountain access, winter logistics, and contractor availability may materially affect costs.
+estimate_warning: >
+  Planning estimate only. Not a contractor quote, procurement instruction,
+  or financing-grade estimate.
+cost_items:
+  - code: COST-001
+    phase: foundations
+    category: structure
+    description: Reinforced concrete foundation placeholder
+    quantity: 55
+    unit: m3
+    material_unit_cost: 180
+    labor_unit_cost: 75
+    machinery_unit_cost: 35
+    contingency_percent: 20
+    notes: Requires geotechnical and structural design.
+  - code: COST-002
+    phase: shell
+    category: structure
+    description: Hybrid timber frame placeholder
+    quantity: 38
+    unit: m3
+    material_unit_cost: 850
+    labor_unit_cost: 280
+    machinery_unit_cost: 60
+    contingency_percent: 20
+    notes: Static planning rate only.
+  - code: COST-003
+    phase: envelope
+    category: roof
+    description: Standing seam metal roof placeholder
+    quantity: 225
+    unit: m2
+    material_unit_cost: 80
+    labor_unit_cost: 45
+    machinery_unit_cost: 10
+    contingency_percent: 20
+    notes: Snow guards and drainage not final.
+

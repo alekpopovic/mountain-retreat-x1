@@ -1,0 +1,62 @@
+materials:
+  - code: MAT-CORE-001
+    category: structure
+    subcategory: foundations
+    name: Reinforced concrete foundation placeholder
+    specification: Preliminary only; final foundation requires geotechnical and structural design.
+    unit: m3
+    base_quantity: 55
+    waste_percent: 7
+    unit_price_low: 145
+    unit_price_standard: 180
+    unit_price_premium: 230
+    supplier_placeholder: Local Serbia concrete supplier TBD
+    formula_note: Placeholder volume based on footprint and assumed foundation depth.
+    assumption_ref: site.geotechnical_report_required
+    notes: Not a final foundation quantity.
+  - code: MAT-CORE-002
+    category: structure
+    subcategory: timber
+    name: Hybrid timber frame package
+    specification: Glulam/LVL and dimensional timber placeholder; structural engineer review required.
+    unit: m3
+    base_quantity: 38
+    waste_percent: 12
+    unit_price_low: 650
+    unit_price_standard: 850
+    unit_price_premium: 1150
+    supplier_placeholder: Regional timber supplier TBD
+    formula_note: Approximate frame volume from gross area and concept framing factor.
+    assumption_ref: building.construction_variant
+    notes: Applies to standard_hybrid variant.
+  - code: MAT-CORE-003
+    category: envelope
+    subcategory: roof
+    name: Standing seam metal roof
+    specification: Insulated pitched roof with standing seam metal finish.
+    unit: m2
+    base_quantity: 225
+    waste_percent: 10
+    unit_price_low: 55
+    unit_price_standard: 80
+    unit_price_premium: 120
+    supplier_placeholder: Roofing supplier TBD
+    formula_note: Roof area from footprint, pitch allowance, and overhang placeholder.
+    assumption_ref: building.roof_type
+    notes: Snow guards and roof drainage require design.
+  - code: MAT-CORE-004
+    category: envelope
+    subcategory: facade
+    name: Timber + stone + glass facade assembly
+    specification: Mixed facade system placeholder with high-performance glazing.
+    unit: m2
+    base_quantity: 260
+    waste_percent: 10
+    unit_price_low: 85
+    unit_price_standard: 130
+    unit_price_premium: 210
+    supplier_placeholder: Facade supplier TBD
+    formula_note: Facade area from preliminary perimeter and height assumptions.
+    assumption_ref: building.facade_type
+    notes: Thermal bridges, air tightness, and waterproofing require professional detailing.
+

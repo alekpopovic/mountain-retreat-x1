@@ -27,6 +27,7 @@ dev = [
   "mypy>=1.10",
   "pytest>=8.2",
   "ruff>=0.5",
+  "types-PyYAML>=6.0",
 ]
 pdf = [
   "reportlab>=4.2",
@@ -56,4 +57,3 @@ warn_unused_configs = true
 disallow_untyped_defs = true
 check_untyped_defs = true
 packages = ["mountain_retreat_x1"]
-

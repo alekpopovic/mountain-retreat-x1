@@ -1,0 +1,14 @@
+gross_area_m2: 180
+net_area_m2: 145
+terrace_area_m2: 85
+footprint_length_m: 18
+footprint_width_m: 10
+floors: 2
+max_height_m: 7.8
+roof_pitch_deg: 28
+construction_variant: standard_hybrid
+roof_type: Standing seam metal roof
+facade_type: Timber + stone + glass
+occupancy_people: 8
+design_life_years: 50
+

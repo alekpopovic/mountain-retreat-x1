@@ -1,11 +1,13 @@
 """Command line interface for Mountain Retreat X1."""
 
+from pathlib import Path
 from typing import Annotated
 
 import typer
 from rich.console import Console
 
 from mountain_retreat_x1 import __version__
+from mountain_retreat_x1.config import ConfigLoadError, load_config
 
 app = typer.Typer(
     name="mrx1",
@@ -37,9 +39,34 @@ def main(
 
 
 @app.command()
-def validate() -> None:
-    """Validate project configuration placeholders."""
-    console.print("[green]Validation placeholder completed.[/green]")
+def validate(
+    config_dir: Annotated[
+        Path,
+        typer.Option(
+            "--config-dir",
+            "-c",
+            exists=True,
+            file_okay=False,
+            dir_okay=True,
+            readable=True,
+            help="Directory containing Mountain Retreat X1 YAML configuration.",
+        ),
+    ] = Path("config"),
+) -> None:
+    """Validate project YAML configuration files."""
+    try:
+        config = load_config(config_dir)
+    except ConfigLoadError as exc:
+        console.print(f"[red]Configuration validation failed:[/red]\n{exc}")
+        raise typer.Exit(code=1) from exc
+
+    room_count = len(config.rooms_ground_floor.rooms) + len(config.rooms_gallery.rooms)
+    material_count = len(config.materials_core.materials) + len(config.materials_mep.materials)
+    console.print(
+        "[green]Configuration validation completed.[/green] "
+        f"{room_count} rooms, {material_count} materials, "
+        f"{len(config.construction_phases.phases)} phases."
+    )
 
 
 @generate_app.command("all")
@@ -70,4 +97,3 @@ def generate_drawings() -> None:
 def clean() -> None:
     """Clean generated output placeholders."""
     console.print("[green]Clean placeholder completed.[/green]")
-

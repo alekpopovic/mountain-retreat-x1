@@ -1,9 +1,0 @@
-drawing_settings:
-  status: "schematic-only"
-  title_block_notice: "SCHEMATIC / NOT FOR CONSTRUCTION"
-  dimension_policy: "Approximate unless explicitly verified in YAML."
-  forbidden_marks:
-    - "professional seal"
-    - "permit approval"
-    - "approved for construction"
-

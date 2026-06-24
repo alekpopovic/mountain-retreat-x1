@@ -1,0 +1,52 @@
+phases:
+  - wbs: "1.0"
+    name: Professional review and surveys
+    description: Survey, geotechnical review, architectural and engineering kickoff.
+    duration_days: 20
+    dependencies: []
+    responsible_party: Owner with licensed professionals
+    required_tools:
+      - survey equipment
+      - site documentation
+    required_machinery: []
+    safety_notes:
+      - Confirm safe site access before visits.
+      - Account for mountain weather.
+    qa_checklist_refs:
+      - QA-SITE-001
+    inspection_required: true
+  - wbs: "2.0"
+    name: Concept refinement
+    description: Refine layout, terrace, envelope, MEP, and cost assumptions.
+    duration_days: 15
+    dependencies:
+      - "1.0"
+    responsible_party: Architect and engineering team
+    required_tools:
+      - BIM/CAD tools
+      - cost worksheets
+    required_machinery: []
+    safety_notes:
+      - Keep all documents marked preliminary.
+    qa_checklist_refs:
+      - QA-DOC-001
+    inspection_required: false
+  - wbs: "3.0"
+    name: Preliminary construction sequencing
+    description: Planning-level sequence for site, structure, envelope, interiors, terrace, and systems.
+    duration_days: 120
+    dependencies:
+      - "2.0"
+    responsible_party: Contractor input required
+    required_tools:
+      - schedule workbook
+      - QA/QC checklist
+    required_machinery:
+      - excavation equipment placeholder
+      - lifting equipment placeholder
+    safety_notes:
+      - Real construction safety plan is required before work.
+    qa_checklist_refs:
+      - QA-SAFE-001
+    inspection_required: true
+

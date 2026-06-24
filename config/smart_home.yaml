@@ -1,0 +1,18 @@
+platform: Home Assistant
+protocols:
+  - Zigbee
+  - Matter
+  - MQTT
+network_assumptions:
+  backbone: Wired Ethernet to key zones where practical
+  wifi: Ceiling access points, final count by coverage study
+  rack_location: Technical room
+systems:
+  - lighting scenes
+  - heating control integration
+  - terrace lighting
+  - leak sensors
+  - smoke and CO sensor integration placeholder
+  - energy monitoring
+notes: Electrical design, device placement, and safety systems require professional review.
+

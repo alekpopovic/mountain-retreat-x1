@@ -1,0 +1,13 @@
+enabled_optional_package: true
+pv_kwp: 15
+battery_kwh: 40
+generator: Backup generator placeholder, final sizing by electrical engineer
+water_tank_l: 10000
+wastewater_options:
+  - septic system option subject to local approval
+  - biological treatment plant option subject to local approval
+limitations:
+  - Off-grid package is optional and preliminary.
+  - PV, battery, generator, water, and wastewater systems require professional design and authority review.
+  - No generated document is a utility approval or environmental permit.
+

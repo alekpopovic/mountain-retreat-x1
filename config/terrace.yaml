@@ -1,0 +1,65 @@
+terrace_area_m2: 85
+status: PRELIMINARY
+disclaimer: Terrace layout is schematic and requires architectural, structural, drainage, waterproofing, and safety review.
+zones:
+  - code: TR-DIN
+    name: Covered dining
+    area_m2: 18
+    function: Protected outdoor dining
+    surface_finish: Exterior-rated timber or porcelain pavers
+    guard_required: true
+    utility_requirements:
+      - lighting
+      - weather-protected outlets
+    notes: Roof/cover and snow drift effects require professional review.
+  - code: TR-LOU
+    name: Lounge
+    area_m2: 22
+    function: Panoramic seating area
+    surface_finish: Exterior-rated decking
+    guard_required: true
+    utility_requirements:
+      - low-level lighting
+      - weather-protected outlets
+    notes: Guard design and wind exposure require review.
+  - code: TR-BBQ
+    name: BBQ/outdoor kitchen
+    area_m2: 12
+    function: Outdoor cooking
+    surface_finish: Non-combustible cooking zone finish
+    guard_required: true
+    utility_requirements:
+      - power
+      - water placeholder
+      - drainage placeholder
+    notes: Fire safety and plumbing require professional review.
+  - code: TR-JAC
+    name: Jacuzzi-ready zone
+    area_m2: 14
+    function: Future spa tub placeholder
+    surface_finish: Reinforced waterproof terrace finish
+    guard_required: true
+    utility_requirements:
+      - dedicated electrical placeholder
+      - drainage placeholder
+      - structural load review
+    notes: Not approved for jacuzzi installation without structural and electrical design.
+  - code: TR-FIR
+    name: Fire pit zone
+    area_m2: 10
+    function: Outdoor fire feature placeholder
+    surface_finish: Non-combustible finish
+    guard_required: true
+    utility_requirements:
+      - lighting
+    notes: Fire pit must comply with local fire safety requirements.
+  - code: TR-STO
+    name: Storage bench zone
+    area_m2: 9
+    function: Built-in exterior storage and seating
+    surface_finish: Exterior-rated timber
+    guard_required: true
+    utility_requirements:
+      - low-level lighting
+    notes: Waterproofing interfaces require review.
+

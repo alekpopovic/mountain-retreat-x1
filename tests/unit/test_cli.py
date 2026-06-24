@@ -12,11 +12,17 @@ def test_help_works() -> None:
     assert "Mountain Retreat X1" in result.output
 
 
-def test_validate_placeholder() -> None:
+def test_validate_default_config() -> None:
     result = runner.invoke(app, ["validate"])
 
     assert result.exit_code == 0
-    assert "Validation placeholder completed" in result.output
+    assert "Configuration validation completed" in result.output
+
+
+def test_validate_rejects_invalid_config_dir() -> None:
+    result = runner.invoke(app, ["validate", "--config-dir", "does-not-exist"])
+
+    assert result.exit_code != 0
 
 
 def test_generate_commands_are_registered() -> None:

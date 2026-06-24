@@ -1,0 +1,211 @@
+rooms:
+  - code: GF-ENT
+    name: Entrance vestibule
+    floor: ground_floor
+    zone: entry
+    length_m: 2.4
+    width_m: 2.0
+    area_m2: 4.8
+    clear_height_m: 2.7
+    function: Arrival, coat storage, thermal buffer
+    floor_finish: Porcelain tile
+    wall_finish: Painted gypsum board
+    ceiling_finish: Painted gypsum board
+    heating_type: Underfloor heating
+    ventilation_type: Natural transfer air
+    window_area_m2: 0.8
+    door_count: 2
+    socket_count: 1
+    light_point_count: 1
+    plumbing_fixtures: []
+    notes: Preliminary room data; dimensions require architectural review.
+  - code: GF-TEC
+    name: Technical room
+    floor: ground_floor
+    zone: service
+    length_m: 3.0
+    width_m: 2.6
+    area_m2: 7.8
+    clear_height_m: 2.5
+    function: Heat pump, tanks, controls, electrical distribution
+    floor_finish: Sealed concrete or technical tile
+    wall_finish: Moisture-resistant painted board
+    ceiling_finish: Service ceiling
+    heating_type: Frost protection
+    ventilation_type: Mechanical extract
+    window_area_m2: 0.5
+    door_count: 1
+    socket_count: 4
+    light_point_count: 2
+    plumbing_fixtures:
+      - floor drain
+      - utility sink placeholder
+    notes: MEP layout requires licensed professional review.
+  - code: GF-LAU
+    name: Laundry/storage
+    floor: ground_floor
+    zone: service
+    length_m: 2.6
+    width_m: 2.4
+    area_m2: 6.2
+    clear_height_m: 2.5
+    function: Laundry, linens, supplies
+    floor_finish: Porcelain tile
+    wall_finish: Washable painted board
+    ceiling_finish: Painted gypsum board
+    heating_type: Underfloor heating
+    ventilation_type: Mechanical extract
+    window_area_m2: 0.4
+    door_count: 1
+    socket_count: 4
+    light_point_count: 2
+    plumbing_fixtures:
+      - washing machine connection
+      - utility sink placeholder
+    notes: Preliminary.
+  - code: GF-BTH
+    name: Guest bathroom
+    floor: ground_floor
+    zone: sanitary
+    length_m: 2.4
+    width_m: 2.0
+    area_m2: 4.8
+    clear_height_m: 2.5
+    function: Guest WC and shower
+    floor_finish: Anti-slip porcelain tile
+    wall_finish: Ceramic tile wet zones
+    ceiling_finish: Moisture-resistant painted board
+    heating_type: Underfloor heating
+    ventilation_type: Mechanical extract
+    window_area_m2: 0.3
+    door_count: 1
+    socket_count: 1
+    light_point_count: 2
+    plumbing_fixtures:
+      - WC
+      - washbasin
+      - shower
+    notes: Waterproofing and ventilation require detailed design.
+  - code: GF-BED
+    name: Guest bedroom
+    floor: ground_floor
+    zone: private
+    length_m: 3.6
+    width_m: 3.4
+    area_m2: 12.2
+    clear_height_m: 2.7
+    function: Guest sleeping room
+    floor_finish: Engineered wood
+    wall_finish: Painted gypsum board
+    ceiling_finish: Painted gypsum board
+    heating_type: Underfloor heating
+    ventilation_type: Natural ventilation
+    window_area_m2: 2.4
+    door_count: 1
+    socket_count: 6
+    light_point_count: 2
+    plumbing_fixtures: []
+    notes: Preliminary.
+  - code: GF-KIT
+    name: Kitchen
+    floor: ground_floor
+    zone: day
+    length_m: 4.4
+    width_m: 3.2
+    area_m2: 14.1
+    clear_height_m: 2.8
+    function: Cooking and preparation
+    floor_finish: Engineered wood or tile
+    wall_finish: Washable finish and backsplash
+    ceiling_finish: Painted gypsum board
+    heating_type: Underfloor heating
+    ventilation_type: Range hood plus natural ventilation
+    window_area_m2: 2.5
+    door_count: 0
+    socket_count: 10
+    light_point_count: 4
+    plumbing_fixtures:
+      - kitchen sink
+      - dishwasher connection
+    notes: Appliance loads require electrical review.
+  - code: GF-DIN
+    name: Dining
+    floor: ground_floor
+    zone: day
+    length_m: 4.2
+    width_m: 3.8
+    area_m2: 16.0
+    clear_height_m: 2.8
+    function: Indoor dining with terrace connection
+    floor_finish: Engineered wood
+    wall_finish: Painted gypsum board
+    ceiling_finish: Painted gypsum board
+    heating_type: Underfloor heating
+    ventilation_type: Natural ventilation
+    window_area_m2: 5.0
+    door_count: 1
+    socket_count: 4
+    light_point_count: 2
+    plumbing_fixtures: []
+    notes: Large glazing requires envelope review.
+  - code: GF-LIV
+    name: Living room
+    floor: ground_floor
+    zone: day
+    length_m: 6.0
+    width_m: 5.2
+    area_m2: 31.2
+    clear_height_m: 3.2
+    function: Main lounge with panoramic view
+    floor_finish: Engineered wood
+    wall_finish: Painted gypsum board and feature cladding
+    ceiling_finish: Exposed timber or painted board
+    heating_type: Underfloor heating + fireplace
+    ventilation_type: Natural ventilation
+    window_area_m2: 14.0
+    door_count: 2
+    socket_count: 10
+    light_point_count: 5
+    plumbing_fixtures: []
+    notes: Glazing, shading, and fireplace flue require professional review.
+  - code: GF-FIR
+    name: Fireplace zone
+    floor: ground_floor
+    zone: day
+    length_m: 2.8
+    width_m: 2.4
+    area_m2: 6.7
+    clear_height_m: 3.2
+    function: Fireplace and seating focus
+    floor_finish: Non-combustible hearth zone plus engineered wood
+    wall_finish: Stone or fire-rated surround
+    ceiling_finish: Fire-rated interface to flue zone
+    heating_type: Fireplace
+    ventilation_type: Combustion air to be designed
+    window_area_m2: 1.5
+    door_count: 0
+    socket_count: 2
+    light_point_count: 2
+    plumbing_fixtures: []
+    notes: Fireplace must be designed and installed to applicable local requirements.
+  - code: GF-STR
+    name: Stair zone
+    floor: ground_floor
+    zone: circulation
+    length_m: 4.0
+    width_m: 2.4
+    area_m2: 9.6
+    clear_height_m: 5.8
+    function: Vertical circulation to gallery
+    floor_finish: Timber stair with anti-slip details
+    wall_finish: Painted gypsum board
+    ceiling_finish: Open to gallery
+    heating_type: Adjacent underfloor heating
+    ventilation_type: Stack effect and natural transfer air
+    window_area_m2: 2.0
+    door_count: 0
+    socket_count: 2
+    light_point_count: 3
+    plumbing_fixtures: []
+    notes: Guards, handrails, headroom, and stair geometry require code review.
+

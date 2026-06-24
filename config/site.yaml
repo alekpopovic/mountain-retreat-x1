@@ -1,0 +1,14 @@
+location_name: Serbian mountain site
+country: Serbia
+climate_zone: Mountain continental
+altitude_m: 950
+slope_percent: 12
+access_road_type: Gravel or compacted local access road, to be verified
+soil_assumption: Soil bearing capacity and groundwater conditions are unknown until geotechnical investigation.
+geotechnical_report_required: true
+snow_load_placeholder_kn_m2: 2.5
+wind_load_placeholder_kn_m2: 0.8
+seismic_zone_placeholder: To be confirmed by licensed structural engineer
+drainage_risk: Medium; slope drainage and terrace runoff require professional design
+frost_depth_placeholder_cm: 90
+

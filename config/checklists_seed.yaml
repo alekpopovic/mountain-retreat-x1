@@ -1,0 +1,44 @@
+checklist_items:
+  - id: QA-SITE-001
+    phase: Professional review and surveys
+    discipline: site
+    inspection_item: Confirm site access, slope, drainage, and geotechnical investigation requirements.
+    acceptance_criteria: Licensed professionals identify required next studies and constraints.
+    responsible_party: Architect / civil or geotechnical consultant
+    required_photo: true
+    required_document: true
+    status_options:
+      - open
+      - reviewed
+      - blocked
+      - not_applicable
+    notes: Preliminary QA seed item.
+  - id: QA-DOC-001
+    phase: Concept refinement
+    discipline: documentation
+    inspection_item: Confirm all generated documents include preliminary disclaimers and assumptions.
+    acceptance_criteria: No document claims legal, permit, construction, or engineering approval.
+    responsible_party: Documentation reviewer
+    required_photo: false
+    required_document: true
+    status_options:
+      - open
+      - reviewed
+      - blocked
+      - not_applicable
+    notes: Safety-critical documentation check.
+  - id: QA-SAFE-001
+    phase: Preliminary construction sequencing
+    discipline: safety
+    inspection_item: Confirm that real construction safety planning is excluded from preliminary generator output.
+    acceptance_criteria: Package requires contractor and licensed-professional safety planning before work.
+    responsible_party: Contractor / safety coordinator
+    required_photo: false
+    required_document: true
+    status_options:
+      - open
+      - reviewed
+      - blocked
+      - not_applicable
+    notes: Preliminary only.
+

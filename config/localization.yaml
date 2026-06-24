@@ -1,0 +1,15 @@
+default_language: sr-Latn
+supported_languages:
+  - en
+  - sr-Latn
+  - sr-Cyrl
+strings:
+  preliminary_notice:
+    en: Preliminary planning document only. Not for construction or permitting.
+    sr-Latn: Preliminarni planski dokument. Nije za izvođenje radova niti za dozvole.
+    sr-Cyrl: Прелиминарни плански документ. Није за извођење радова нити за дозволе.
+  professional_review_required:
+    en: Review by licensed professionals and local authorities is required.
+    sr-Latn: Potrebna je provera od strane licenciranih stručnjaka i nadležnih lokalnih organa.
+    sr-Cyrl: Потребна је провера од стране лиценцираних стручњака и надлежних локалних органа.
+
