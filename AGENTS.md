@@ -8,6 +8,18 @@ Do not write implementation code until the planning phase is explicitly complete
 
 Planning artifacts, configuration templates, repository documentation, empty directories, and tooling metadata are allowed.
 
+## Codex Context Files
+
+Before substantial future work, review the files in `.codex/`, especially:
+
+- `.codex/project-brief.md`
+- `.codex/safety-rules.md`
+- `.codex/implementation-roadmap.md`
+- `.codex/repository-contract.md`
+- `.codex/validation-checklist.md`
+- `.codex/output-manifest.md`
+- `.codex/git-workflow.md`
+
 ## Required Git Workflow
 
 After every user prompt that results in repository changes, run:
