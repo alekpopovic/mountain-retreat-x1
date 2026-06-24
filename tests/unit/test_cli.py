@@ -27,6 +27,8 @@ def test_summary_default_config() -> None:
     assert "Project Summary" in result.output
     assert "Area Summary" in result.output
     assert "Room Summary" in result.output
+    assert "Calculated Area Summary" in result.output
+    assert "Calculated Quantity Summary" in result.output
     assert "standard_hybrid" in result.output
 
 

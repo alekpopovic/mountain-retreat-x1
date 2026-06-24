@@ -3,6 +3,7 @@
 from mountain_retreat_x1.models.building import BuildingConfig, ConstructionVariant
 from mountain_retreat_x1.models.checklists import ChecklistItem
 from mountain_retreat_x1.models.configuration import (
+    CalculatorAssumptionsConfig,
     ChecklistSeedConfig,
     ConstructionPhasesConfig,
     CostAssumptionsConfig,
@@ -24,6 +25,7 @@ from mountain_retreat_x1.models.site import SiteConfig
 
 __all__ = [
     "BuildingConfig",
+    "CalculatorAssumptionsConfig",
     "ChecklistItem",
     "ChecklistSeedConfig",
     "ConstructionPhase",

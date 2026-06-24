@@ -108,3 +108,28 @@ class LocalizationConfig(StrictModel):
     supported_languages: list[str]
     strings: dict[str, LocalizedString]
 
+
+class CalculatorAssumptionsConfig(StrictModel):
+    """YAML-backed assumptions used by quantity calculators."""
+
+    status: str = "PRELIMINARY"
+    warning: str
+    foundation_depth_m: float = Field(gt=0)
+    foundation_coverage_factor: float = Field(gt=0, le=1)
+    rebar_kg_per_m3: float = Field(gt=0)
+    gravel_depth_m: float = Field(gt=0)
+    waterproofing_overlap_factor: float = Field(gt=0)
+    standard_hybrid_timber_m3_per_m2_gross: float = Field(gt=0)
+    premium_clt_m3_per_m2_gross: float = Field(gt=0)
+    masonry_blocks_per_m2_wall: float = Field(gt=0)
+    masonry_wall_height_m: float = Field(gt=0)
+    roof_overhang_factor: float = Field(gt=0)
+    facade_height_factor: float = Field(gt=0)
+    facade_opening_reduction_factor: float = Field(ge=0, lt=1)
+    facade_timber_share: float = Field(ge=0, le=1)
+    facade_stone_share: float = Field(ge=0, le=1)
+    terrace_decking_waste_factor: float = Field(gt=0)
+    insulation_area_factor: float = Field(gt=0)
+    vapor_barrier_area_factor: float = Field(gt=0)
+    membrane_area_factor: float = Field(gt=0)
+    wall_finish_opening_reduction_factor: float = Field(ge=0, lt=1)

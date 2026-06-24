@@ -19,6 +19,7 @@ def test_load_default_config_returns_typed_objects() -> None:
     assert config.smart_home.platform == "Home Assistant"
     assert config.off_grid.pv_kwp == 15
     assert config.localization.default_language == "sr-Latn"
+    assert config.calculator_assumptions.rebar_kg_per_m3 == 95
 
 
 def test_invalid_yaml_syntax_raises_clear_error(tmp_path: Path) -> None:
@@ -49,4 +50,3 @@ def test_invalid_project_yaml_raises_clear_validation_error(tmp_path: Path) -> N
 
     with pytest.raises(ConfigLoadError, match="disclaimer"):
         load_typed_yaml(invalid_file, ProjectConfig)
-

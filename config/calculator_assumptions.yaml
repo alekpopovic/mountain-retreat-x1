@@ -1,0 +1,22 @@
+status: PRELIMINARY
+warning: Quantities are rough planning estimates and require professional review.
+foundation_depth_m: 0.45
+foundation_coverage_factor: 0.7
+rebar_kg_per_m3: 95
+gravel_depth_m: 0.2
+waterproofing_overlap_factor: 1.15
+standard_hybrid_timber_m3_per_m2_gross: 0.21
+premium_clt_m3_per_m2_gross: 0.16
+masonry_blocks_per_m2_wall: 12.5
+masonry_wall_height_m: 3.0
+roof_overhang_factor: 1.12
+facade_height_factor: 0.85
+facade_opening_reduction_factor: 0.18
+facade_timber_share: 0.45
+facade_stone_share: 0.25
+terrace_decking_waste_factor: 1.08
+insulation_area_factor: 1.0
+vapor_barrier_area_factor: 1.0
+membrane_area_factor: 1.1
+wall_finish_opening_reduction_factor: 0.15
+

@@ -8,6 +8,8 @@ from rich.console import Console
 from rich.table import Table
 
 from mountain_retreat_x1 import __version__
+from mountain_retreat_x1.calculators import area_summary, cost_summary, quantity_summary
+from mountain_retreat_x1.calculators.results import QuantityMap
 from mountain_retreat_x1.config import ConfigLoadError, load_config
 from mountain_retreat_x1.config.loader import MountainRetreatConfig
 
@@ -105,6 +107,7 @@ def _config_summary_table(config: MountainRetreatConfig) -> Table:
     table.add_row("Materials", "valid", f"{_material_count(config)} catalog items")
     table.add_row("Costs", "valid", f"{len(config.cost_assumptions_serbia_2026.cost_items)} items")
     table.add_row("Phases", "valid", f"{len(config.construction_phases.phases)} phases")
+    table.add_row("Calculator assumptions", "valid", config.calculator_assumptions.status)
     table.add_row(
         "Checklists",
         "valid",
@@ -183,6 +186,21 @@ def _assumptions_table(config: MountainRetreatConfig) -> Table:
     return table
 
 
+def _calculated_summary_table(title: str, quantities: QuantityMap, keys: tuple[str, ...]) -> Table:
+    table = Table(title=title)
+    table.add_column("Quantity", style="cyan")
+    table.add_column("Value", justify="right")
+    table.add_column("Formula / Assumptions")
+    for key in keys:
+        quantity = quantities[key]
+        table.add_row(
+            quantity.label,
+            f"{quantity.value:g} {quantity.unit}",
+            f"{quantity.formula_note} Assumptions: {', '.join(quantity.assumptions_used)}",
+        )
+    return table
+
+
 @app.command()
 def validate(
     config_dir: ConfigDirOption = Path("config"),
@@ -207,6 +225,37 @@ def summary(
     console.print(_area_summary_table(config))
     console.print(_room_summary_table(config))
     console.print(_assumptions_table(config))
+    console.print(
+        _calculated_summary_table(
+            "Calculated Area Summary",
+            area_summary(config),
+            (
+                "calculated_net_area",
+                "net_area_difference",
+                "facade_rough_area",
+                "roof_rough_area",
+            ),
+        )
+    )
+    console.print(
+        _calculated_summary_table(
+            "Calculated Quantity Summary",
+            quantity_summary(config),
+            (
+                "qty.concrete.volume",
+                "qty.rebar.mass",
+                "qty.roof.covering",
+                "qty.terrace.decking",
+            ),
+        )
+    )
+    console.print(
+        _calculated_summary_table(
+            "Calculated Cost Summary",
+            cost_summary(config),
+            ("cost.total", "cost.per_m2.gross", "cost.per_m2.net"),
+        )
+    )
 
 
 def _print_placeholder_generation(kind: str, output_dir: Path) -> None:

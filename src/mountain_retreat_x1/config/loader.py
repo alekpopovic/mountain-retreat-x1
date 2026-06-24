@@ -8,6 +8,7 @@ from pydantic import BaseModel, ValidationError
 
 from mountain_retreat_x1.models import (
     BuildingConfig,
+    CalculatorAssumptionsConfig,
     ChecklistSeedConfig,
     ConstructionPhasesConfig,
     CostAssumptionsConfig,
@@ -44,6 +45,7 @@ class MountainRetreatConfig:
     smart_home: SmartHomeConfig
     off_grid: OffGridConfig
     localization: LocalizationConfig
+    calculator_assumptions: CalculatorAssumptionsConfig
 
 
 def load_yaml_file(path: Path) -> object:
@@ -96,4 +98,8 @@ def load_config(config_dir: Path | str = Path("config")) -> MountainRetreatConfi
         smart_home=load_typed_yaml(root / "smart_home.yaml", SmartHomeConfig),
         off_grid=load_typed_yaml(root / "off_grid.yaml", OffGridConfig),
         localization=load_typed_yaml(root / "localization.yaml", LocalizationConfig),
+        calculator_assumptions=load_typed_yaml(
+            root / "calculator_assumptions.yaml",
+            CalculatorAssumptionsConfig,
+        ),
     )
