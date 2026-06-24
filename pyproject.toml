@@ -1,38 +1,59 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "mountain-retreat-x1"
 version = "0.1.0"
 description = "Preliminary planning documentation generator for Mountain Retreat X1."
 requires-python = ">=3.12"
 readme = "README.md"
+license = { text = "Proprietary" }
+authors = [
+  { name = "Mountain Retreat X1" },
+]
 dependencies = [
-  "jinja2",
-  "openpyxl",
-  "pydantic",
-  "pyyaml",
-  "typer",
+  "jinja2>=3.1",
+  "openpyxl>=3.1",
+  "pydantic>=2.7",
+  "pydantic-settings>=2.2",
+  "pyyaml>=6.0",
+  "rich>=13.7",
+  "typer>=0.12",
 ]
 
 [project.optional-dependencies]
-pdf = [
-  "reportlab",
-]
 dev = [
-  "mypy",
-  "pytest",
-  "ruff",
+  "mypy>=1.10",
+  "pytest>=8.2",
+  "ruff>=0.5",
 ]
+pdf = [
+  "reportlab>=4.2",
+]
+
+[project.scripts]
+mrx1 = "mountain_retreat_x1.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mountain_retreat_x1"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
 
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+src = ["src", "tests"]
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B"]
+select = ["B", "E", "F", "I", "UP"]
 
 [tool.mypy]
 python_version = "3.12"
 warn_unused_configs = true
 disallow_untyped_defs = true
+check_untyped_defs = true
+packages = ["mountain_retreat_x1"]
 
-[tool.pytest.ini_options]
-testpaths = ["tests"]

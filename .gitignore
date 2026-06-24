@@ -7,6 +7,14 @@ __pycache__/
 dist/
 build/
 *.egg-info/
-output/*
+output/**
+!output/
 !output/.gitkeep
-
+!output/pdf/
+!output/pdf/.gitkeep
+!output/excel/
+!output/excel/.gitkeep
+!output/drawings/
+!output/drawings/.gitkeep
+!output/zip/
+!output/zip/.gitkeep
