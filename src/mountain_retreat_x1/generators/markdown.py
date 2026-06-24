@@ -15,6 +15,7 @@ TEMPLATE_NAME = "volume.md.j2"
 ARCHITECTURAL_TEMPLATE_NAME = "architectural_package.md.j2"
 STRUCTURAL_TEMPLATE_NAME = "structural_concept.md.j2"
 ELECTRICAL_TEMPLATE_NAME = "electrical_package.md.j2"
+PLUMBING_TEMPLATE_NAME = "plumbing_wastewater.md.j2"
 DEFAULT_TEMPLATE_DIR = Path("docs/templates/markdown")
 
 
@@ -104,6 +105,21 @@ class CircuitItem:
     rcd_rcbo_placeholder: str
     notes: str
     review_required: str
+
+
+@dataclass(frozen=True)
+class FixtureItem:
+    """Preliminary plumbing fixture schedule item."""
+
+    code: str
+    room: str
+    fixture_type: str
+    cold_water_required: str
+    hot_water_required: str
+    waste_required: str
+    trap_vent_note: str
+    freeze_risk: str
+    notes: str
 
 
 def _shared_limitations(config: MountainRetreatConfig) -> tuple[str, ...]:
@@ -601,6 +617,153 @@ def _electrical_context(config: MountainRetreatConfig) -> dict[str, object]:
     }
 
 
+def _fixture_connections(fixture_type: str) -> tuple[str, str, str, str]:
+    name = fixture_type.lower()
+    cold = "Yes"
+    hot = "Yes"
+    waste = "Yes"
+    trap_vent = "Trap and venting TBD by licensed plumbing/mechanical designer"
+    if "wc" in name or "toilet" in name:
+        hot = "No"
+        trap_vent = "Soil stack, trap seal, and venting route TBD"
+    elif "floor drain" in name:
+        cold = "No"
+        hot = "No"
+        trap_vent = "Trap primer/freeze protection and venting TBD"
+    elif "dishwasher" in name or "washing machine" in name:
+        hot = "No/TBD"
+        trap_vent = "Appliance trap, standpipe, backflow, and venting TBD"
+    elif "tap" in name or "hose" in name:
+        hot = "No/TBD"
+        waste = "No, unless connected to drained exterior worktop"
+        trap_vent = "Backflow prevention and winter shutoff/drain-down TBD"
+    elif "jacuzzi" in name or "spa" in name:
+        trap_vent = "Dedicated drainage, backflow, isolation, and maintenance access TBD"
+    return cold, hot, waste, trap_vent
+
+
+def _fixture_freeze_risk(room_name: str, fixture_type: str, config: MountainRetreatConfig) -> str:
+    room_text = room_name.lower()
+    fixture_text = fixture_type.lower()
+    if any(marker in room_text for marker in ("terrace", "exterior", "outdoor")):
+        return (
+            f"High; exterior exposure and frost depth placeholder "
+            f"{config.site.frost_depth_placeholder_cm:g} cm require winterization."
+        )
+    if any(marker in fixture_text for marker in ("tap", "hose", "jacuzzi", "spa")):
+        return "High; exposed or intermittently heated plumbing requires drain-down."
+    if "technical" in room_text:
+        return "Medium; frost protection must remain active during vacancy."
+    return "Medium; pipe routes in external walls or cold voids must be avoided."
+
+
+def _fixture_notes(room_name: str, fixture_type: str) -> str:
+    name = fixture_type.lower()
+    if "wc" in name or "toilet" in name:
+        return "Confirm soil pipe route, acoustic treatment, cleanouts, and service access."
+    if "shower" in name:
+        return "Confirm waterproofing, falls to drain, access to trap, and extract ventilation."
+    if "washbasin" in name or "sink" in name:
+        return "Confirm shutoff valves, splash protection, trap access, and fixture support."
+    if "dishwasher" in name:
+        return (
+            "Confirm appliance valve, waste connection, leak protection, and "
+            "electrical coordination."
+        )
+    if "washing machine" in name:
+        return "Confirm valve box, standpipe, overflow risk, vibration, and floor drain strategy."
+    if "floor drain" in name:
+        return "Confirm trap seal protection, waterproofing interface, and cleanout access."
+    if "tap" in name or "hose" in name:
+        return (
+            "Confirm backflow protection, isolation valve, winter drain-down, "
+            "and slope to drain."
+        )
+    if "jacuzzi" in name or "spa" in name:
+        return (
+            "Placeholder only; requires structural, electrical, waterproofing, "
+            "and drainage design."
+        )
+    return f"Confirm final fixture requirements for {room_name}."
+
+
+def _wet_rooms(config: MountainRetreatConfig) -> tuple[Room, ...]:
+    return tuple(room for room in all_config_rooms(config) if room.plumbing_fixtures)
+
+
+def _fixture_schedule(config: MountainRetreatConfig) -> tuple[FixtureItem, ...]:
+    fixtures: list[FixtureItem] = []
+    index = 1
+    for room in _wet_rooms(config):
+        for fixture in room.plumbing_fixtures:
+            cold, hot, waste, trap_vent = _fixture_connections(fixture)
+            fixtures.append(
+                FixtureItem(
+                    code=f"PL-{index:03d}",
+                    room=room.name,
+                    fixture_type=fixture,
+                    cold_water_required=cold,
+                    hot_water_required=hot,
+                    waste_required=waste,
+                    trap_vent_note=trap_vent,
+                    freeze_risk=_fixture_freeze_risk(room.name, fixture, config),
+                    notes=_fixture_notes(room.name, fixture),
+                )
+            )
+            index += 1
+
+    exterior_items = (
+        ("Terrace", "exterior hose tap / outdoor kitchen water placeholder"),
+        ("Terrace BBQ/outdoor kitchen", "outdoor sink placeholder"),
+        ("Jacuzzi-ready terrace zone", "jacuzzi/spa water and drain placeholder"),
+    )
+    for room_name, fixture in exterior_items:
+        cold, hot, waste, trap_vent = _fixture_connections(fixture)
+        fixtures.append(
+            FixtureItem(
+                code=f"PL-{index:03d}",
+                room=room_name,
+                fixture_type=fixture,
+                cold_water_required=cold,
+                hot_water_required=hot,
+                waste_required=waste,
+                trap_vent_note=trap_vent,
+                freeze_risk=_fixture_freeze_risk(room_name, fixture, config),
+                notes=_fixture_notes(room_name, fixture),
+            )
+        )
+        index += 1
+
+    return tuple(fixtures)
+
+
+def _plumbing_context(config: MountainRetreatConfig) -> dict[str, object]:
+    wet_rooms = _wet_rooms(config)
+    fixtures = _fixture_schedule(config)
+    terrace_plumbing_zones = tuple(
+        zone
+        for zone in config.terrace.zones
+        if any(
+            "water" in item.lower() or "drain" in item.lower()
+            for item in zone.utility_requirements
+        )
+    )
+    return {
+        "project": config.project,
+        "site": config.site,
+        "building": config.building,
+        "terrace": config.terrace,
+        "off_grid": config.off_grid,
+        "assumptions": _shared_assumptions(config),
+        "limitations": _shared_limitations(config),
+        "wet_rooms": wet_rooms,
+        "fixtures": fixtures,
+        "terrace_plumbing_zones": terrace_plumbing_zones,
+        "wet_room_count": len(wet_rooms),
+        "fixture_count": len(fixtures),
+    }
+
+
 def all_config_rooms(config: MountainRetreatConfig) -> list[Room]:
     """Return all configured room models."""
     return [*config.rooms_ground_floor.rooms, *config.rooms_gallery.rooms]
@@ -1022,6 +1185,7 @@ def generate_markdown_volumes(
     architectural_template = env.get_template(ARCHITECTURAL_TEMPLATE_NAME)
     structural_template = env.get_template(STRUCTURAL_TEMPLATE_NAME)
     electrical_template = env.get_template(ELECTRICAL_TEMPLATE_NAME)
+    plumbing_template = env.get_template(PLUMBING_TEMPLATE_NAME)
     paths: list[Path] = []
     for volume in _volume_specs(config):
         if volume.filename == "02_architectural_package.md":
@@ -1030,6 +1194,8 @@ def generate_markdown_volumes(
             rendered = structural_template.render(**_structural_context(config))
         elif volume.filename == "04_electrical_package.md":
             rendered = electrical_template.render(**_electrical_context(config))
+        elif volume.filename == "05_plumbing_wastewater.md":
+            rendered = plumbing_template.render(**_plumbing_context(config))
         else:
             rendered = template.render(project=config.project, volume=volume)
         path = markdown_dir / volume.filename

@@ -213,3 +213,71 @@ def test_electrical_package_covers_major_rooms(tmp_path: Path) -> None:
     )
     for room_name in major_rooms:
         assert room_name in text
+
+
+def test_plumbing_package_contains_required_sections_fixture_schedule_and_warnings(
+    tmp_path: Path,
+) -> None:
+    output_dir = tmp_path / "output"
+
+    result = runner.invoke(app, ["generate", "markdown", "--output-dir", str(output_dir)])
+
+    assert result.exit_code == 0
+    text = (output_dir / "markdown" / "05_plumbing_wastewater.md").read_text(
+        encoding="utf-8"
+    )
+    for section in (
+        "## 1. Water Supply Concept",
+        "## 2. Mains Water Option",
+        "## 3. Water Tank Option",
+        "## 4. Pump and Pressure Concept",
+        "## 5. Cold Water Distribution",
+        "## 6. Hot Water Distribution",
+        "## 7. Domestic Hot Water Source",
+        "## 8. Kitchen Plumbing",
+        "## 9. Bathroom Plumbing",
+        "## 10. Laundry/Utility Plumbing",
+        "## 11. Exterior Taps",
+        "## 12. Freeze Protection",
+        "## 13. Wastewater Concept",
+        "## 14. Septic Tank Option",
+        "## 15. Biological Treatment Plant Option",
+        "## 16. Vent Pipe Concept",
+        "## 17. Rainwater Drainage",
+        "## 18. Terrace Drainage",
+        "## 19. Foundation Drainage",
+        "## 20. Maintenance Checklist",
+        "## 21. Licensed Plumbing/Mechanical Review Checklist",
+    ):
+        assert section in text
+
+    assert "Fixture code" in text
+    assert "not final pipe sizing" in text
+    assert "does not claim local wastewater approval" in text
+    assert "No local wastewater approval" in text
+    assert "frost" in text.lower()
+    assert "slope" in text.lower()
+    assert "maintenance access" in text.lower()
+
+
+def test_plumbing_package_includes_all_configured_wet_rooms(tmp_path: Path) -> None:
+    output_dir = tmp_path / "output"
+    config = load_config("config")
+    wet_room_names = [
+        room.name
+        for room in [*config.rooms_ground_floor.rooms, *config.rooms_gallery.rooms]
+        if room.plumbing_fixtures
+    ]
+
+    result = runner.invoke(app, ["generate", "markdown", "--output-dir", str(output_dir)])
+
+    assert result.exit_code == 0
+    text = (output_dir / "markdown" / "05_plumbing_wastewater.md").read_text(
+        encoding="utf-8"
+    )
+    for room_name in wet_room_names:
+        assert room_name in text
+
+    assert "Terrace" in text
+    assert "outdoor sink placeholder" in text
+    assert "jacuzzi/spa water and drain placeholder" in text

@@ -1,0 +1,208 @@
+# 05 Plumbing, Wastewater and Drainage Package
+
+**Project code:** {{ project.project_code }}  
+**Project:** {{ project.project_name }}  
+**Version:** {{ project.version }}  
+**Status:** {{ project.status }}  
+**Revision date:** {{ project.revision_date }}  
+**Language:** {{ project.language }}  
+
+## Revision History
+
+| Version | Date | Author | Notes |
+|---|---|---|---|
+| {{ project.version }} | {{ project.revision_date }} | {{ project.author }} | Generated preliminary plumbing, wastewater, and drainage package from YAML room, site, terrace, and off-grid assumptions. |
+
+## Mandatory Notice
+
+{{ project.disclaimer }}
+
+This plumbing, wastewater, and drainage package is **PRELIMINARY**. It is not final pipe sizing, does not claim local wastewater approval, and does not certify potable water, sanitary drainage, rainwater drainage, frost protection, or environmental compliance.
+
+## Required Professional Review
+
+- Licensed plumbing/mechanical engineer or designer
+- Licensed civil/drainage engineer where required
+- Local water and wastewater authority
+- Local environmental/permitting authority
+- Architect, structural engineer, and waterproofing specialist for terrace and foundation interfaces
+
+## Assumptions
+
+{% for assumption in assumptions -%}
+- {{ assumption }}
+{% endfor %}
+- Wet rooms with configured fixtures: {{ wet_room_count }}.
+- Fixture schedule rows: {{ fixture_count }}.
+- Optional water tank assumption: {{ off_grid.water_tank_l }} L.
+- Wastewater options: {{ off_grid.wastewater_options | join("; ") }}.
+- Frost depth placeholder: {{ site.frost_depth_placeholder_cm }} cm.
+- Site slope placeholder: {{ site.slope_percent }}%.
+- Drainage risk: {{ site.drainage_risk }}.
+
+## Limitations
+
+{% for limitation in limitations -%}
+- {{ limitation }}
+{% endfor %}
+- Pipe diameters, pressure loss, pump curves, fixture-unit counts, vent sizing, traps, cleanouts, slopes, and backflow devices are TBD by licensed professionals.
+- Septic tank and biological treatment plant options are planning placeholders only and do not grant local wastewater approval.
+- Frost, mountain slope runoff, terrace waterproofing, and maintenance access require detailed design before procurement or construction.
+- This document must not be used as an installation drawing, permit, sanitary approval, environmental approval, or commissioning certificate.
+
+## 1. Water Supply Concept
+
+- Provide preliminary water planning for kitchen, bathrooms, laundry/storage, technical room, terrace/outdoor kitchen placeholder, and exterior taps.
+- Keep mains water and tank supply options open until site utilities, water quality, winter access, and local authority requirements are verified.
+- Route water services through accessible, insulated, maintainable zones; avoid external walls, unheated voids, and inaccessible terrace build-ups wherever possible.
+- Final pipe sizing, pressure balancing, backflow prevention, shutoff strategy, and disinfection/commissioning are excluded.
+
+## 2. Mains Water Option
+
+- Mains connection is assumed possible only as a placeholder.
+- Connection point, meter chamber, authority fees, pressure, flow, backflow requirements, easements, and winter protection are TBD.
+- The design must include isolation, drain-down, pressure regulation where needed, and accessible maintenance points after professional review.
+
+## 3. Water Tank Option
+
+- Optional storage tank: {{ off_grid.water_tank_l }} L.
+- Tank use may support intermittent supply, off-grid operation, firefighting reserve discussions, or temporary resilience, but no final capacity is certified.
+- Tank location, structural support, burial/freezing risk, overflow, venting, filtration, water quality, cleaning access, and pump intake protection require professional design.
+
+## 4. Pump and Pressure Concept
+
+- A booster pump/pressure set may be required for tank supply or low mains pressure.
+- Pump selection, duty/standby strategy, pressure vessel sizing, noise/vibration isolation, dry-run protection, filtration, bypasses, and controls are TBD.
+- Technical room maintenance access must be preserved for pumps, filters, valves, tanks, electrical isolation, and leak detection.
+
+## 5. Cold Water Distribution
+
+- Cold water should serve all configured wet rooms and any approved exterior water points.
+- Include accessible isolation valves for each wet room or branch, appliance isolation, backflow protection where required, and labelled service routes.
+- Pipe routes must be protected from frost, puncture, condensation, and inaccessible concealment.
+
+## 6. Hot Water Distribution
+
+- Hot water is expected at kitchen sink, washbasins, showers, utility sinks, and other configured fixtures that require hot water.
+- Recirculation, point-of-use heaters, pipe insulation, scald protection, balancing, and energy losses are TBD.
+- Long hot-water runs should be minimized and coordinated with bathroom/kitchen stacking and technical room location.
+
+## 7. Domestic Hot Water Source
+
+- Domestic hot water is assumed to coordinate with the air-to-water heat pump concept and technical room equipment.
+- Cylinder size, legionella control, backup heater, mixing valve, expansion vessel, pressure relief discharge, and service clearances are TBD.
+- Final DHW design requires mechanical/plumbing review and manufacturer data.
+
+## 8. Kitchen Plumbing
+
+- Kitchen fixtures from YAML are included in the fixture schedule.
+- Expected needs include sink supply/waste, dishwasher connection, shutoff valves, leak protection, trap access, and coordination with cabinetry.
+- Final drain route, venting, appliance details, and penetrations through structure are TBD.
+
+## 9. Bathroom Plumbing
+
+- Bathrooms require coordinated supply, waste, trap, vent, waterproofing, floor falls, fixture support, service access, and mechanical extract.
+- Shower areas require particular review of waterproofing interfaces, drain capacity, trap access, and slope to drain.
+- This package does not approve bathroom layouts, wet-room waterproofing, or sanitary code compliance.
+
+## 10. Laundry/Utility Plumbing
+
+- Laundry/storage and technical room fixtures are included in the fixture schedule.
+- Washing machine connections, utility sink, floor drain, overflow risk, vibration, leak detection, and maintenance access require detailed design.
+- Utility areas should keep valves, filters, drains, pumps, and equipment reachable after finishes are installed.
+
+## 11. Exterior Taps
+
+- Exterior taps are placeholders for terrace/outdoor use and require freeze-safe detailing.
+- Include internal isolation valves, drain-down, backflow protection, frost-resistant fittings where appropriate, and slope to drain.
+- Exterior water points must be coordinated with terrace waterproofing and electrical safety zones.
+
+## 12. Freeze Protection
+
+- Frost depth placeholder: {{ site.frost_depth_placeholder_cm }} cm.
+- Mountain conditions and vacancy periods create elevated freeze risk for exterior taps, tank/pump lines, terrace plumbing, foundation penetrations, and unheated service voids.
+- Freeze protection may require burial depth, insulation, heat tracing, drain-down, frost-free valves, heated technical spaces, monitoring, and emergency access.
+
+## 13. Wastewater Concept
+
+- Wastewater planning covers sanitary discharge from bathrooms, kitchen, laundry/storage, technical room drains, and approved exterior wet points.
+- Final pipe slopes, diameters, venting, cleanouts, inspection chambers, grease handling, backflow/flood protection, and treatment connection are TBD.
+- No local wastewater approval is implied by this generated document.
+
+## 14. Septic Tank Option
+
+- Septic system option is subject to local approval, soil conditions, groundwater level, setbacks, access for emptying, and environmental constraints.
+- Percolation/infiltration assumptions must come from site investigation and authority requirements.
+- This package does not size a septic tank, approve a leach field, or replace environmental permitting.
+
+## 15. Biological Treatment Plant Option
+
+- Biological treatment plant option is subject to local approval, power reliability, maintenance contracts, discharge route, sampling/access needs, and manufacturer requirements.
+- Backup power, alarm handling, winter operation, and service vehicle access require review.
+- This package does not select or approve a treatment plant.
+
+## 16. Vent Pipe Concept
+
+- Sanitary ventilation is required in concept, but vent pipe sizing and routing are not final.
+- Vent routes must coordinate with roof penetrations, snow, wind, odor control, condensation, air admittance rules where allowed, and maintenance access.
+- Final vent strategy must be designed by licensed professionals and reviewed against local requirements.
+
+## 17. Rainwater Drainage
+
+- Rainwater drainage must respond to roof area, standing seam metal roof conditions, snow melt, ice, site slope, discharge routes, and erosion control.
+- Gutters, downpipes, snow guards, heated sections, splash blocks, soakaways, channels, and outfalls are placeholders until drainage calculations are performed.
+- Site slope placeholder: {{ site.slope_percent }}%; drainage must avoid directing runoff toward foundations, neighbors, access roads, or unstable slopes.
+
+## 18. Terrace Drainage
+
+- Terrace area: {{ terrace.terrace_area_m2 }} m2.
+- Terrace drainage must coordinate surface falls, waterproofing build-up, scuppers/drains, overflow paths, guard posts, door thresholds, snow/ice, and maintenance access.
+- Terrace zones with water/drainage placeholders:
+{% for zone in terrace_plumbing_zones -%}
+  - {{ zone.name }}: {{ zone.utility_requirements | join(", ") }}. {{ zone.notes }}
+{% else -%}
+  - No terrace water/drainage utility placeholders configured.
+{% endfor %}
+- Jacuzzi-ready and outdoor-kitchen placeholders are not approved installations.
+
+## 19. Foundation Drainage
+
+- Site drainage risk: {{ site.drainage_risk }}.
+- Foundation drainage should consider uphill interception, perimeter drains, waterproofing protection, capillary breaks, frost protection, discharge location, cleanouts, and inspection points.
+- Final strategy depends on geotechnical investigation, groundwater, soil permeability, slope stability, and civil/structural coordination.
+
+## 20. Maintenance Checklist
+
+- Keep shutoff valves, filters, pumps, pressure vessels, tanks, drains, cleanouts, inspection chambers, treatment equipment, and terrace drains accessible.
+- Confirm winter drain-down procedure for exterior taps, terrace plumbing, optional tank lines, and vacant-period systems.
+- Schedule periodic cleaning for gutters, terrace drains, floor drains, traps, filters, septic/treatment equipment, and tank access points.
+- Maintain records of inspections, pump service, wastewater servicing, water quality checks, and frost incidents.
+
+## 21. Licensed Plumbing/Mechanical Review Checklist
+
+- Confirm mains water or tank supply strategy, pressure, flow, treatment, filtration, and backflow protection.
+- Confirm final pipe sizing, material selection, insulation, supports, penetrations, isolation valves, and commissioning tests.
+- Confirm hot-water source, cylinder, expansion, safety discharge, scald protection, legionella controls, and maintenance clearances.
+- Confirm sanitary drainage, slopes, venting, traps, cleanouts, inspection chambers, wastewater treatment, and authority approvals.
+- Confirm rainwater, terrace, and foundation drainage against frost, slope, erosion, waterproofing, and maintenance access.
+- Confirm that this document remains PRELIMINARY and does not claim local wastewater approval or final pipe sizing.
+
+## Fixture Schedule
+
+| Fixture code | Room | Fixture type | Cold water required | Hot water required | Waste required | Trap/vent note | Freeze risk | Notes |
+|---|---|---|---|---|---|---|---|---|
+{% for fixture in fixtures -%}
+| {{ fixture.code }} | {{ fixture.room }} | {{ fixture.fixture_type }} | {{ fixture.cold_water_required }} | {{ fixture.hot_water_required }} | {{ fixture.waste_required }} | {{ fixture.trap_vent_note }} | {{ fixture.freeze_risk }} | {{ fixture.notes }} |
+{% endfor %}
+
+## Wet Room Coverage
+
+{% for room in wet_rooms -%}
+- {{ room.name }} ({{ room.code }}): {{ room.plumbing_fixtures | join(", ") }}.
+{% endfor %}
+
+## QA Notes
+
+- Every configured wet room should appear in the fixture schedule.
+- Fixture rows are planning records only; they are not installation instructions.
+- Drainage strategy must remain visible in generated review documents because frost, slope, and maintenance access are primary mountain-site risks.
