@@ -16,6 +16,7 @@ from mountain_retreat_x1.exporters import (
     generate_bom_workbook,
     generate_cost_estimate_workbook,
     generate_gantt_schedule_workbook,
+    generate_qa_checklist_workbook,
 )
 from mountain_retreat_x1.generators import generate_markdown_volumes
 
@@ -345,9 +346,16 @@ def generate_excel(
             help="Generate the preliminary 52-week Gantt schedule workbook.",
         ),
     ] = False,
+    qa: Annotated[
+        bool,
+        typer.Option(
+            "--qa",
+            help="Generate the preliminary QA/QC checklist workbook.",
+        ),
+    ] = False,
 ) -> None:
     """Generate preliminary Excel workbooks."""
-    if bom or cost or gantt:
+    if bom or cost or gantt or qa:
         _ensure_output_dirs(output_dir)
         config = _load_config_or_exit(config_dir)
         generated_paths: list[Path] = []
@@ -357,6 +365,8 @@ def generate_excel(
             generated_paths.append(generate_cost_estimate_workbook(config, output_dir))
         if gantt:
             generated_paths.append(generate_gantt_schedule_workbook(config, output_dir))
+        if qa:
+            generated_paths.append(generate_qa_checklist_workbook(config, output_dir))
         table = Table(title="Generated Excel Workbooks")
         table.add_column("File", style="cyan")
         table.add_column("Status")

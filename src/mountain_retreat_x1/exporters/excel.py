@@ -7,6 +7,7 @@ from pathlib import Path
 from openpyxl import Workbook  # type: ignore[import-untyped]
 from openpyxl.styles import Alignment, Font, PatternFill  # type: ignore[import-untyped]
 from openpyxl.utils import get_column_letter  # type: ignore[import-untyped]
+from openpyxl.worksheet.datavalidation import DataValidation  # type: ignore[import-untyped]
 from openpyxl.worksheet.worksheet import Worksheet  # type: ignore[import-untyped]
 
 from mountain_retreat_x1.config.loader import MountainRetreatConfig
@@ -15,9 +16,11 @@ from mountain_retreat_x1.models import CostItem, MaterialItem
 BOM_FILENAME = "Mountain_Retreat_X1_BOM.xlsx"
 COST_FILENAME = "Mountain_Retreat_X1_Cost_Estimate.xlsx"
 GANTT_FILENAME = "Mountain_Retreat_X1_Gantt_Schedule.xlsx"
+QA_FILENAME = "Mountain_Retreat_X1_QA_QC_Checklists.xlsx"
 BOM_OUTPUT_DIR = "excel"
 COST_OUTPUT_DIR = "excel"
 GANTT_OUTPUT_DIR = "excel"
+QA_OUTPUT_DIR = "excel"
 
 ITEM_HEADERS = (
     "Item Code",
@@ -89,6 +92,29 @@ GANTT_WORKBOOK_SHEETS = (
     "Cashflow_By_Week",
     "Assumptions",
 )
+QA_WORKBOOK_SHEETS = (
+    "Site_Preparation",
+    "Earthworks",
+    "Drainage",
+    "Foundations",
+    "Rebar",
+    "Concrete",
+    "Timber_Structure",
+    "Roof",
+    "Windows_Doors",
+    "Facade",
+    "Electrical",
+    "Plumbing",
+    "HVAC",
+    "Insulation",
+    "Interior",
+    "Terrace",
+    "Smart_Home",
+    "Solar_OffGrid",
+    "Final_Inspection",
+    "Photo_Log",
+    "Document_Register",
+)
 
 COST_ITEM_HEADERS = (
     "Cost Code",
@@ -129,6 +155,28 @@ GANTT_HEADERS = (
     "Weather Sensitive",
     "Notes",
     *WEEK_HEADERS,
+)
+QA_HEADERS = (
+    "Checklist ID",
+    "Phase",
+    "Discipline",
+    "Inspection Item",
+    "Acceptance Criteria",
+    "Responsible Person",
+    "Required Photo",
+    "Required Document",
+    "Status",
+    "Date",
+    "Notes",
+    "Reviewer",
+)
+QA_STATUS_VALUES = (
+    "Not Started",
+    "In Progress",
+    "Passed",
+    "Failed",
+    "Needs Review",
+    "Not Applicable",
 )
 
 
@@ -1415,5 +1463,292 @@ def generate_gantt_schedule_workbook(config: MountainRetreatConfig, output_dir: 
     _apply_gantt_workbook_metadata(workbook, config)
 
     path = excel_dir / GANTT_FILENAME
+    workbook.save(path)
+    return path
+
+
+def _qa_phase_name(sheet_name: str) -> str:
+    return sheet_name.replace("_", " ")
+
+
+def _qa_scope_names(config: MountainRetreatConfig) -> tuple[str, ...]:
+    room_names = tuple(
+        room.name for room in [*config.rooms_ground_floor.rooms, *config.rooms_gallery.rooms]
+    )
+    terrace_names = tuple(f"Terrace - {zone.name}" for zone in config.terrace.zones)
+    systems = (
+        "Technical room",
+        "Main distribution",
+        "Water storage option",
+        "Wastewater option",
+        "Access road",
+        "Foundation perimeter",
+        "Roof drainage",
+        "Owner handover set",
+    )
+    return (*room_names, *terrace_names, *systems)
+
+
+def _qa_templates(sheet_name: str) -> tuple[tuple[str, str, str, str], ...]:
+    raw_templates: dict[str, tuple[tuple[str, str, str], ...]] = {
+        "Site_Preparation": (
+            ("site", "Access route", "Owner / contractor"),
+            ("site", "Setting out", "Surveyor"),
+            ("safety", "Temporary works", "Safety lead"),
+            ("environment", "Erosion control", "Civil contractor"),
+            ("documentation", "Pre-start record", "Site manager"),
+        ),
+        "Earthworks": (
+            ("civil", "Excavation depth", "Civil contractor"),
+            ("geotechnical", "Soil condition", "Geotechnical reviewer"),
+            ("safety", "Slope stability", "Safety lead"),
+            ("civil", "Spoil management", "Site manager"),
+            ("survey", "Formation level", "Surveyor"),
+        ),
+        "Drainage": (
+            ("civil", "Drain route", "Drainage designer"),
+            ("civil", "Filter layer", "Civil contractor"),
+            ("waterproofing", "Interface", "Site manager"),
+            ("maintenance", "Access", "Contractor"),
+            ("weather", "Mountain runoff", "Civil reviewer"),
+        ),
+        "Foundations": (
+            ("structural", "Subgrade approval", "Structural engineer"),
+            ("structural", "Dimensions", "Site engineer"),
+            ("waterproofing", "Damp proofing", "Waterproofing lead"),
+            ("civil", "Frost protection", "Civil reviewer"),
+            ("documentation", "Hold point", "Site manager"),
+        ),
+        "Rebar": (
+            ("structural", "Bar placement", "Structural engineer"),
+            ("structural", "Chairs/supports", "Site engineer"),
+            ("structural", "Openings", "Structural engineer"),
+            ("documentation", "Photo record", "Site manager"),
+            ("safety", "Access", "Safety lead"),
+        ),
+        "Concrete": (
+            ("concrete", "Delivery ticket", "Concrete contractor"),
+            ("concrete", "Placement", "Site engineer"),
+            ("concrete", "Curing", "Concrete contractor"),
+            ("testing", "Samples", "Testing lab"),
+            ("documentation", "Pour record", "Site manager"),
+        ),
+        "Timber_Structure": (
+            ("structural", "Member condition", "Structural contractor"),
+            ("structural", "Connections", "Structural engineer"),
+            ("structural", "Bracing", "Site engineer"),
+            ("envelope", "Moisture protection", "Contractor"),
+            ("survey", "Plumb/level", "Surveyor"),
+        ),
+        "Roof": (
+            ("roofing", "Underlay", "Roofing contractor"),
+            ("roofing", "Metal covering", "Roofing contractor"),
+            ("safety", "Fall protection", "Safety lead"),
+            ("snow", "Snow measures", "Designer"),
+            ("drainage", "Gutters/outlets", "Site manager"),
+        ),
+        "Windows_Doors": (
+            ("envelope", "Opening prep", "Envelope contractor"),
+            ("envelope", "Installation", "Site manager"),
+            ("thermal", "Glazing", "Architect"),
+            ("operation", "Function", "Installer"),
+            ("documentation", "Warranty data", "Site manager"),
+        ),
+        "Facade": (
+            ("envelope", "Substrate", "Facade contractor"),
+            ("envelope", "Cladding", "Architect"),
+            ("moisture", "Ventilation gap", "Site manager"),
+            ("thermal", "Thermal bridge", "Envelope reviewer"),
+            ("documentation", "Mockup/approval", "Architect"),
+        ),
+        "Electrical": (
+            ("electrical", "Containment", "Licensed electrician"),
+            ("electrical", "Box positions", "Licensed electrician"),
+            ("electrical", "Labeling", "Electrical engineer"),
+            ("safety", "Wet/exterior zones", "Electrical engineer"),
+            ("testing", "Pre-close inspection", "Site manager"),
+        ),
+        "Plumbing": (
+            ("plumbing", "Pipe routes", "Licensed plumber"),
+            ("plumbing", "Waste/vent", "Plumbing designer"),
+            ("plumbing", "Pressure test", "Licensed plumber"),
+            ("waterproofing", "Penetrations", "Site manager"),
+            ("documentation", "Fixture data", "Site manager"),
+        ),
+        "HVAC": (
+            ("mechanical", "Heating loop", "Mechanical engineer"),
+            ("mechanical", "Manifold/access", "HVAC contractor"),
+            ("ventilation", "Extract/supply", "Mechanical engineer"),
+            ("controls", "Thermostat", "HVAC contractor"),
+            ("testing", "Commissioning prep", "HVAC contractor"),
+        ),
+        "Insulation": (
+            ("thermal", "Continuity", "Envelope reviewer"),
+            ("thermal", "Vapor control", "Site manager"),
+            ("moisture", "Dryness", "Contractor"),
+            ("fire", "Fire stopping", "Site manager"),
+            ("documentation", "Photo record", "Site manager"),
+        ),
+        "Interior": (
+            ("finishes", "Substrate", "Finishing contractor"),
+            ("finishes", "Finish quality", "Architect"),
+            ("joinery", "Fit-out", "Contractor"),
+            ("safety", "Stairs/guards", "Architect"),
+            ("handover", "Defects", "Site manager"),
+        ),
+        "Terrace": (
+            ("terrace", "Structure", "Structural engineer"),
+            ("waterproofing", "Membrane", "Waterproofing lead"),
+            ("drainage", "Falls/drains", "Drainage designer"),
+            ("safety", "Guard", "Architect"),
+            ("finishes", "Decking/pavers", "Contractor"),
+        ),
+        "Smart_Home": (
+            ("controls", "Device placement", "Smart-home integrator"),
+            ("network", "Connectivity", "Network integrator"),
+            ("security", "Privacy/safety", "Security reviewer"),
+            ("testing", "Automation", "Smart-home integrator"),
+            ("documentation", "Credentials", "Owner"),
+        ),
+        "Solar_OffGrid": (
+            ("electrical", "PV/battery", "Electrical engineer"),
+            ("electrical", "Protection", "Electrician"),
+            ("mechanical", "Generator/fuel", "Specialist"),
+            ("monitoring", "Energy data", "Integrator"),
+            ("winter", "Snow/cold risk", "Owner"),
+        ),
+        "Final_Inspection": (
+            ("handover", "Completion", "Site manager"),
+            ("documentation", "Approvals", "Owner"),
+            ("commissioning", "Systems", "Contractor"),
+            ("safety", "Life safety", "Reviewer"),
+            ("defects", "Punch list", "Site manager"),
+        ),
+        "Photo_Log": (
+            ("records", "Photo before", "Site manager"),
+            ("records", "Photo after", "Site manager"),
+            ("records", "Defect photo", "Contractor"),
+            ("records", "Weather photo", "Site manager"),
+            ("records", "Closeout photo", "Owner"),
+        ),
+        "Document_Register": (
+            ("records", "Drawing record", "Document controller"),
+            ("records", "Submittal record", "Contractor"),
+            ("records", "Inspection record", "Site manager"),
+            ("records", "Warranty record", "Owner"),
+            ("records", "Approval record", "Owner"),
+        ),
+    }
+    phase = _qa_phase_name(sheet_name).lower()
+    return tuple(
+        (
+            discipline,
+            inspection,
+            f"Confirm {inspection.lower()} for {{scope}} during {phase}.",
+            responsible,
+        )
+        for discipline, inspection, responsible in raw_templates[sheet_name]
+    )
+
+
+def _configure_qa_sheet(sheet: Worksheet) -> None:
+    sheet.append(QA_HEADERS)
+    _style_header_row(sheet)
+    sheet.freeze_panes = "A2"
+    sheet.auto_filter.ref = f"A1:{get_column_letter(len(QA_HEADERS))}1"
+    _set_widths(sheet, (18, 24, 18, 44, 60, 28, 16, 18, 18, 14, 52, 24))
+
+
+def _add_status_validation(sheet: Worksheet, end_row: int) -> None:
+    quoted_values = ",".join(QA_STATUS_VALUES)
+    validation = DataValidation(
+        type="list",
+        formula1=f'"{quoted_values}"',
+        allow_blank=True,
+    )
+    validation.error = "Select a valid QA/QC status."
+    validation.errorTitle = "Invalid status"
+    validation.prompt = "Choose a status from the list."
+    validation.promptTitle = "QA/QC status"
+    sheet.add_data_validation(validation)
+    validation.add(f"I2:I{end_row}")
+
+
+def _qa_row_values(
+    sheet_name: str,
+    index: int,
+    discipline: str,
+    inspection: str,
+    criteria: str,
+    responsible: str,
+) -> tuple[str, str, str, str, str, str, str, str, str, str, str, str]:
+    phase = _qa_phase_name(sheet_name)
+    prefix = "".join(part[0] for part in sheet_name.split("_"))
+    required_photo = "Yes" if sheet_name not in {"Document_Register"} else "No"
+    required_document = "Yes" if sheet_name not in {"Photo_Log"} else "No"
+    return (
+        f"QA-{prefix}-{index:04d}",
+        phase,
+        discipline,
+        inspection,
+        criteria,
+        responsible,
+        required_photo,
+        required_document,
+        "Not Started",
+        "",
+        "Preliminary QA/QC checklist row; verify against approved documents.",
+        "",
+    )
+
+
+def _build_qa_sheet(sheet: Worksheet, config: MountainRetreatConfig, sheet_name: str) -> None:
+    _configure_qa_sheet(sheet)
+    templates = _qa_templates(sheet_name)
+    scopes = _qa_scope_names(config)
+    target_rows = 52
+    row_index = 1
+    while row_index <= target_rows:
+        scope = scopes[(row_index - 1) % len(scopes)]
+        template = templates[(row_index - 1) % len(templates)]
+        discipline, inspection, criteria, responsible = template
+        sheet.append(
+            _qa_row_values(
+                sheet_name,
+                row_index,
+                discipline,
+                f"{inspection} - {scope}",
+                criteria.format(scope=scope),
+                responsible,
+            )
+        )
+        for cell in sheet[sheet.max_row]:
+            cell.alignment = Alignment(vertical="top", wrap_text=True)
+        row_index += 1
+    _add_status_validation(sheet, sheet.max_row)
+
+
+def _apply_qa_workbook_metadata(workbook: Workbook, config: MountainRetreatConfig) -> None:
+    workbook.properties.title = "Mountain Retreat X1 Preliminary QA/QC Checklists"
+    workbook.properties.subject = "Preliminary construction QA/QC checklist workbook"
+    workbook.properties.creator = config.project.author
+    workbook.properties.keywords = "PRELIMINARY, QA/QC, not for construction"
+
+
+def generate_qa_checklist_workbook(config: MountainRetreatConfig, output_dir: Path) -> Path:
+    """Generate the preliminary QA/QC checklist workbook and return its path."""
+    excel_dir = output_dir / QA_OUTPUT_DIR
+    excel_dir.mkdir(parents=True, exist_ok=True)
+
+    workbook = Workbook()
+    workbook.active.title = QA_WORKBOOK_SHEETS[0]
+    for sheet_name in QA_WORKBOOK_SHEETS[1:]:
+        workbook.create_sheet(sheet_name)
+
+    for sheet_name in QA_WORKBOOK_SHEETS:
+        _build_qa_sheet(workbook[sheet_name], config, sheet_name)
+    _apply_qa_workbook_metadata(workbook, config)
+
+    path = excel_dir / QA_FILENAME
     workbook.save(path)
     return path
