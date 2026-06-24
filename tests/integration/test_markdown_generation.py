@@ -56,6 +56,26 @@ def test_generated_markdown_contains_required_safety_language(tmp_path: Path) ->
         assert "## Limitations" in text
 
 
+def test_maintenance_manual_contains_year_based_sections(tmp_path: Path) -> None:
+    output_dir = tmp_path / "output"
+
+    result = runner.invoke(app, ["generate", "markdown", "--output-dir", str(output_dir)])
+
+    assert result.exit_code == 0
+    text = (output_dir / "markdown" / "12_maintenance_manual.md").read_text(encoding="utf-8")
+    for section in (
+        "## 6. 5-year maintenance",
+        "## 7. 10-year maintenance",
+        "## 8. 20-year maintenance",
+        "## 9. 30-year renewal planning",
+    ):
+        assert section in text
+    assert "Planning horizon:** 30 years" in text
+    assert "| Task | Frequency | Responsible person | Estimated effort |" in text
+    assert "PRELIMINARY" in text
+    assert "not for construction" in text.lower()
+
+
 def test_self_build_guide_contains_at_least_100_normal_steps(
     tmp_path: Path,
 ) -> None:

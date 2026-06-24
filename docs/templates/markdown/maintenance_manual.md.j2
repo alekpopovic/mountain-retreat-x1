@@ -1,0 +1,100 @@
+# 12 Maintenance Manual
+
+**Project code:** {{ project.project_code }}  
+**Project:** {{ project.project_name }}  
+**Version:** {{ project.version }}  
+**Status:** {{ project.status }}  
+**Revision date:** {{ project.revision_date }}  
+**Language:** {{ project.language }}  
+**Planning horizon:** 30 years  
+**Generated task count:** {{ task_count }}  
+
+## Revision History
+
+| Version | Date | Author | Notes |
+|---|---|---|---|
+| {{ project.version }} | {{ project.revision_date }} | {{ project.author }} | Generated preliminary 30-year maintenance manual. |
+
+## Mandatory Notice
+
+{{ project.disclaimer }}
+
+This maintenance manual is **PRELIMINARY**, **not for construction**, and does not replace manufacturer manuals, warranty requirements, licensed trade inspections, fire-safety reviews, utility requirements, wastewater authority requirements, or local law.
+
+## Required Professional Review
+
+{% for reviewer in project.review_required_by -%}
+- {{ reviewer }}
+{% endfor %}
+- Architect or envelope specialist
+- Licensed structural engineer where movement, cracking, terrace loading, or structural distress is suspected
+- Licensed electrical professional for PV, battery, generator, smart panels, and mains wiring
+- Licensed mechanical/plumbing professional for HVAC, water, wastewater, and freeze-protection systems
+- Fireplace/chimney professional
+- Local authorities and utilities where required
+
+## Assumptions
+
+{% for assumption in assumptions -%}
+- {{ assumption }}
+{% endfor %}
+- Design life assumption: {{ building.design_life_years }} years.
+- Maintenance intervals are planning defaults and must be replaced by manufacturer and professional instructions.
+- Mountain exposure, frost, wind, snow, slope drainage, and intermittent occupancy increase maintenance risk.
+
+## Limitations
+
+{% for limitation in limitations -%}
+- {{ limitation }}
+{% endfor %}
+- This manual does not certify safety, code compliance, warranty compliance, or system performance.
+- Do not perform roof access, electrical work, battery work, generator transfer work, chimney work, wastewater work, or hazardous work without qualified professionals.
+- The maintenance calendar is a planning aid and must be updated with real service records.
+
+{% for section in sections %}
+## {{ loop.index }}. {{ section }}
+
+{% if section == "Maintenance philosophy" %}
+- Maintain early, document everything, and treat water, frost, fire, electrical, and terrace-edge risks as priority risks.
+- Use monthly owner observations, seasonal readiness checks, annual professional reviews, and long-cycle renewal planning.
+- Keep maintenance conservative because this cabin combines large glazing, timber/stone/glass facade interfaces, standing seam roofing, mountain climate exposure, terrace drainage, smart controls, and optional off-grid systems.
+{% elif section == "Owner responsibilities" %}
+- Keep the maintenance calendar current.
+- Store manuals, warranties, certificates, photos, invoices, and inspection reports in the handover binder.
+- Stop using unsafe systems and call licensed professionals when warning signs appear.
+- Do not convert preliminary generated guidance into final manufacturer, trade, or authority instructions.
+{% elif section == "5-year maintenance" %}
+- Reassess exposed finishes, sealants, membranes, exterior fixings, gutters, roof accessories, terrace waterproofing, and system service history.
+- Update the cost plan using contractor quotes; do not rely on placeholder prices.
+{% elif section == "10-year maintenance" %}
+- Review aging mechanical equipment, window and door hardware, facade coatings, exterior drainage, smart-home hardware, batteries, and generator reliability.
+- Consider professional envelope and energy review before large renewal spending.
+{% elif section == "20-year maintenance" %}
+- Commission a condition survey for envelope, terrace, roof, structure interfaces, PV, battery, generator, HVAC, water, and wastewater systems.
+- Plan major renewals before failure, especially where mountain weather limits emergency access.
+{% elif section == "30-year renewal planning" %}
+- Treat year 30 as a renewal-design checkpoint, not a routine checklist.
+- Reconfirm legal requirements, codes, climate assumptions, energy strategy, insurance expectations, and owner use patterns.
+{% elif section == "Maintenance log template" %}
+
+| Date | Task | Observation | Responsible person | Photo/document ref | Action required | Closeout date |
+|---|---|---|---|---|---|---|
+| YYYY-MM-DD | Example task | Observation summary | Owner/trade | Folder/file reference | Follow-up action | YYYY-MM-DD |
+{% endif %}
+
+{% set section_tasks = tasks | selectattr("section", "equalto", section) | list %}
+{% if section_tasks %}
+| Task | Frequency | Responsible person | Estimated effort | Required tools | Warning signs | Notes |
+|---|---|---|---|---|---|---|
+{% for item in section_tasks -%}
+| {{ item.task }} | {{ item.frequency }} | {{ item.responsible_person }} | {{ item.estimated_effort }} | {{ item.required_tools }} | {{ item.warning_signs }} | {{ item.notes }} |
+{% endfor %}
+{% endif %}
+
+{% endfor %}
+
+## QA Notes
+
+- Confirm maintenance intervals against manufacturer instructions after procurement.
+- Confirm licensed trades perform regulated or hazardous maintenance.
+- Keep photos, receipts, and inspection records because long-cycle renewal planning depends on real history.

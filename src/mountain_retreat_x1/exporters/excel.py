@@ -17,10 +17,12 @@ BOM_FILENAME = "Mountain_Retreat_X1_BOM.xlsx"
 COST_FILENAME = "Mountain_Retreat_X1_Cost_Estimate.xlsx"
 GANTT_FILENAME = "Mountain_Retreat_X1_Gantt_Schedule.xlsx"
 QA_FILENAME = "Mountain_Retreat_X1_QA_QC_Checklists.xlsx"
+MAINTENANCE_FILENAME = "Mountain_Retreat_X1_Maintenance_Calendar.xlsx"
 BOM_OUTPUT_DIR = "excel"
 COST_OUTPUT_DIR = "excel"
 GANTT_OUTPUT_DIR = "excel"
 QA_OUTPUT_DIR = "excel"
+MAINTENANCE_OUTPUT_DIR = "excel"
 
 ITEM_HEADERS = (
     "Item Code",
@@ -179,6 +181,37 @@ QA_STATUS_VALUES = (
     "Not Applicable",
 )
 
+MAINTENANCE_WORKBOOK_SHEETS = (
+    "Calendar",
+    "Task_Catalog",
+    "Year_1_to_30",
+    "Professional_Reviews",
+    "Emergency_Plan",
+    "Maintenance_Log",
+    "Assumptions",
+)
+
+MAINTENANCE_HEADERS = (
+    "Task",
+    "Frequency",
+    "Responsible Person",
+    "Estimated Effort",
+    "Required Tools",
+    "Warning Signs",
+    "Notes",
+)
+
+CALENDAR_HEADERS = (
+    "Year",
+    "Month/Season",
+    "Section",
+    *MAINTENANCE_HEADERS,
+    "Professional Review Required",
+    "Completed Date",
+    "Photo/Document Ref",
+    "Closeout Notes",
+)
+
 
 HEADER_FILL = PatternFill("solid", fgColor="1F4E78")
 SUBHEADER_FILL = PatternFill("solid", fgColor="D9EAF7")
@@ -206,6 +239,23 @@ class GanttTask:
     inspection_required: str
     weather_sensitive: str
     notes: str
+
+
+@dataclass(frozen=True)
+class MaintenanceCalendarTask:
+    """Maintenance calendar task row."""
+
+    section: str
+    task: str
+    frequency: str
+    responsible_person: str
+    estimated_effort: str
+    required_tools: str
+    warning_signs: str
+    notes: str
+    month_season: str
+    due_years: tuple[int, ...]
+    professional_review_required: str
 
 
 def _all_materials(config: MountainRetreatConfig) -> list[MaterialItem]:
@@ -330,7 +380,7 @@ def _append_material_row(sheet: Worksheet, item: MaterialItem) -> None:
     for cell in sheet[row]:
         cell.alignment = Alignment(vertical="top", wrap_text=True)
     for column in ("G", "H", "I", "J", "K", "L", "M", "N", "O"):
-        sheet[f"{column}{row}"].number_format = '#,##0.00'
+        sheet[f"{column}{row}"].number_format = "#,##0.00"
 
 
 def _build_summary_sheet(
@@ -388,7 +438,7 @@ def _build_summary_sheet(
         cell.fill = SUBHEADER_FILL
     for row in sheet.iter_rows(min_row=2, max_row=sheet.max_row, min_col=2, max_col=4):
         for cell in row:
-            cell.number_format = '#,##0.00'
+            cell.number_format = "#,##0.00"
     sheet.freeze_panes = "A2"
     sheet.auto_filter.ref = f"A1:F{sheet.max_row}"
     _set_widths(sheet, (22, 18, 20, 18, 48, 42))
@@ -515,7 +565,7 @@ def _append_cost_component_row(
     for cell in sheet[row]:
         cell.alignment = Alignment(vertical="top", wrap_text=True)
     for column in ("E", "G", "H"):
-        sheet[f"{column}{row}"].number_format = EUR_FORMAT if column in ("G", "H") else '#,##0.00'
+        sheet[f"{column}{row}"].number_format = EUR_FORMAT if column in ("G", "H") else "#,##0.00"
 
 
 def _build_cost_component_sheet(
@@ -1750,5 +1800,531 @@ def generate_qa_checklist_workbook(config: MountainRetreatConfig, output_dir: Pa
     _apply_qa_workbook_metadata(workbook, config)
 
     path = excel_dir / QA_FILENAME
+    workbook.save(path)
+    return path
+
+
+def _maintenance_calendar_tasks(
+    config: MountainRetreatConfig,
+) -> tuple[MaintenanceCalendarTask, ...]:
+    annual_years = tuple(range(1, 31))
+    return (
+        MaintenanceCalendarTask(
+            "Monthly checklist",
+            "Inspect visible leaks, terrace drains, technical room, bathrooms, and windows.",
+            "Monthly",
+            "Owner/operator",
+            "1-2 hours",
+            "Flashlight, camera, moisture meter if available",
+            "Staining, swelling, musty smell, ponding, active drips",
+            "Stop and call qualified trades if water ingress is suspected.",
+            "Monthly",
+            annual_years,
+            "No, unless warning signs are found",
+        ),
+        MaintenanceCalendarTask(
+            "Seasonal checklist",
+            "Prepare cabin for winter freeze, snow, wind, and mountain access constraints.",
+            "Autumn / before first frost",
+            "Owner with HVAC/plumbing trades as needed",
+            "0.5-1 day",
+            "Drain-down checklist, insulation check, snow tools",
+            "Unheated pipe routes, blocked drains, low frost protection",
+            (
+                f"Frost depth placeholder {config.site.frost_depth_placeholder_cm:g} "
+                "cm is a risk reminder only."
+            ),
+            "Autumn",
+            annual_years,
+            "Yes, for plumbing/HVAC winterization details",
+        ),
+        MaintenanceCalendarTask(
+            "Annual checklist",
+            "Schedule professional roof, envelope, MEP, fireplace, and safety review.",
+            "Annual",
+            "Qualified contractor / licensed trades",
+            "1 day allowance",
+            "Access equipment, inspection reports, as-built notes",
+            "Movement, leaks, corrosion, poor combustion, electrical faults",
+            "Professional inspections do not create permits unless issued by authorities.",
+            "Spring",
+            annual_years,
+            "Yes",
+        ),
+        MaintenanceCalendarTask(
+            "5-year maintenance",
+            (
+                "Review coatings, sealants, membranes, exterior fixings, service "
+                "history, and renewals."
+            ),
+            "Every 5 years",
+            "Owner with architect/contractor",
+            "1-3 days",
+            "Inspection checklist, access equipment, supplier manuals",
+            "UV damage, sealant cracking, timber finish breakdown, recurring leaks",
+            "Use contractor quotes for renewal budgeting.",
+            "Planning",
+            (5, 10, 15, 20, 25, 30),
+            "Yes",
+        ),
+        MaintenanceCalendarTask(
+            "10-year maintenance",
+            (
+                "Review roof accessories, facade finish strategy, window hardware, "
+                "HVAC major service needs."
+            ),
+            "Every 10 years",
+            "Owner with specialist contractors",
+            "2-5 days",
+            "Inspection report, service records, replacement budget",
+            "Corrosion, hardware wear, coating failure, lower HVAC efficiency",
+            "Consider professional envelope and energy review before major spending.",
+            "Planning",
+            (10, 20, 30),
+            "Yes",
+        ),
+        MaintenanceCalendarTask(
+            "20-year maintenance",
+            (
+                "Commission major system renewal study for envelope, terrace, roof, "
+                "HVAC, PV, and controls."
+            ),
+            "Year 20",
+            "Owner with design team",
+            "1-2 weeks planning",
+            "Condition survey, budget model, energy review",
+            "End-of-life equipment, repeated water ingress, obsolete controls",
+            "Treat as a redesign checkpoint with licensed professional review.",
+            "Planning",
+            (20,),
+            "Yes",
+        ),
+        MaintenanceCalendarTask(
+            "30-year renewal planning",
+            (
+                "Prepare full renewal plan for envelope, structure interfaces, "
+                "MEP systems, and interiors."
+            ),
+            "Year 30",
+            "Owner with architect, engineers, and cost estimator",
+            "2-4 weeks planning",
+            "Condition survey, measured drawings, contractor quotes",
+            "System obsolescence, hidden moisture, structural movement, code changes",
+            "Do not assume original planning documents remain valid after 30 years.",
+            "Planning",
+            (30,),
+            "Yes",
+        ),
+        MaintenanceCalendarTask(
+            "Roof maintenance",
+            (
+                f"Inspect {config.building.roof_type}, gutters, snow guards, "
+                "flashings, and penetrations."
+            ),
+            "Seasonal and after severe storms",
+            "Owner for visual checks; roofer for access work",
+            "2-4 hours",
+            "Binoculars, camera, safe access equipment by qualified personnel",
+            "Loose panels, corrosion, ice dams, blocked gutters, damaged flashing",
+            "No roof access without fall protection and competent supervision.",
+            "Spring/Autumn",
+            annual_years,
+            "Yes, for roof access or defects",
+        ),
+        MaintenanceCalendarTask(
+            "Timber facade maintenance",
+            (
+                "Inspect timber cladding finish, ventilation gaps, end grain, "
+                "fasteners, and splash zones."
+            ),
+            "Annual; refinish cycle TBD",
+            "Owner / facade contractor",
+            "0.5-1 day",
+            "Moisture meter, camera, cleaning tools",
+            "Cupping, rot, loose boards, trapped debris, coating breakdown",
+            "Final coating cycles depend on selected product and exposure.",
+            "Spring",
+            annual_years,
+            "Yes, if deterioration appears",
+        ),
+        MaintenanceCalendarTask(
+            "Stone facade maintenance",
+            "Inspect stone veneer/supports, joints, weeps, movement joints, and staining.",
+            "Annual",
+            "Masonry/facade contractor",
+            "0.5 day",
+            "Camera, joint probe by specialist, cleaning tools",
+            "Cracked joints, displaced stone, efflorescence, blocked weeps",
+            "Avoid aggressive cleaning without facade specialist review.",
+            "Spring",
+            annual_years,
+            "Yes, if cracking or movement appears",
+        ),
+        MaintenanceCalendarTask(
+            "Terrace maintenance",
+            (
+                "Inspect deck/paver surfaces, waterproofing terminations, drains, "
+                "guards, stairs, and lighting."
+            ),
+            "Monthly in use season; seasonal deep check",
+            "Owner / terrace contractor",
+            "2-6 hours",
+            "Hand tools, level, drain cleaning tools",
+            "Ponding, loose guards, slippery surfaces, blocked drains, movement",
+            f"Terrace area assumption is {config.terrace.terrace_area_m2:g} m2.",
+            "Spring/Autumn",
+            annual_years,
+            "Yes, for guards, structure, waterproofing, or jacuzzi/fire-pit zones",
+        ),
+        MaintenanceCalendarTask(
+            "Window and door maintenance",
+            "Inspect glazing, seals, drainage slots, thresholds, hinges, locks, and weatherstrips.",
+            "Seasonal",
+            "Owner / window contractor",
+            "2-4 hours",
+            "Non-abrasive cleaner, hardware lubricant, camera",
+            "Condensation between panes, air leakage, stiff operation, water at thresholds",
+            "Large panoramic glazing requires specialist review if movement or cracking appears.",
+            "Spring/Autumn",
+            annual_years,
+            "Yes, if glazing, structure, or egress concerns appear",
+        ),
+        MaintenanceCalendarTask(
+            "HVAC maintenance",
+            "Service heat pump, underfloor manifolds, filters, pumps, valves, and frost settings.",
+            "Annual; filters 3-6 months",
+            "Licensed mechanical/HVAC contractor",
+            "0.5-1 day",
+            "Manufacturer service kit, pressure/temperature readings",
+            "Short cycling, low pressure, cold rooms, unusual noise, fault codes",
+            "No final heat-loss calculation is included in this repository.",
+            "Autumn",
+            annual_years,
+            "Yes",
+        ),
+        MaintenanceCalendarTask(
+            "Fireplace maintenance",
+            "Inspect fireplace/stove, flue, combustion air, hearth, clearances, and CO alarms.",
+            "Before heating season",
+            "Certified chimney/fireplace professional",
+            "2-4 hours",
+            "Chimney tools by professional, CO alarm tester",
+            "Soot smell, poor draft, cracked glass, smoke spillage, CO alarm events",
+            "Never operate after suspected flue or CO issue until inspected.",
+            "Autumn",
+            annual_years,
+            "Yes",
+        ),
+        MaintenanceCalendarTask(
+            "Solar PV maintenance",
+            (
+                "Inspect PV production, roof interfaces, isolators, labels, snow "
+                "shading, and monitoring."
+            ),
+            "Quarterly visual; annual professional check",
+            "Owner / licensed solar electrician",
+            "1-3 hours",
+            "Monitoring dashboard, camera, electrician test equipment",
+            "Production drop, damaged cables, inverter faults, water at penetrations",
+            f"PV assumption is {config.off_grid.pv_kwp:g} kWp and remains preliminary.",
+            "Quarterly/Annual",
+            annual_years,
+            "Yes, for electrical inspection",
+        ),
+        MaintenanceCalendarTask(
+            "Battery maintenance",
+            (
+                "Review battery area, BMS alarms, ventilation, temperature, "
+                "clearances, and shutdown labels."
+            ),
+            "Monthly dashboard; annual professional check",
+            "Owner / licensed electrical professional",
+            "1-2 hours",
+            "BMS dashboard, thermal scan by professional if needed",
+            "Swelling, heat, odor, repeated faults, communication loss",
+            f"Battery assumption is {config.off_grid.battery_kwh:g} kWh.",
+            "Monthly/Annual",
+            annual_years,
+            "Yes, for battery area and BMS faults",
+        ),
+        MaintenanceCalendarTask(
+            "Generator maintenance",
+            (
+                "Test generator start, fuel condition, exhaust route, transfer "
+                "arrangement, and service interval."
+            ),
+            "Monthly exercise; annual service",
+            "Owner / generator specialist / electrician",
+            "1-3 hours",
+            "Generator manual, fuel stabilizer, load test equipment by professional",
+            "Hard starting, exhaust smell, fuel leaks, transfer faults, low runtime",
+            f"Generator assumption: {config.off_grid.generator}. Transfer design is not finalized.",
+            "Monthly/Annual",
+            annual_years,
+            "Yes, for transfer, exhaust, or fuel issues",
+        ),
+        MaintenanceCalendarTask(
+            "Water system maintenance",
+            (
+                "Inspect tank, pump, filters, pressure, insulation, valves, leak "
+                "sensors, and drain-down points."
+            ),
+            "Monthly; seasonal winterization",
+            "Owner / licensed plumber",
+            "1-4 hours",
+            "Pressure gauge, filter cartridges, leak sensor test",
+            "Pressure loss, cloudy water, pump cycling, leaks, frozen sections",
+            f"Water tank option assumption: {config.off_grid.water_tank_l:g} L.",
+            "Monthly/Autumn",
+            annual_years,
+            "Yes, for plumbing or water-quality concerns",
+        ),
+        MaintenanceCalendarTask(
+            "Wastewater system maintenance",
+            (
+                "Review septic/biological treatment option, access covers, alarms, "
+                "odors, and service contract."
+            ),
+            "Per authority/manufacturer; visual monthly",
+            "Licensed wastewater service provider",
+            "1-3 hours",
+            "Service log, access tools by provider, alarm test",
+            "Odor, backups, wet ground, alarm events, blocked venting",
+            "Local wastewater approval and maintenance rules govern final operation.",
+            "Monthly/Annual",
+            annual_years,
+            "Yes",
+        ),
+        MaintenanceCalendarTask(
+            "Smart home maintenance",
+            (
+                "Back up Home Assistant, test Zigbee/Matter/MQTT devices, cameras, "
+                "UPS, alerts, and credentials."
+            ),
+            "Monthly backup; annual security review",
+            "Owner / smart-home integrator",
+            "1-3 hours",
+            "Admin dashboard, password manager, UPS test, spare batteries",
+            "Offline devices, failed backups, stale updates, weak passwords, missing alerts",
+            f"Configured platform assumption: {config.smart_home.platform}.",
+            "Monthly/Annual",
+            annual_years,
+            "Yes, for security architecture changes",
+        ),
+        MaintenanceCalendarTask(
+            "Emergency plan",
+            (
+                "Review emergency contacts, shutoff locations, generator procedure, "
+                "freeze response, evacuation."
+            ),
+            "Annual and after major changes",
+            "Owner/operator",
+            "1-2 hours",
+            "Printed emergency sheet, labels, flashlight, first-aid kit",
+            "Unlabeled shutoffs, inaccessible equipment, expired fire extinguishers",
+            "Keep paper instructions available because internet or power may fail.",
+            "Annual",
+            annual_years,
+            "Yes, if life-safety systems change",
+        ),
+    )
+
+
+def _configure_maintenance_sheet(sheet: Worksheet, headers: tuple[str, ...]) -> None:
+    sheet.append(headers)
+    _style_header_row(sheet)
+    sheet.freeze_panes = "A2"
+    sheet.auto_filter.ref = f"A1:{get_column_letter(len(headers))}1"
+    _set_widths(sheet, (10, 18, 26, 44, 22, 28, 18, 32, 40, 52, 28, 18, 28, 52))
+
+
+def _build_maintenance_catalog(
+    sheet: Worksheet, tasks: tuple[MaintenanceCalendarTask, ...]
+) -> None:
+    _configure_maintenance_sheet(
+        sheet,
+        ("Section", *MAINTENANCE_HEADERS, "Professional Review"),
+    )
+    for task in tasks:
+        sheet.append(
+            (
+                task.section,
+                task.task,
+                task.frequency,
+                task.responsible_person,
+                task.estimated_effort,
+                task.required_tools,
+                task.warning_signs,
+                task.notes,
+                task.professional_review_required,
+            )
+        )
+        for cell in sheet[sheet.max_row]:
+            cell.alignment = Alignment(vertical="top", wrap_text=True)
+
+
+def _build_maintenance_calendar(
+    sheet: Worksheet,
+    tasks: tuple[MaintenanceCalendarTask, ...],
+) -> None:
+    _configure_maintenance_sheet(sheet, CALENDAR_HEADERS)
+    for year in range(1, 31):
+        for task in tasks:
+            if year not in task.due_years:
+                continue
+            sheet.append(
+                (
+                    year,
+                    task.month_season,
+                    task.section,
+                    task.task,
+                    task.frequency,
+                    task.responsible_person,
+                    task.estimated_effort,
+                    task.required_tools,
+                    task.warning_signs,
+                    task.notes,
+                    task.professional_review_required,
+                    "",
+                    "",
+                    "",
+                )
+            )
+            for cell in sheet[sheet.max_row]:
+                cell.alignment = Alignment(vertical="top", wrap_text=True)
+    for row in range(2, sheet.max_row + 1):
+        if sheet[f"A{row}"].value in {5, 10, 20, 30}:
+            for cell in sheet[row]:
+                cell.fill = SUBHEADER_FILL
+
+
+def _build_year_plan(sheet: Worksheet) -> None:
+    sheet.append(("Year", "Planning Focus", "Professional Review", "Notes"))
+    _style_header_row(sheet)
+    for year in range(1, 31):
+        if year == 30:
+            focus = "30-year renewal planning"
+            review = "Architect, engineers, cost estimator, authority checks as required"
+        elif year == 20:
+            focus = "Major system renewal study"
+            review = "Design team and specialist contractors"
+        elif year % 10 == 0:
+            focus = "10-year maintenance and medium renewal review"
+            review = "Specialist contractors and envelope/MEP reviewers"
+        elif year % 5 == 0:
+            focus = "5-year maintenance and sealant/coating review"
+            review = "Architect or contractor review"
+        else:
+            focus = "Routine monthly, seasonal, and annual maintenance"
+            review = "Licensed trades where warning signs or regulated systems are involved"
+        sheet.append(
+            (
+                year,
+                focus,
+                review,
+                "PRELIMINARY planning aid; update from real service records.",
+            )
+        )
+    sheet.freeze_panes = "A2"
+    sheet.auto_filter.ref = f"A1:D{sheet.max_row}"
+    _set_widths(sheet, (10, 44, 54, 54))
+
+
+def _build_professional_reviews(sheet: Worksheet) -> None:
+    rows = (
+        ("Roof/fall-risk work", "Roofer or competent contractor", "Before access work"),
+        ("Structural movement/cracking", "Licensed structural engineer", "Immediately"),
+        ("Electrical/PV/battery/generator", "Licensed electrical professional", "Before work"),
+        ("HVAC/water/freeze protection", "Licensed mechanical/plumbing professional", "Annual"),
+        ("Fireplace/flue/CO", "Certified chimney/fireplace professional", "Before heating season"),
+        ("Wastewater", "Licensed wastewater provider/local authority", "Per permit/manufacturer"),
+        ("Smart home/security", "Integrator/security reviewer", "Annual or after changes"),
+    )
+    sheet.append(("Topic", "Required Reviewer", "Timing"))
+    _style_header_row(sheet)
+    for row in rows:
+        sheet.append(row)
+    sheet.freeze_panes = "A2"
+    sheet.auto_filter.ref = f"A1:C{sheet.max_row}"
+    _set_widths(sheet, (36, 52, 34))
+
+
+def _build_emergency_plan(sheet: Worksheet) -> None:
+    rows = (
+        ("Water leak", "Shut off water, isolate power if safe, document leak, call plumber."),
+        ("Electrical fault", "Do not reset repeatedly; isolate if safe and call electrician."),
+        (
+            "CO/fireplace alarm",
+            "Evacuate, ventilate if safe, call emergency services/professional.",
+        ),
+        (
+            "Freeze event",
+            "Check frost-protection heat, water pressure, and drain-down procedure.",
+        ),
+        ("Generator fault", "Stop use if exhaust/fuel/electrical issue is suspected."),
+        ("Battery alarm", "Follow manufacturer emergency instructions and call specialist."),
+    )
+    sheet.append(("Scenario", "Owner Response"))
+    _style_header_row(sheet)
+    for row in rows:
+        sheet.append(row)
+    sheet.freeze_panes = "A2"
+    sheet.auto_filter.ref = f"A1:B{sheet.max_row}"
+    _set_widths(sheet, (30, 90))
+
+
+def _build_maintenance_log(sheet: Worksheet) -> None:
+    headers = (
+        "Date",
+        "Task",
+        "Observation",
+        "Responsible Person",
+        "Photo/Document Ref",
+        "Action Required",
+        "Closeout Date",
+    )
+    sheet.append(headers)
+    _style_header_row(sheet)
+    for _ in range(40):
+        sheet.append(("", "", "", "", "", "", ""))
+    sheet.freeze_panes = "A2"
+    sheet.auto_filter.ref = f"A1:G{sheet.max_row}"
+    _set_widths(sheet, (16, 34, 54, 28, 32, 48, 16))
+
+
+def _apply_maintenance_workbook_metadata(
+    workbook: Workbook,
+    config: MountainRetreatConfig,
+) -> None:
+    workbook.properties.title = "Mountain Retreat X1 Maintenance Calendar"
+    workbook.properties.subject = "Preliminary 30-year maintenance planning calendar"
+    workbook.properties.creator = config.project.author
+    workbook.properties.keywords = "PRELIMINARY, maintenance, not for construction"
+
+
+def generate_maintenance_calendar_workbook(
+    config: MountainRetreatConfig,
+    output_dir: Path,
+) -> Path:
+    """Generate the preliminary 30-year maintenance calendar workbook."""
+    excel_dir = output_dir / MAINTENANCE_OUTPUT_DIR
+    excel_dir.mkdir(parents=True, exist_ok=True)
+
+    workbook = Workbook()
+    workbook.active.title = MAINTENANCE_WORKBOOK_SHEETS[0]
+    for sheet_name in MAINTENANCE_WORKBOOK_SHEETS[1:]:
+        workbook.create_sheet(sheet_name)
+
+    tasks = _maintenance_calendar_tasks(config)
+    _build_maintenance_calendar(workbook["Calendar"], tasks)
+    _build_maintenance_catalog(workbook["Task_Catalog"], tasks)
+    _build_year_plan(workbook["Year_1_to_30"])
+    _build_professional_reviews(workbook["Professional_Reviews"])
+    _build_emergency_plan(workbook["Emergency_Plan"])
+    _build_maintenance_log(workbook["Maintenance_Log"])
+    _build_assumptions_sheet(workbook["Assumptions"], config)
+    _apply_maintenance_workbook_metadata(workbook, config)
+
+    path = excel_dir / MAINTENANCE_FILENAME
     workbook.save(path)
     return path

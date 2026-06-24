@@ -20,6 +20,7 @@ PLUMBING_TEMPLATE_NAME = "plumbing_wastewater.md.j2"
 HVAC_TEMPLATE_NAME = "hvac_package.md.j2"
 SMART_HOME_TEMPLATE_NAME = "smart_home_security.md.j2"
 OFF_GRID_TEMPLATE_NAME = "off_grid_package.md.j2"
+MAINTENANCE_TEMPLATE_NAME = "maintenance_manual.md.j2"
 SELF_BUILD_TEMPLATE_NAME = "self_build_guide.md.j2"
 DEFAULT_TEMPLATE_DIR = Path("docs/templates/markdown")
 
@@ -216,6 +217,20 @@ class FailureScenarioItem:
     manual_response: str
     automation_monitoring: str
     professional_review: str
+
+
+@dataclass(frozen=True)
+class MaintenanceTask:
+    """Maintenance task for the 30-year manual."""
+
+    section: str
+    task: str
+    frequency: str
+    responsible_person: str
+    estimated_effort: str
+    required_tools: str
+    warning_signs: str
+    notes: str
 
 
 @dataclass(frozen=True)
@@ -1494,6 +1509,379 @@ def _off_grid_context(config: MountainRetreatConfig) -> dict[str, object]:
     }
 
 
+MAINTENANCE_SECTIONS = (
+    "Maintenance philosophy",
+    "Owner responsibilities",
+    "Monthly checklist",
+    "Seasonal checklist",
+    "Annual checklist",
+    "5-year maintenance",
+    "10-year maintenance",
+    "20-year maintenance",
+    "30-year renewal planning",
+    "Roof maintenance",
+    "Timber facade maintenance",
+    "Stone facade maintenance",
+    "Terrace maintenance",
+    "Window and door maintenance",
+    "HVAC maintenance",
+    "Fireplace maintenance",
+    "Solar PV maintenance",
+    "Battery maintenance",
+    "Generator maintenance",
+    "Water system maintenance",
+    "Wastewater system maintenance",
+    "Smart home maintenance",
+    "Emergency plan",
+    "Maintenance log template",
+)
+
+
+def _maintenance_task_rows(config: MountainRetreatConfig) -> tuple[tuple[str, ...], ...]:
+    return (
+        (
+            "Monthly checklist",
+            "Walk roof edges, terrace drains, technical room, bathrooms, and windows for leaks.",
+            "Monthly",
+            "Owner/operator",
+            "1-2 hours",
+            "Flashlight, camera, moisture meter if available",
+            "Staining, swelling, musty smell, ponding, active drips",
+            "Record photos and call qualified trades if water ingress is suspected.",
+        ),
+        (
+            "Monthly checklist",
+            "Review heat pump, smart-home dashboard, leak sensors, and battery alerts.",
+            "Monthly",
+            "Owner/operator",
+            "30 minutes",
+            "Home Assistant dashboard, equipment manuals",
+            "Offline sensors, repeated alarms, unusual cycling, temperature drift",
+            "Alerts are planning aids and do not replace physical inspection.",
+        ),
+        (
+            "Seasonal checklist",
+            "Prepare cabin for winter freeze, snow, wind, and access constraints.",
+            "Autumn / before first frost",
+            "Owner with HVAC/plumbing trades as needed",
+            "0.5-1 day",
+            "Drain-down checklist, insulation check, snow tools",
+            "Unheated pipe routes, blocked drains, low antifreeze/frost protection",
+            (
+                f"Use frost depth placeholder {config.site.frost_depth_placeholder_cm:g} "
+                "cm as a risk reminder only."
+            ),
+        ),
+        (
+            "Seasonal checklist",
+            (
+                "Inspect terrace surface falls, scuppers/drains, guards, exterior "
+                "lighting, and furniture."
+            ),
+            "Spring and autumn",
+            "Owner/operator",
+            "2-4 hours",
+            "Hose test by professional if needed, level, hand tools",
+            "Loose guards, ponding, cracked sealant, blocked outlets",
+            "Jacuzzi-ready and fire-pit zones remain placeholders until professionally designed.",
+        ),
+        (
+            "Annual checklist",
+            "Complete annual owner inspection and update maintenance binder.",
+            "Annual",
+            "Owner/operator",
+            "0.5 day",
+            "Maintenance log, camera, manuals, warranty file",
+            "Missing records, unresolved defects, repeated alarms",
+            "Use the Excel maintenance calendar as the working log.",
+        ),
+        (
+            "Annual checklist",
+            (
+                "Schedule professional review of roof, envelope, MEP systems, and "
+                "safety-critical items."
+            ),
+            "Annual",
+            "Qualified contractor / licensed trades",
+            "1 day allowance",
+            "Access equipment, inspection reports, as-built notes",
+            "Movement, leaks, corrosion, poor combustion, electrical faults",
+            "Professional inspections do not create permits unless issued by proper authorities.",
+        ),
+        (
+            "5-year maintenance",
+            (
+                "Plan first medium-cycle review of coatings, sealants, membranes, "
+                "and MEP service history."
+            ),
+            "Every 5 years",
+            "Owner with architect/contractor",
+            "1-3 days",
+            "Inspection checklist, access equipment, supplier manuals",
+            "UV damage, sealant cracking, timber finish breakdown, recurring leaks",
+            "Budget for selective renewal rather than waiting for failure.",
+        ),
+        (
+            "10-year maintenance",
+            (
+                "Review roof accessories, facade finish strategy, window hardware, "
+                "HVAC major service needs."
+            ),
+            "Every 10 years",
+            "Owner with specialist contractors",
+            "2-5 days",
+            "Inspection report, service records, replacement budget",
+            "Corrosion, hardware wear, coating failure, lower HVAC efficiency",
+            "Use real contractor quotes; this package does not provide live prices.",
+        ),
+        (
+            "20-year maintenance",
+            (
+                "Plan major system renewal study for roof, facade, terrace, HVAC, "
+                "PV, battery, and controls."
+            ),
+            "Year 20",
+            "Owner with design team",
+            "1-2 weeks planning",
+            "Condition survey, budget model, energy review",
+            "End-of-life equipment, repeated water ingress, obsolete controls",
+            "Treat as a redesign checkpoint with licensed professional review.",
+        ),
+        (
+            "30-year renewal planning",
+            (
+                "Prepare 30-year renewal plan for envelope, structure interfaces, "
+                "MEP systems, and interiors."
+            ),
+            "Year 30",
+            "Owner with architect, engineers, and cost estimator",
+            "2-4 weeks planning",
+            "Condition survey, measured drawings, contractor quotes",
+            "System obsolescence, hidden moisture, structural movement, code changes",
+            "Do not assume original planning documents remain valid after 30 years.",
+        ),
+        (
+            "Roof maintenance",
+            (
+                f"Inspect {config.building.roof_type}, valleys, gutters, snow guards, "
+                "flashings, and penetrations."
+            ),
+            "Seasonal and after severe storms",
+            "Owner for visual checks; roofer for access work",
+            "2-4 hours",
+            "Binoculars, camera, safe access equipment by qualified personnel",
+            "Loose panels, corrosion, ice dams, blocked gutters, damaged flashing",
+            "No roof access without fall protection and competent supervision.",
+        ),
+        (
+            "Timber facade maintenance",
+            (
+                "Inspect timber cladding finish, ventilation gaps, end grain, "
+                "fasteners, and splash zones."
+            ),
+            "Annual; refinish cycle TBD",
+            "Owner / facade contractor",
+            "0.5-1 day",
+            "Moisture meter, camera, cleaning tools",
+            "Greying beyond design intent, cupping, rot, loose boards, trapped debris",
+            "Final coating cycles depend on selected product and exposure.",
+        ),
+        (
+            "Stone facade maintenance",
+            "Inspect stone veneer/supports, joints, weeps, movement joints, and staining.",
+            "Annual",
+            "Masonry/facade contractor",
+            "0.5 day",
+            "Camera, joint probe by specialist, cleaning tools",
+            "Cracked joints, displaced stone, efflorescence, blocked weeps",
+            "Avoid aggressive cleaning without facade specialist review.",
+        ),
+        (
+            "Terrace maintenance",
+            (
+                "Inspect deck boards/pavers, waterproofing terminations, drains, "
+                "guards, stairs, and lighting."
+            ),
+            "Monthly in use season; seasonal deep check",
+            "Owner / terrace contractor",
+            "2-6 hours",
+            "Hand tools, level, drain cleaning tools",
+            "Ponding, loose guards, slippery surfaces, blocked drains, movement",
+            f"Terrace area assumption is {config.terrace.terrace_area_m2:g} m2.",
+        ),
+        (
+            "Window and door maintenance",
+            (
+                "Clean and inspect glazing, seals, drainage slots, thresholds, hinges, "
+                "locks, and weatherstrips."
+            ),
+            "Seasonal",
+            "Owner / window contractor",
+            "2-4 hours",
+            "Non-abrasive cleaner, silicone-free hardware lubricant, camera",
+            "Condensation between panes, air leakage, stiff operation, water at thresholds",
+            (
+                "Large panoramic glazing requires specialist inspection if movement "
+                "or cracking appears."
+            ),
+        ),
+        (
+            "HVAC maintenance",
+            (
+                "Service heat pump, underfloor manifolds, filters, pumps, valves, "
+                "and frost-protection settings."
+            ),
+            "Annual; filters 3-6 months",
+            "Licensed mechanical/HVAC contractor",
+            "0.5-1 day",
+            "Manufacturer service kit, pressure/temperature readings",
+            "Short cycling, low pressure, cold rooms, unusual noise, fault codes",
+            "No final heat-loss calculation is included in this repository.",
+        ),
+        (
+            "Fireplace maintenance",
+            (
+                "Inspect fireplace/stove, flue, combustion air, hearth, clearances, "
+                "ash handling, and CO alarms."
+            ),
+            "Before heating season",
+            "Certified chimney/fireplace professional",
+            "2-4 hours",
+            "Chimney brushes/tools by professional, CO alarm tester",
+            "Soot smell, poor draft, cracked glass, smoke spillage, CO alarm events",
+            "Never operate fireplace after a suspected flue or CO issue until inspected.",
+        ),
+        (
+            "Solar PV maintenance",
+            (
+                "Inspect PV production, roof interfaces, isolators, labels, snow "
+                "shading, and monitoring."
+            ),
+            "Quarterly visual; annual professional check",
+            "Owner / licensed solar electrician",
+            "1-3 hours",
+            "Monitoring dashboard, camera, electrician test equipment",
+            "Production drop, damaged cables, inverter faults, water at penetrations",
+            f"PV assumption is {config.off_grid.pv_kwp:g} kWp and remains preliminary.",
+        ),
+        (
+            "Battery maintenance",
+            (
+                "Review battery room/area, BMS alarms, ventilation, temperature, "
+                "clearances, and shutdown labels."
+            ),
+            "Monthly dashboard; annual professional check",
+            "Owner / licensed electrical professional",
+            "1-2 hours",
+            "BMS dashboard, thermal scan by professional if needed",
+            "Swelling, heat, odor, repeated faults, communication loss",
+            (
+                f"Battery assumption is {config.off_grid.battery_kwh:g} kWh and "
+                "requires specialist review."
+            ),
+        ),
+        (
+            "Generator maintenance",
+            (
+                "Test generator start, fuel condition, exhaust route, transfer "
+                "arrangement, and service interval."
+            ),
+            "Monthly exercise; annual service",
+            "Owner / generator specialist / electrician",
+            "1-3 hours",
+            "Generator manual, fuel stabilizer if applicable, load test equipment by professional",
+            "Hard starting, exhaust smell, fuel leaks, transfer faults, low runtime",
+            f"Generator assumption: {config.off_grid.generator}. Transfer design is not finalized.",
+        ),
+        (
+            "Water system maintenance",
+            (
+                "Inspect tank, pump, filters, pressure, insulation, valves, leak "
+                "sensors, and drain-down points."
+            ),
+            "Monthly; seasonal winterization",
+            "Owner / licensed plumber",
+            "1-4 hours",
+            "Pressure gauge, filter cartridges, leak sensor test",
+            "Pressure loss, cloudy water, pump cycling, leaks, frozen sections",
+            f"Water tank option assumption: {config.off_grid.water_tank_l:g} L.",
+        ),
+        (
+            "Wastewater system maintenance",
+            (
+                "Review septic/biological treatment option, access covers, alarms, "
+                "odors, and service contract."
+            ),
+            "Per authority/manufacturer; visual monthly",
+            "Licensed wastewater service provider",
+            "1-3 hours",
+            "Service log, access tools by provider, alarm test",
+            "Odor, backups, wet ground, alarm events, blocked venting",
+            "Local wastewater approval and maintenance rules must govern final operation.",
+        ),
+        (
+            "Smart home maintenance",
+            (
+                "Back up Home Assistant, test Zigbee/Matter/MQTT devices, cameras, "
+                "UPS, alerts, and credentials."
+            ),
+            "Monthly backup; annual security review",
+            "Owner / smart-home integrator",
+            "1-3 hours",
+            "Admin dashboard, password manager, UPS test, spare batteries",
+            "Offline devices, failed backups, stale updates, weak passwords, missing alerts",
+            f"Configured platform assumption: {config.smart_home.platform}.",
+        ),
+        (
+            "Emergency plan",
+            (
+                "Review emergency contacts, shutoff locations, generator procedure, "
+                "freeze response, and evacuation."
+            ),
+            "Annual and after major changes",
+            "Owner/operator",
+            "1-2 hours",
+            "Printed emergency sheet, labels, flashlight, first-aid kit",
+            "Unlabeled shutoffs, inaccessible equipment, expired fire extinguishers",
+            "Keep paper instructions available because internet or power may fail.",
+        ),
+        (
+            "Maintenance log template",
+            (
+                "Update maintenance log with date, task, observations, photos, "
+                "responsible person, and next action."
+            ),
+            "Every maintenance event",
+            "Owner/operator",
+            "10-20 minutes per entry",
+            "Excel calendar, photo folder, document register",
+            "Missing photos, unresolved defects, no assigned follow-up",
+            "The log supports planning and does not replace formal inspection certificates.",
+        ),
+    )
+
+
+def _maintenance_tasks(config: MountainRetreatConfig) -> tuple[MaintenanceTask, ...]:
+    return tuple(MaintenanceTask(*row) for row in _maintenance_task_rows(config))
+
+
+def _maintenance_context(config: MountainRetreatConfig) -> dict[str, object]:
+    tasks = _maintenance_tasks(config)
+    return {
+        "project": config.project,
+        "site": config.site,
+        "building": config.building,
+        "terrace": config.terrace,
+        "smart_home": config.smart_home,
+        "off_grid": config.off_grid,
+        "assumptions": _shared_assumptions(config),
+        "limitations": _shared_limitations(config),
+        "sections": MAINTENANCE_SECTIONS,
+        "tasks": tasks,
+        "task_count": len(tasks),
+    }
+
+
 SELF_BUILD_PHASES = (
     "Project preparation",
     "Professional review checklist",
@@ -2351,6 +2739,7 @@ def generate_markdown_volumes(
     hvac_template = env.get_template(HVAC_TEMPLATE_NAME)
     smart_home_template = env.get_template(SMART_HOME_TEMPLATE_NAME)
     off_grid_template = env.get_template(OFF_GRID_TEMPLATE_NAME)
+    maintenance_template = env.get_template(MAINTENANCE_TEMPLATE_NAME)
     self_build_template = env.get_template(SELF_BUILD_TEMPLATE_NAME)
     paths: list[Path] = []
     for volume in _volume_specs(config):
@@ -2368,6 +2757,8 @@ def generate_markdown_volumes(
             rendered = smart_home_template.render(**_smart_home_context(config))
         elif volume.filename == "08_off_grid_package.md":
             rendered = off_grid_template.render(**_off_grid_context(config))
+        elif volume.filename == "12_maintenance_manual.md":
+            rendered = maintenance_template.render(**_maintenance_context(config))
         elif volume.filename == "13_self_build_guide.md":
             rendered = self_build_template.render(
                 **_self_build_context(config, large_mode),
