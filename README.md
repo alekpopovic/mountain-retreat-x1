@@ -30,6 +30,15 @@ The system must not generate:
 
 All assumptions must be stored in YAML and surfaced in generated documents.
 
+## Schematic Drawings
+
+`mrx1 generate drawings` creates plain SVG schematic drawings in `output/drawings/`.
+These drawings are generated from YAML planning assumptions and are not official CAD
+files, permit drawings, shop drawings, or construction drawings. They are intended
+only for preliminary coordination and must be reviewed and replaced by drawings
+prepared by licensed professionals before any construction, permitting, procurement,
+or installation use.
+
 ## Quick Start
 
 ```bash

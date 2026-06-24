@@ -51,7 +51,7 @@ def test_generate_all_creates_output_folders(tmp_path: Path) -> None:
 
 
 def test_generate_specific_placeholders_create_output_folders(tmp_path: Path) -> None:
-    for command in ("excel", "pdf", "drawings"):
+    for command in ("excel", "pdf"):
         output_dir = tmp_path / command
         result = runner.invoke(app, ["generate", command, "--output-dir", str(output_dir)])
 
@@ -59,6 +59,17 @@ def test_generate_specific_placeholders_create_output_folders(tmp_path: Path) ->
         assert "placeholder completed" in result.output
         for subdir in ("markdown", "pdf", "excel", "drawings", "zip"):
             assert (output_dir / subdir).is_dir()
+
+
+def test_generate_drawings_creates_output_folders(tmp_path: Path) -> None:
+    output_dir = tmp_path / "drawings"
+
+    result = runner.invoke(app, ["generate", "drawings", "--output-dir", str(output_dir)])
+
+    assert result.exit_code == 0
+    assert "Drawing generation completed" in result.output
+    for subdir in ("markdown", "pdf", "excel", "drawings", "zip"):
+        assert (output_dir / subdir).is_dir()
 
 
 def test_clean_preserves_gitkeep_files(tmp_path: Path) -> None:
