@@ -8,6 +8,16 @@ Do not write implementation code until the planning phase is explicitly complete
 
 Planning artifacts, configuration templates, repository documentation, empty directories, and tooling metadata are allowed.
 
+## Required Git Workflow
+
+After every user prompt that results in repository changes, run:
+
+1. `git add` for the changed files
+2. `git commit` with a concise message
+3. `git push`
+
+If push is not possible because no remote is configured or authentication is unavailable, report that clearly in the final response.
+
 ## Non-Negotiable Safety Rules
 
 Generated documents must never claim to be:
@@ -35,4 +45,3 @@ When coding begins:
 - use pytest, ruff, and mypy where practical
 
 Keep the system deterministic and auditable. Do not use live price scraping.
-
