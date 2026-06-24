@@ -1,6 +1,7 @@
 country: Serbia
 currency: EUR
 assumption_year: 2026
+last_updated: 2026-06-24
 status: PRELIMINARY
 source_policy: Static planning assumptions only; do not scrape live prices.
 vat_included: false
@@ -43,4 +44,3 @@ cost_items:
     machinery_unit_cost: 10
     contingency_percent: 20
     notes: Snow guards and drainage not final.
-

@@ -9,10 +9,12 @@ from openpyxl.utils import get_column_letter  # type: ignore[import-untyped]
 from openpyxl.worksheet.worksheet import Worksheet  # type: ignore[import-untyped]
 
 from mountain_retreat_x1.config.loader import MountainRetreatConfig
-from mountain_retreat_x1.models import MaterialItem
+from mountain_retreat_x1.models import CostItem, MaterialItem
 
 BOM_FILENAME = "Mountain_Retreat_X1_BOM.xlsx"
+COST_FILENAME = "Mountain_Retreat_X1_Cost_Estimate.xlsx"
 BOM_OUTPUT_DIR = "excel"
+COST_OUTPUT_DIR = "excel"
 
 ITEM_HEADERS = (
     "Item Code",
@@ -58,6 +60,47 @@ ITEM_SHEETS = (
 )
 
 WORKBOOK_SHEETS = ("Summary", *ITEM_SHEETS, "Assumptions")
+COST_WORKBOOK_SHEETS = (
+    "Executive_Summary",
+    "Cost_By_Phase",
+    "Cost_By_Category",
+    "Materials",
+    "Labor",
+    "Machinery",
+    "Contingency",
+    "Cash_Flow",
+    "Scenario_Economy",
+    "Scenario_Standard",
+    "Scenario_Premium",
+    "Scenario_OffGrid_AddOn",
+    "Assumptions",
+    "Review_Notes",
+)
+
+COST_ITEM_HEADERS = (
+    "Cost Code",
+    "Phase",
+    "Category",
+    "Description",
+    "Quantity",
+    "Unit",
+    "Unit Cost",
+    "Subtotal",
+    "Notes",
+)
+
+SCENARIO_HEADERS = (
+    "Cost Code",
+    "Description",
+    "Base Subtotal Before Contingency",
+    "Scenario Factor",
+    "Scenario Subtotal",
+    "Contingency %",
+    "Total With Contingency",
+    "Notes",
+)
+
+EUR_FORMAT = '#,##0.00 "EUR"'
 
 
 HEADER_FILL = PatternFill("solid", fgColor="1F4E78")
@@ -335,5 +378,452 @@ def generate_bom_workbook(config: MountainRetreatConfig, output_dir: Path) -> Pa
     _apply_workbook_metadata(workbook, config)
 
     path = excel_dir / BOM_FILENAME
+    workbook.save(path)
+    return path
+
+
+def _cost_items(config: MountainRetreatConfig) -> list[CostItem]:
+    return config.cost_assumptions_serbia_2026.cost_items
+
+
+def _configure_cost_table_sheet(sheet: Worksheet) -> None:
+    sheet.append(COST_ITEM_HEADERS)
+    _style_header_row(sheet)
+    sheet.freeze_panes = "A2"
+    sheet.auto_filter.ref = f"A1:{get_column_letter(len(COST_ITEM_HEADERS))}1"
+    _set_widths(sheet, (16, 18, 18, 42, 14, 10, 16, 18, 48))
+
+
+def _append_cost_component_row(
+    sheet: Worksheet,
+    item: CostItem,
+    unit_cost_attr: str,
+) -> None:
+    row = sheet.max_row + 1
+    unit_cost = getattr(item, unit_cost_attr)
+    sheet.append(
+        (
+            item.code,
+            item.phase,
+            item.category,
+            item.description,
+            item.quantity,
+            item.unit,
+            unit_cost,
+            f"=E{row}*G{row}",
+            item.notes,
+        )
+    )
+    for cell in sheet[row]:
+        cell.alignment = Alignment(vertical="top", wrap_text=True)
+    for column in ("E", "G", "H"):
+        sheet[f"{column}{row}"].number_format = EUR_FORMAT if column in ("G", "H") else '#,##0.00'
+
+
+def _build_cost_component_sheet(
+    sheet: Worksheet,
+    items: Iterable[CostItem],
+    unit_cost_attr: str,
+) -> None:
+    _configure_cost_table_sheet(sheet)
+    for item in items:
+        _append_cost_component_row(sheet, item, unit_cost_attr)
+    total_row = sheet.max_row + 1
+    sheet.append(("", "", "", "TOTAL", "", "", "", f"=SUM(H2:H{total_row - 1})", ""))
+    for cell in sheet[total_row]:
+        cell.font = BOLD_FONT
+        cell.fill = SUBHEADER_FILL
+    sheet[f"H{total_row}"].number_format = EUR_FORMAT
+
+
+def _phase_or_category_formula(
+    sheet_name: str,
+    lookup_column: str,
+    lookup_cell: str,
+) -> str:
+    return (
+        f"SUMIF('{sheet_name}'!${lookup_column}:${lookup_column},"
+        f"{lookup_cell},'{sheet_name}'!$H:$H)"
+    )
+
+
+def _build_cost_aggregation_sheet(
+    sheet: Worksheet,
+    labels: Iterable[str],
+    lookup_column: str,
+    title: str,
+) -> None:
+    sheet.append(
+        (
+            title,
+            "Material Subtotal",
+            "Labor Subtotal",
+            "Machinery Subtotal",
+            "Subtotal Before Contingency",
+            "Contingency 10%",
+            "Contingency 15%",
+            "Contingency 20%",
+            "Total With 20% Contingency",
+            "Cost per Gross m2",
+            "Cost per Net m2",
+        )
+    )
+    _style_header_row(sheet)
+    for row, label in enumerate(sorted(labels), start=2):
+        lookup_cell = f"$A{row}"
+        sheet.append(
+            (
+                label,
+                f"={_phase_or_category_formula('Materials', lookup_column, lookup_cell)}",
+                f"={_phase_or_category_formula('Labor', lookup_column, lookup_cell)}",
+                f"={_phase_or_category_formula('Machinery', lookup_column, lookup_cell)}",
+                f"=SUM(B{row}:D{row})",
+                f"=E{row}*10%",
+                f"=E{row}*15%",
+                f"=E{row}*20%",
+                f"=E{row}+H{row}",
+                f"=I{row}/Assumptions!$B$11",
+                f"=I{row}/Assumptions!$B$12",
+            )
+        )
+    total_row = sheet.max_row + 1
+    sheet.append(
+        (
+            "TOTAL",
+            f"=SUM(B2:B{total_row - 1})",
+            f"=SUM(C2:C{total_row - 1})",
+            f"=SUM(D2:D{total_row - 1})",
+            f"=SUM(E2:E{total_row - 1})",
+            f"=SUM(F2:F{total_row - 1})",
+            f"=SUM(G2:G{total_row - 1})",
+            f"=SUM(H2:H{total_row - 1})",
+            f"=SUM(I2:I{total_row - 1})",
+            f"=I{total_row}/Assumptions!$B$11",
+            f"=I{total_row}/Assumptions!$B$12",
+        )
+    )
+    for cell in sheet[total_row]:
+        cell.font = BOLD_FONT
+        cell.fill = SUBHEADER_FILL
+    for row in sheet.iter_rows(min_row=2, max_row=sheet.max_row, min_col=2, max_col=11):
+        for cell in row:
+            cell.number_format = EUR_FORMAT
+    sheet.freeze_panes = "A2"
+    sheet.auto_filter.ref = f"A1:K{sheet.max_row}"
+    _set_widths(sheet, (22, 18, 16, 18, 24, 18, 18, 18, 24, 18, 18))
+
+
+def _build_contingency_sheet(sheet: Worksheet, items: list[CostItem]) -> None:
+    sheet.append(
+        (
+            "Cost Code",
+            "Description",
+            "Subtotal Before Contingency",
+            "Item Contingency %",
+            "Item Contingency",
+            "Contingency 10%",
+            "Contingency 15%",
+            "Contingency 20%",
+            "Total With Item Contingency",
+        )
+    )
+    _style_header_row(sheet)
+    for row, item in enumerate(items, start=2):
+        source_row = row
+        sheet.append(
+            (
+                item.code,
+                item.description,
+                f"=Materials!H{source_row}+Labor!H{source_row}+Machinery!H{source_row}",
+                item.contingency_percent / 100,
+                f"=C{row}*D{row}",
+                f"=C{row}*10%",
+                f"=C{row}*15%",
+                f"=C{row}*20%",
+                f"=C{row}+E{row}",
+            )
+        )
+    total_row = sheet.max_row + 1
+    sheet.append(
+        (
+            "TOTAL",
+            "",
+            f"=SUM(C2:C{total_row - 1})",
+            "",
+            f"=SUM(E2:E{total_row - 1})",
+            f"=SUM(F2:F{total_row - 1})",
+            f"=SUM(G2:G{total_row - 1})",
+            f"=SUM(H2:H{total_row - 1})",
+            f"=SUM(I2:I{total_row - 1})",
+        )
+    )
+    for cell in sheet[total_row]:
+        cell.font = BOLD_FONT
+        cell.fill = SUBHEADER_FILL
+    for row in sheet.iter_rows(min_row=2, max_row=sheet.max_row, min_col=3, max_col=9):
+        for cell in row:
+            cell.number_format = "0.00%" if cell.column == 4 else EUR_FORMAT
+    sheet.freeze_panes = "A2"
+    sheet.auto_filter.ref = f"A1:I{sheet.max_row}"
+    _set_widths(sheet, (16, 42, 26, 18, 18, 18, 18, 18, 26))
+
+
+def _build_scenario_sheet(
+    sheet: Worksheet,
+    items: list[CostItem],
+    factor: float,
+    contingency_percent: float,
+) -> None:
+    sheet.append(SCENARIO_HEADERS)
+    _style_header_row(sheet)
+    for row, item in enumerate(items, start=2):
+        source_row = row
+        sheet.append(
+            (
+                item.code,
+                item.description,
+                f"=Materials!H{source_row}+Labor!H{source_row}+Machinery!H{source_row}",
+                factor,
+                f"=C{row}*D{row}",
+                contingency_percent,
+                f"=E{row}*(1+F{row})",
+                "Static placeholder scenario; contractor quotes required.",
+            )
+        )
+    total_row = sheet.max_row + 1
+    sheet.append(
+        (
+            "TOTAL",
+            "",
+            f"=SUM(C2:C{total_row - 1})",
+            "",
+            f"=SUM(E2:E{total_row - 1})",
+            "",
+            f"=SUM(G2:G{total_row - 1})",
+            "",
+        )
+    )
+    for cell in sheet[total_row]:
+        cell.font = BOLD_FONT
+        cell.fill = SUBHEADER_FILL
+    for row in sheet.iter_rows(min_row=2, max_row=sheet.max_row, min_col=3, max_col=7):
+        for cell in row:
+            cell.number_format = "0.00%" if cell.column == 6 else EUR_FORMAT
+    sheet.freeze_panes = "A2"
+    sheet.auto_filter.ref = f"A1:H{sheet.max_row}"
+    _set_widths(sheet, (16, 42, 30, 16, 18, 16, 24, 46))
+
+
+def _build_off_grid_addon_sheet(sheet: Worksheet, config: MountainRetreatConfig) -> None:
+    sheet.append(
+        (
+            "Add-on Code",
+            "System",
+            "Quantity Placeholder",
+            "Unit",
+            "Unit Cost Placeholder",
+            "Subtotal",
+            "Notes",
+        )
+    )
+    _style_header_row(sheet)
+    rows = (
+        ("OG-001", f"Solar PV {config.off_grid.pv_kwp:g} kWp placeholder", 1, "system", 18000),
+        ("OG-002", f"Battery {config.off_grid.battery_kwh:g} kWh placeholder", 1, "system", 24000),
+        ("OG-003", "Backup generator placeholder", 1, "system", 6500),
+        ("OG-004", f"Water tank {config.off_grid.water_tank_l:g} L placeholder", 1, "system", 3200),
+        ("OG-005", "Wastewater independence placeholder", 1, "system", 8000),
+    )
+    for row, (code, system, quantity, unit, unit_cost) in enumerate(rows, start=2):
+        sheet.append(
+            (
+                code,
+                system,
+                quantity,
+                unit,
+                unit_cost,
+                f"=C{row}*E{row}",
+                "Optional planning add-on only; professional design and quotes required.",
+            )
+        )
+    total_row = sheet.max_row + 1
+    sheet.append(("TOTAL", "", "", "", "", f"=SUM(F2:F{total_row - 1})", ""))
+    for cell in sheet[total_row]:
+        cell.font = BOLD_FONT
+        cell.fill = SUBHEADER_FILL
+    for row in sheet.iter_rows(min_row=2, max_row=sheet.max_row, min_col=5, max_col=6):
+        for cell in row:
+            cell.number_format = EUR_FORMAT
+    sheet.freeze_panes = "A2"
+    sheet.auto_filter.ref = f"A1:G{sheet.max_row}"
+    _set_widths(sheet, (16, 42, 20, 12, 22, 18, 58))
+
+
+def _build_cash_flow_sheet(sheet: Worksheet, phases: Iterable[str]) -> None:
+    sheet.append(("Phase", "Phase Total With 20% Contingency", "Cash Flow %", "Cash Flow EUR"))
+    _style_header_row(sheet)
+    for row, phase in enumerate(sorted(phases), start=2):
+        sheet.append(
+            (
+                phase,
+                f"=SUMIF(Cost_By_Phase!$A:$A,A{row},Cost_By_Phase!$I:$I)",
+                f"=B{row}/SUM(B:B)",
+                f"=B{row}",
+            )
+        )
+    total_row = sheet.max_row + 1
+    sheet.append(
+        (
+            "TOTAL",
+            f"=SUM(B2:B{total_row - 1})",
+            f"=SUM(C2:C{total_row - 1})",
+            f"=SUM(D2:D{total_row - 1})",
+        )
+    )
+    for cell in sheet[total_row]:
+        cell.font = BOLD_FONT
+        cell.fill = SUBHEADER_FILL
+    for row in sheet.iter_rows(min_row=2, max_row=sheet.max_row, min_col=2, max_col=4):
+        for cell in row:
+            cell.number_format = "0.00%" if cell.column == 3 else EUR_FORMAT
+    sheet.freeze_panes = "A2"
+    sheet.auto_filter.ref = f"A1:D{sheet.max_row}"
+    _set_widths(sheet, (22, 30, 16, 18))
+
+
+def _build_cost_assumptions_sheet(sheet: Worksheet, config: MountainRetreatConfig) -> None:
+    cost_config = config.cost_assumptions_serbia_2026
+    rows = (
+        ("Project", config.project.project_name),
+        ("Status", config.project.status),
+        ("Currency", cost_config.currency),
+        ("Assumption year", str(cost_config.assumption_year)),
+        ("last_updated", cost_config.last_updated.isoformat()),
+        ("Source policy", cost_config.source_policy),
+        ("VAT included", str(cost_config.vat_included)),
+        ("Default contingency", f"{cost_config.contingency_percent:g}%"),
+        ("Regional adjustment note", cost_config.regional_adjustment_note),
+        ("Estimate warning", cost_config.estimate_warning),
+        ("Gross area m2", f"{config.building.gross_area_m2:g}"),
+        ("Net area m2", f"{config.building.net_area_m2:g}"),
+        ("Off-grid PV kWp", f"{config.off_grid.pv_kwp:g}"),
+        ("Off-grid battery kWh", f"{config.off_grid.battery_kwh:g}"),
+        ("Professional limit", config.project.disclaimer),
+        ("Quote requirement", "Contractor quotes are required before procurement or budgeting."),
+    )
+    sheet.append(("Assumption", "Value"))
+    _style_header_row(sheet)
+    for row in rows:
+        sheet.append(row)
+    sheet.freeze_panes = "A2"
+    sheet.auto_filter.ref = f"A1:B{sheet.max_row}"
+    _set_widths(sheet, (30, 100))
+    for cell in sheet["B"]:
+        cell.alignment = Alignment(wrap_text=True, vertical="top")
+
+
+def _build_review_notes_sheet(sheet: Worksheet, config: MountainRetreatConfig) -> None:
+    notes = (
+        "All prices are placeholders and static planning assumptions.",
+        "Prices are not current market quotes and must not be represented as supplier offers.",
+        "Contractor quotes are required before procurement, financing, or construction decisions.",
+        config.cost_assumptions_serbia_2026.source_policy,
+        config.cost_assumptions_serbia_2026.regional_adjustment_note,
+        config.cost_assumptions_serbia_2026.estimate_warning,
+        (
+            "Licensed professionals must review structural, electrical, mechanical, "
+            "plumbing, and off-grid systems."
+        ),
+    )
+    sheet.append(("Review Note",))
+    _style_header_row(sheet)
+    for note in notes:
+        sheet.append((note,))
+    sheet.freeze_panes = "A2"
+    sheet.auto_filter.ref = f"A1:A{sheet.max_row}"
+    _set_widths(sheet, (120,))
+    for cell in sheet["A"]:
+        cell.alignment = Alignment(wrap_text=True, vertical="top")
+
+
+def _build_executive_summary(sheet: Worksheet, config: MountainRetreatConfig) -> None:
+    sheet.append(("Metric", "Value", "Notes"))
+    _style_header_row(sheet)
+    rows = (
+        ("Material subtotal", "=SUM(Materials!H:H)", "Formula from Materials sheet."),
+        ("Labor subtotal", "=SUM(Labor!H:H)", "Formula from Labor sheet."),
+        ("Machinery subtotal", "=SUM(Machinery!H:H)", "Formula from Machinery sheet."),
+        ("Subtotal before contingency", "=SUM(B2:B4)", "Materials + labor + machinery."),
+        ("Contingency 10%", "=B5*10%", "Planning sensitivity."),
+        ("Contingency 15%", "=B5*15%", "Planning sensitivity."),
+        ("Contingency 20%", "=B5*20%", "Planning sensitivity."),
+        ("Total with contingency", "=B5+B8", "Uses 20% contingency by default."),
+        ("Cost per gross m2", "=B9/Assumptions!$B$11", "Gross area denominator."),
+        ("Cost per net m2", "=B9/Assumptions!$B$12", "Net area denominator."),
+        ("Optional off-grid add-on", "=Scenario_OffGrid_AddOn!F7", "Separate optional add-on."),
+        ("Total with off-grid add-on", "=B9+B12", "Base total + optional add-on."),
+        ("Economy scenario", "=Scenario_Economy!G5", "Scenario comparison total."),
+        ("Standard scenario", "=Scenario_Standard!G5", "Scenario comparison total."),
+        ("Premium scenario", "=Scenario_Premium!G5", "Scenario comparison total."),
+        (
+            "last_updated",
+            config.cost_assumptions_serbia_2026.last_updated.isoformat(),
+            "From YAML cost assumptions.",
+        ),
+        ("Quote requirement", "Contractor quotes required", "Prices are placeholders."),
+    )
+    for row in rows:
+        sheet.append(row)
+    for row in sheet.iter_rows(min_row=2, max_row=16, min_col=2, max_col=2):
+        for cell in row:
+            if isinstance(cell.value, str) and cell.value.startswith("="):
+                cell.number_format = EUR_FORMAT
+    for row_number in (5, 8, 9, 13):
+        for cell in sheet[row_number]:
+            cell.font = BOLD_FONT
+            cell.fill = SUBHEADER_FILL
+    sheet.freeze_panes = "A2"
+    sheet.auto_filter.ref = f"A1:C{sheet.max_row}"
+    _set_widths(sheet, (34, 24, 58))
+
+
+def _apply_cost_workbook_metadata(workbook: Workbook, config: MountainRetreatConfig) -> None:
+    workbook.properties.title = "Mountain Retreat X1 Preliminary Cost Estimate"
+    workbook.properties.subject = "Preliminary planning cost estimate"
+    workbook.properties.creator = config.project.author
+    workbook.properties.keywords = "PRELIMINARY, placeholder prices, contractor quotes required"
+
+
+def generate_cost_estimate_workbook(config: MountainRetreatConfig, output_dir: Path) -> Path:
+    """Generate the preliminary cost estimate workbook and return its path."""
+    excel_dir = output_dir / COST_OUTPUT_DIR
+    excel_dir.mkdir(parents=True, exist_ok=True)
+
+    workbook = Workbook()
+    workbook.active.title = "Executive_Summary"
+    for sheet_name in COST_WORKBOOK_SHEETS[1:]:
+        workbook.create_sheet(sheet_name)
+
+    items = _cost_items(config)
+    phases = {item.phase for item in items}
+    categories = {item.category for item in items}
+
+    _build_cost_component_sheet(workbook["Materials"], items, "material_unit_cost")
+    _build_cost_component_sheet(workbook["Labor"], items, "labor_unit_cost")
+    _build_cost_component_sheet(workbook["Machinery"], items, "machinery_unit_cost")
+    _build_cost_aggregation_sheet(workbook["Cost_By_Phase"], phases, "B", "Phase")
+    _build_cost_aggregation_sheet(workbook["Cost_By_Category"], categories, "C", "Category")
+    _build_contingency_sheet(workbook["Contingency"], items)
+    _build_cash_flow_sheet(workbook["Cash_Flow"], phases)
+    _build_scenario_sheet(workbook["Scenario_Economy"], items, 0.9, 0.10)
+    _build_scenario_sheet(workbook["Scenario_Standard"], items, 1.0, 0.15)
+    _build_scenario_sheet(workbook["Scenario_Premium"], items, 1.25, 0.20)
+    _build_off_grid_addon_sheet(workbook["Scenario_OffGrid_AddOn"], config)
+    _build_cost_assumptions_sheet(workbook["Assumptions"], config)
+    _build_review_notes_sheet(workbook["Review_Notes"], config)
+    _build_executive_summary(workbook["Executive_Summary"], config)
+    _apply_cost_workbook_metadata(workbook, config)
+
+    path = excel_dir / COST_FILENAME
     workbook.save(path)
     return path

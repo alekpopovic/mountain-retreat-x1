@@ -1,5 +1,7 @@
 """Composite configuration models loaded from YAML."""
 
+from datetime import date
+
 from pydantic import Field
 
 from mountain_retreat_x1.models.base import StrictModel
@@ -28,6 +30,7 @@ class CostAssumptionsConfig(StrictModel):
     country: str
     currency: str = "EUR"
     assumption_year: int
+    last_updated: date
     status: str = "PRELIMINARY"
     source_policy: str
     vat_included: bool

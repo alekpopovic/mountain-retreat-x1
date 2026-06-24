@@ -21,7 +21,7 @@ def test_generate_excel_bom_creates_workbook_with_expected_sheets_and_headers(
     )
 
     assert result.exit_code == 0
-    assert "Excel BOM generation completed" in result.output
+    assert "Excel generation completed" in result.output
     workbook_path = output_dir / "excel" / BOM_FILENAME
     assert workbook_path.exists()
 

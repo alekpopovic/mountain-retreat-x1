@@ -12,7 +12,7 @@ from mountain_retreat_x1.calculators import area_summary, cost_summary, quantity
 from mountain_retreat_x1.calculators.results import QuantityMap
 from mountain_retreat_x1.config import ConfigLoadError, load_config
 from mountain_retreat_x1.config.loader import MountainRetreatConfig
-from mountain_retreat_x1.exporters import generate_bom_workbook
+from mountain_retreat_x1.exporters import generate_bom_workbook, generate_cost_estimate_workbook
 from mountain_retreat_x1.generators import generate_markdown_volumes
 
 app = typer.Typer(
@@ -327,13 +327,32 @@ def generate_excel(
             help="Generate the preliminary Excel BOM workbook.",
         ),
     ] = False,
+    cost: Annotated[
+        bool,
+        typer.Option(
+            "--cost",
+            help="Generate the preliminary Excel cost estimate workbook.",
+        ),
+    ] = False,
 ) -> None:
     """Generate preliminary Excel workbooks."""
-    if bom:
+    if bom or cost:
         _ensure_output_dirs(output_dir)
         config = _load_config_or_exit(config_dir)
-        path = generate_bom_workbook(config, output_dir)
-        console.print(f"[green]Excel BOM generation completed.[/green] {path}")
+        generated_paths: list[Path] = []
+        if bom:
+            generated_paths.append(generate_bom_workbook(config, output_dir))
+        if cost:
+            generated_paths.append(generate_cost_estimate_workbook(config, output_dir))
+        table = Table(title="Generated Excel Workbooks")
+        table.add_column("File", style="cyan")
+        table.add_column("Status")
+        for path in generated_paths:
+            table.add_row(str(path), "generated")
+        console.print(table)
+        console.print(
+            f"[green]Excel generation completed.[/green] {len(generated_paths)} workbook(s)."
+        )
         return
     _print_placeholder_generation("Excel", output_dir)
 
