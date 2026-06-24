@@ -1,0 +1,177 @@
+# 04 Electrical Package
+
+**Project code:** {{ project.project_code }}  
+**Project:** {{ project.project_name }}  
+**Version:** {{ project.version }}  
+**Status:** {{ project.status }}  
+**Revision date:** {{ project.revision_date }}  
+**Language:** {{ project.language }}  
+
+## Revision History
+
+| Version | Date | Author | Notes |
+|---|---|---|---|
+| {{ project.version }} | {{ project.revision_date }} | {{ project.author }} | Generated preliminary electrical package from YAML room, smart-home, and off-grid assumptions. |
+
+## Mandatory Notice
+
+{{ project.disclaimer }}
+
+This electrical package is **PRELIMINARY**. It does not claim compliance with Serbian or local electrical codes, does not provide final cable sizing, and does not provide final breaker, protection, grounding, bonding, or utility-connection design.
+
+## Required Professional Review
+
+- Licensed electrician
+- Licensed electrical engineer where required
+- Local utility/grid operator where required
+- Local permitting authority
+- Smart-home/security integrator for low-voltage systems
+
+## Assumptions
+
+{% for assumption in assumptions -%}
+- {{ assumption }}
+{% endfor %}
+- Total configured sockets from room YAML: {{ total_socket_count }}.
+- Total configured light points from room YAML: {{ total_light_points }}.
+- Smart-home platform assumption: {{ smart_home.platform }}.
+- Optional PV assumption: {{ off_grid.pv_kwp }} kWp.
+- Optional battery assumption: {{ off_grid.battery_kwh }} kWh.
+
+## Limitations
+
+{% for limitation in limitations -%}
+- {{ limitation }}
+{% endfor %}
+- Breaker values are placeholders unless explicitly configured by the user and reviewed by a licensed electrician.
+- Cable values are placeholders unless explicitly configured by the user and reviewed by a licensed electrician.
+- RCD/RCBO, grounding, bonding, surge protection, selectivity, voltage drop, and short-circuit checks are excluded from final design.
+- This document must not be used as an installation design, code-compliance statement, or commissioning certificate.
+
+## 1. Electrical Design Concept
+
+- Provide a preliminary electrical planning structure for lighting, sockets, appliance zones, terrace/exterior equipment, smart home, and optional off-grid systems.
+- Keep life-safety, wet-area, exterior, PV, battery, generator, grounding, bonding, and protection topics explicitly subject to licensed review.
+- Use room-level YAML counts for sockets and light points as planning inputs only.
+
+## 2. Grid Connection Assumptions
+
+- Grid connection is assumed but not designed.
+- Service capacity, metering, utility approval, earthing arrangement, main protective device, and point of connection are TBD.
+- Any off-grid or hybrid system must be coordinated with the grid operator and licensed professionals.
+
+## 3. Main Distribution Board Concept
+
+- Main distribution board is assumed to be located in or near the technical room.
+- Board sizing, enclosure rating, spare capacity, phase arrangement, labeling, heat dissipation, and accessibility are TBD.
+- Segregate general lighting, socket circuits, wet-area circuits, technical systems, terrace/exterior loads, smart-home equipment, PV/battery/generator equipment, and future spare ways.
+
+## 4. Circuit Schedule
+
+| Circuit code | Area/room | Load type | Estimated load category | Breaker placeholder | Cable placeholder | RCD/RCBO placeholder | Notes | Review required |
+|---|---|---|---|---|---|---|---|---|
+{% for circuit in circuits -%}
+| {{ circuit.code }} | {{ circuit.area_room }} | {{ circuit.load_type }} | {{ circuit.estimated_load_category }} | {{ circuit.breaker_placeholder }} | {{ circuit.cable_placeholder }} | {{ circuit.rcd_rcbo_placeholder }} | {{ circuit.notes }} | {{ circuit.review_required }} |
+{% endfor %}
+
+## 5. Lighting Concept
+
+- Lighting circuits are derived from configured room light-point counts.
+- Day spaces should coordinate ambient, task, accent, fireplace, stair, terrace, and exterior lighting scenes.
+- Bedrooms and gallery areas should coordinate switching at entries and bedside/usage positions.
+- Final luminaire types, emergency lighting needs, dimming, controls, IP ratings, and code requirements are TBD.
+
+## 6. Socket and Appliance Concept
+
+- Socket planning is derived from configured room socket counts.
+- Dedicated appliance circuits are expected for kitchen, laundry, technical room, HVAC, exterior equipment, and high-load optional systems.
+- Final outlet spacing, dedicated loads, load diversity, voltage drop, and protection are excluded.
+
+## 7. Kitchen Electrical Concept
+
+- Kitchen configured socket count is included in the room circuit table.
+- Appliance loads may include cooking, oven, refrigerator, dishwasher, extractor/range hood, small appliances, and under-cabinet/task lighting.
+- Final appliance list, circuit separation, isolators, cable routes, and protection must be designed by a licensed electrician.
+
+## 8. Bathroom Electrical Concept
+
+- Bathrooms and wet rooms require zone, IP-rating, bonding, RCD/RCBO, ventilation, towel warmer, mirror/light, and appliance review.
+- This package does not define final bathroom zones or certify safe installation.
+- Wet-area rows in the circuit table are placeholders and require licensed review.
+
+## 9. Technical Room Electrical Concept
+
+- Technical room is the assumed location for distribution, controls, heat pump support equipment, water systems, smart-home rack/network gear, PV/battery interfaces where applicable, and monitoring.
+- Clearances, ventilation, fire separation, cable containment, labeling, and maintenance access are TBD.
+
+## 10. Terrace Electrical Concept
+
+- Terrace zones require weather-exposed lighting, weather-protected outlets, possible BBQ/outdoor kitchen support, jacuzzi-ready placeholder, and low-level/stair/guard lighting coordination.
+- Exterior equipment must be selected and installed for exposure, water ingress, mechanical protection, frost, UV, and safe isolation.
+- Jacuzzi-ready does not mean approved for a spa installation.
+
+## 11. Exterior Lighting
+
+- Exterior lighting should address entry, access path, terrace, steps, storage bench zone, facade accent lighting, and dark-sky/glare control.
+- Final fixture locations, IP ratings, controls, switching, emergency needs, and cable routes are TBD.
+
+## 12. Grounding and Bonding Placeholder
+
+- Earthing arrangement, main equipotential bonding, supplementary bonding, lightning/interface risks, PV/battery/generator bonding, and terrace/exterior metallic elements require licensed design.
+- No grounding or bonding compliance claim is made.
+
+## 13. Surge Protection Concept
+
+- Surge protection should be reviewed due to mountain exposure, possible overhead/long utility runs, PV integration, smart-home electronics, and sensitive equipment.
+- SPD type, location, coordination, earthing, and maintenance requirements are TBD.
+
+## 14. Backup Generator Concept
+
+- Generator assumption: {{ off_grid.generator }}.
+- Transfer switching, interlocking, neutral/earthing arrangement, ventilation/exhaust, acoustic placement, fuel storage, and maintenance access require licensed design.
+- No generator connection approval is implied.
+
+## 15. Solar PV Integration Concept
+
+- PV placeholder: {{ off_grid.pv_kwp }} kWp.
+- PV integration requires roof loading/attachment review, inverter placement, DC/AC protection, isolation, labeling, fire access, grounding/bonding, utility/grid approval, and commissioning.
+- This package does not approve PV installation.
+
+## 16. Battery Integration Concept
+
+- Battery placeholder: {{ off_grid.battery_kwh }} kWh.
+- Battery integration requires location, fire separation, ventilation/thermal management, BMS, inverter coordination, protection, emergency isolation, labeling, and service access review.
+- This package does not approve battery installation.
+
+## 17. Smart Home Wiring Concept
+
+- Platform: {{ smart_home.platform }}.
+- Protocols: {{ smart_home.protocols | join(", ") }}.
+- Network assumptions:
+{% for key, value in smart_home.network_assumptions.items() %}
+  - {{ key }}: {{ value }}
+{% endfor %}
+- Smart-home wiring should preserve manual override, safe isolation, serviceability, labeled panels, network resilience, and separation between mains and low-voltage systems.
+
+## 18. Testing and Commissioning Checklist
+
+- Confirm final drawings and circuit schedules are prepared by licensed professionals.
+- Confirm insulation resistance, continuity, polarity, earth fault loop/impedance, RCD/RCBO operation, functional tests, labels, and commissioning documentation as required locally.
+- Confirm PV, battery, generator, surge protection, and smart-home systems are commissioned by qualified parties.
+- Confirm no generated placeholder is mistaken for tested installation data.
+
+## 19. Licensed Electrician Review Checklist
+
+- Confirm service capacity and grid/utility requirements.
+- Confirm final circuit grouping, breaker ratings, cable sizing, containment, routing, and voltage drop.
+- Confirm RCD/RCBO strategy, selectivity, surge protection, grounding, bonding, and fault protection.
+- Confirm kitchen, bathroom, technical room, terrace, and exterior requirements.
+- Confirm PV, battery, generator, and smart-home integration.
+- Confirm that this document does not claim local electrical code compliance and remains PRELIMINARY.
+
+## QA Notes
+
+- Every major room should have electrical consideration in the circuit table.
+- Breaker and cable values must remain placeholders unless provided by the user and reviewed by a licensed electrician.
+- Licensed electrician review is mandatory before installation, permitting, procurement, or commissioning use.
+

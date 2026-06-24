@@ -14,6 +14,7 @@ MARKDOWN_OUTPUT_DIR = "markdown"
 TEMPLATE_NAME = "volume.md.j2"
 ARCHITECTURAL_TEMPLATE_NAME = "architectural_package.md.j2"
 STRUCTURAL_TEMPLATE_NAME = "structural_concept.md.j2"
+ELECTRICAL_TEMPLATE_NAME = "electrical_package.md.j2"
 DEFAULT_TEMPLATE_DIR = Path("docs/templates/markdown")
 
 
@@ -88,6 +89,21 @@ class StructuralVariant:
     risk_level: str
     preliminary_materials: tuple[str, ...]
     licensed_engineering_required: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class CircuitItem:
+    """Preliminary electrical circuit schedule item."""
+
+    code: str
+    area_room: str
+    load_type: str
+    estimated_load_category: str
+    breaker_placeholder: str
+    cable_placeholder: str
+    rcd_rcbo_placeholder: str
+    notes: str
+    review_required: str
 
 
 def _shared_limitations(config: MountainRetreatConfig) -> tuple[str, ...]:
@@ -408,6 +424,180 @@ def _structural_context(config: MountainRetreatConfig) -> dict[str, object]:
         "snow_load": config.site.snow_load_placeholder_kn_m2,
         "wind_load": config.site.wind_load_placeholder_kn_m2,
         "seismic_zone": config.site.seismic_zone_placeholder,
+    }
+
+
+def _room_load_category(room: Room, load_type: str) -> str:
+    text = f"{room.name} {room.function} {load_type}".lower()
+    if "kitchen" in text or "technical" in text or "heat pump" in text:
+        return "dedicated/high coordination placeholder"
+    if "bathroom" in text or "laundry" in text or room.plumbing_fixtures:
+        return "wet-area protected circuit placeholder"
+    if "lighting" in text:
+        return "low lighting load placeholder"
+    if room.socket_count >= 8:
+        return "medium socket load placeholder"
+    return "general small-power placeholder"
+
+
+def _room_circuits(config: MountainRetreatConfig) -> tuple[CircuitItem, ...]:
+    circuits: list[CircuitItem] = []
+    index = 1
+    for room in all_config_rooms(config):
+        circuits.append(
+            CircuitItem(
+                code=f"EL-{index:03d}",
+                area_room=room.name,
+                load_type="Lighting",
+                estimated_load_category=_room_load_category(room, "lighting"),
+                breaker_placeholder="Breaker TBD by licensed electrician",
+                cable_placeholder="Cable size TBD by licensed electrician",
+                rcd_rcbo_placeholder="RCD/RCBO TBD by licensed electrician",
+                notes=(
+                    f"Configured light points: {room.light_point_count}; switching, dimming, "
+                    "emergency/egress needs, and controls are preliminary."
+                ),
+                review_required="Licensed electrician / electrical engineer",
+            )
+        )
+        index += 1
+        circuits.append(
+            CircuitItem(
+                code=f"EL-{index:03d}",
+                area_room=room.name,
+                load_type="Sockets / small power",
+                estimated_load_category=_room_load_category(room, "sockets"),
+                breaker_placeholder="Breaker TBD by licensed electrician",
+                cable_placeholder="Cable size TBD by licensed electrician",
+                rcd_rcbo_placeholder="RCD/RCBO TBD by licensed electrician",
+                notes=(
+                    f"Configured socket count: {room.socket_count}; outlet locations, "
+                    "dedicated loads, and code spacing are preliminary."
+                ),
+                review_required="Licensed electrician / electrical engineer",
+            )
+        )
+        index += 1
+        if (
+            room.plumbing_fixtures
+            or "bathroom" in room.name.lower()
+            or "laundry" in room.name.lower()
+        ):
+            circuits.append(
+                CircuitItem(
+                    code=f"EL-{index:03d}",
+                    area_room=room.name,
+                    load_type="Wet-area equipment / extract / appliance placeholder",
+                    estimated_load_category="wet-area protected circuit placeholder",
+                    breaker_placeholder="Breaker TBD by licensed electrician",
+                    cable_placeholder="Cable size TBD by licensed electrician",
+                    rcd_rcbo_placeholder="RCD/RCBO mandatory review placeholder",
+                    notes=(
+                        "Wet-area bonding, zoning, appliance loads, ventilation, and IP ratings "
+                        "must be reviewed against local electrical rules."
+                    ),
+                    review_required="Licensed electrician / electrical engineer",
+                )
+            )
+            index += 1
+    return tuple(circuits)
+
+
+def _system_circuits(config: MountainRetreatConfig) -> tuple[CircuitItem, ...]:
+    circuits: list[CircuitItem] = []
+    base = 900
+    terrace_names = ", ".join(zone.name for zone in config.terrace.zones)
+    system_rows = (
+        (
+            "Terrace and exterior",
+            "Weather-exposed lighting and sockets",
+            "exterior protected circuit placeholder",
+            f"Terrace zones: {terrace_names}. Weatherproof equipment and RCD/RCBO review required.",
+        ),
+        (
+            "Technical room",
+            "Heat pump / underfloor heating controls",
+            "dedicated mechanical equipment placeholder",
+            "Final heat-pump and controls loads require HVAC/electrical coordination.",
+        ),
+        (
+            "Off-grid option",
+            "Backup generator",
+            "standby generation placeholder",
+            f"Generator assumption: {config.off_grid.generator}. Transfer switching TBD.",
+        ),
+        (
+            "Off-grid option",
+            "Solar PV integration",
+            "PV inverter placeholder",
+            f"PV assumption: {config.off_grid.pv_kwp:g} kWp. Grid/utility approval not implied.",
+        ),
+        (
+            "Off-grid option",
+            "Battery integration",
+            "battery inverter/storage placeholder",
+            (
+                f"Battery assumption: {config.off_grid.battery_kwh:g} kWh. "
+                "Protection and ventilation TBD."
+            ),
+        ),
+        (
+            "Smart home",
+            "Controls/network/security",
+            "low-voltage and controls placeholder",
+            (
+                f"Platform: {config.smart_home.platform}; protocols: "
+                f"{', '.join(config.smart_home.protocols)}."
+            ),
+        ),
+    )
+    for offset, (area_room, load_type, category, notes) in enumerate(system_rows):
+        circuits.append(
+            CircuitItem(
+                code=f"EL-{base + offset:03d}",
+                area_room=area_room,
+                load_type=load_type,
+                estimated_load_category=category,
+                breaker_placeholder="Breaker TBD by licensed electrician",
+                cable_placeholder="Cable size TBD by licensed electrician",
+                rcd_rcbo_placeholder="RCD/RCBO/SPD coordination TBD",
+                notes=notes,
+                review_required="Licensed electrician / electrical engineer",
+            )
+        )
+    return tuple(circuits)
+
+
+def _electrical_context(config: MountainRetreatConfig) -> dict[str, object]:
+    room_circuits = _room_circuits(config)
+    system_circuits = _system_circuits(config)
+    all_circuits = (*room_circuits, *system_circuits)
+    major_rooms = (
+        "Kitchen",
+        "Dining",
+        "Living room",
+        "Fireplace zone",
+        "Technical room",
+        "Guest bathroom",
+        "Master bathroom",
+        "Bathroom 2",
+        "Terrace",
+    )
+    return {
+        "project": config.project,
+        "building": config.building,
+        "terrace": config.terrace,
+        "smart_home": config.smart_home,
+        "off_grid": config.off_grid,
+        "assumptions": _shared_assumptions(config),
+        "limitations": _shared_limitations(config),
+        "rooms": all_config_rooms(config),
+        "room_circuits": room_circuits,
+        "system_circuits": system_circuits,
+        "circuits": all_circuits,
+        "major_rooms": major_rooms,
+        "total_socket_count": sum(room.socket_count for room in all_config_rooms(config)),
+        "total_light_points": sum(room.light_point_count for room in all_config_rooms(config)),
     }
 
 
@@ -831,12 +1021,15 @@ def generate_markdown_volumes(
     template = env.get_template(TEMPLATE_NAME)
     architectural_template = env.get_template(ARCHITECTURAL_TEMPLATE_NAME)
     structural_template = env.get_template(STRUCTURAL_TEMPLATE_NAME)
+    electrical_template = env.get_template(ELECTRICAL_TEMPLATE_NAME)
     paths: list[Path] = []
     for volume in _volume_specs(config):
         if volume.filename == "02_architectural_package.md":
             rendered = architectural_template.render(**_architectural_context(config))
         elif volume.filename == "03_structural_concept.md":
             rendered = structural_template.render(**_structural_context(config))
+        elif volume.filename == "04_electrical_package.md":
+            rendered = electrical_template.render(**_electrical_context(config))
         else:
             rendered = template.render(project=config.project, volume=volume)
         path = markdown_dir / volume.filename

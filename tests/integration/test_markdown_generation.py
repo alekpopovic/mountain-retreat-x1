@@ -148,3 +148,68 @@ def test_structural_concept_contains_required_sections_and_review_language(
     assert "not a safety-compliance certificate" in text
     assert "No final beam" in text
     assert "Must Be Engineered by Licensed Professional" in text
+
+
+def test_electrical_package_contains_required_sections_and_placeholder_language(
+    tmp_path: Path,
+) -> None:
+    output_dir = tmp_path / "output"
+
+    result = runner.invoke(app, ["generate", "markdown", "--output-dir", str(output_dir)])
+
+    assert result.exit_code == 0
+    text = (output_dir / "markdown" / "04_electrical_package.md").read_text(
+        encoding="utf-8"
+    )
+    for section in (
+        "## 1. Electrical Design Concept",
+        "## 2. Grid Connection Assumptions",
+        "## 3. Main Distribution Board Concept",
+        "## 4. Circuit Schedule",
+        "## 5. Lighting Concept",
+        "## 6. Socket and Appliance Concept",
+        "## 7. Kitchen Electrical Concept",
+        "## 8. Bathroom Electrical Concept",
+        "## 9. Technical Room Electrical Concept",
+        "## 10. Terrace Electrical Concept",
+        "## 11. Exterior Lighting",
+        "## 12. Grounding and Bonding Placeholder",
+        "## 13. Surge Protection Concept",
+        "## 14. Backup Generator Concept",
+        "## 15. Solar PV Integration Concept",
+        "## 16. Battery Integration Concept",
+        "## 17. Smart Home Wiring Concept",
+        "## 18. Testing and Commissioning Checklist",
+        "## 19. Licensed Electrician Review Checklist",
+    ):
+        assert section in text
+
+    assert "Circuit code" in text
+    assert "Breaker TBD by licensed electrician" in text
+    assert "Cable size TBD by licensed electrician" in text
+    assert "does not claim compliance" in text
+    assert "Licensed electrician" in text
+
+
+def test_electrical_package_covers_major_rooms(tmp_path: Path) -> None:
+    output_dir = tmp_path / "output"
+    major_rooms = (
+        "Technical room",
+        "Guest bathroom",
+        "Kitchen",
+        "Dining",
+        "Living room",
+        "Fireplace zone",
+        "Master bathroom",
+        "Bathroom 2",
+        "Terrace",
+    )
+
+    result = runner.invoke(app, ["generate", "markdown", "--output-dir", str(output_dir)])
+
+    assert result.exit_code == 0
+    text = (output_dir / "markdown" / "04_electrical_package.md").read_text(
+        encoding="utf-8"
+    )
+    for room_name in major_rooms:
+        assert room_name in text
