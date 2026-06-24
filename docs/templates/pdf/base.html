@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>{{ volume_title }} - {{ project.project_name }}</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <section class="cover">
+      <h1>{{ project.project_name }}</h1>
+      <h2>{{ volume_title }}</h2>
+      <p><strong>Version:</strong> {{ project.version }}</p>
+      <p><strong>Status:</strong> {{ project.status }}</p>
+      <p><strong>Revision date:</strong> {{ project.revision_date }}</p>
+      <p class="notice">PRELIMINARY - schematic planning document only - not for construction.</p>
+      <p class="notice">Licensed professional review is required before permitting, procurement, or construction use.</p>
+    </section>
+    <main>
+      {{ body_html | safe }}
+    </main>
+  </body>
+</html>

@@ -18,7 +18,11 @@ from mountain_retreat_x1.exporters import (
     generate_gantt_schedule_workbook,
     generate_qa_checklist_workbook,
 )
-from mountain_retreat_x1.generators import generate_markdown_volumes, generate_svg_drawings
+from mountain_retreat_x1.generators import (
+    generate_markdown_volumes,
+    generate_pdf_volumes,
+    generate_svg_drawings,
+)
 
 app = typer.Typer(
     name="mrx1",
@@ -315,10 +319,21 @@ def generate_markdown(
 
 @generate_app.command("pdf")
 def generate_pdf(
+    config_dir: ConfigDirOption = Path("config"),
     output_dir: OutputDirOption = Path("output"),
 ) -> None:
     """Generate preliminary PDF volumes."""
-    _print_placeholder_generation("PDF", output_dir)
+    _ensure_output_dirs(output_dir)
+    config = _load_config_or_exit(config_dir)
+    paths = generate_pdf_volumes(config, output_dir)
+
+    table = Table(title="Generated PDF Volumes")
+    table.add_column("File", style="cyan")
+    table.add_column("Status")
+    for path in paths:
+        table.add_row(str(path), "generated")
+    console.print(table)
+    console.print(f"[green]PDF generation completed.[/green] {len(paths)} files.")
 
 
 @generate_app.command("excel")

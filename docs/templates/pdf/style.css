@@ -1,0 +1,54 @@
+@page {
+  size: A4;
+  margin: 18mm 14mm 20mm 14mm;
+  @bottom-center {
+    content: "PRELIMINARY - not for construction - licensed professional review required - page " counter(page);
+    font-size: 8pt;
+    color: #666;
+  }
+}
+
+body {
+  color: #1f2933;
+  font-family: Arial, sans-serif;
+  font-size: 10pt;
+  line-height: 1.35;
+}
+
+.cover {
+  page-break-after: always;
+  padding-top: 90mm;
+}
+
+h1,
+h2,
+h3 {
+  color: #15324a;
+}
+
+.notice {
+  border-top: 1px solid #9c0006;
+  color: #9c0006;
+  font-weight: 700;
+  margin-top: 24pt;
+  padding-top: 8pt;
+}
+
+table {
+  border-collapse: collapse;
+  font-size: 8pt;
+  margin: 8pt 0 12pt;
+  width: 100%;
+}
+
+td,
+th {
+  border: 0.5pt solid #b9c2cc;
+  padding: 3pt;
+  vertical-align: top;
+}
+
+th {
+  background: #d9eaf7;
+  font-weight: 700;
+}
