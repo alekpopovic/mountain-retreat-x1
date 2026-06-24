@@ -1,0 +1,15 @@
+materials:
+  categories:
+    - name: "Structure"
+      status: "placeholder"
+      review_required: "Licensed structural engineer"
+    - name: "Envelope"
+      status: "placeholder"
+      review_required: "Architect and applicable specialists"
+    - name: "Terrace"
+      status: "placeholder"
+      review_required: "Architect and structural engineer"
+    - name: "MEP"
+      status: "placeholder"
+      review_required: "Licensed electrical and mechanical engineers"
+

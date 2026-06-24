@@ -1,0 +1,10 @@
+spaces:
+  cabin:
+    status: "planning-placeholder"
+    notes:
+      - "Room list and areas to be confirmed during design."
+  terrace:
+    status: "planning-placeholder"
+    notes:
+      - "Panoramic terrace dimensions, guards, structure, drainage, and waterproofing require professional review."
+

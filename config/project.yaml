@@ -1,0 +1,10 @@
+project:
+  name: "Mountain Retreat X1"
+  description: "Modern mountain cabin with a large panoramic terrace."
+  document_status: "Preliminary planning document only"
+  version: "0.1-planning"
+  location_descriptor: "Mountain site, exact jurisdiction to be confirmed"
+  prepared_for: "Planning review"
+  prepared_by: "Mountain Retreat X1 documentation generator"
+  required_notice: "Not for construction, permitting, procurement, or legal reliance."
+

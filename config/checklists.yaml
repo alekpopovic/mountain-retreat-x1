@@ -1,0 +1,11 @@
+checklists:
+  status: "planning-placeholder"
+  required_sections:
+    - "Site review"
+    - "Professional design review"
+    - "Structural review"
+    - "Electrical review"
+    - "Mechanical review"
+    - "Terrace safety review"
+    - "Final limitations review"
+

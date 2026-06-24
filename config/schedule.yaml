@@ -1,0 +1,12 @@
+schedule:
+  status: "planning-placeholder"
+  phases:
+    - name: "Professional review and survey"
+      duration_days: 20
+      notes:
+        - "Duration is preliminary and jurisdiction-dependent."
+    - name: "Concept refinement"
+      duration_days: 15
+      notes:
+        - "Requires licensed design input before construction documentation."
+
