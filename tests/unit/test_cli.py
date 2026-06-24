@@ -39,11 +39,11 @@ def test_validate_rejects_invalid_config_dir() -> None:
 
 
 def test_generate_commands_are_registered() -> None:
-    for command in ("all", "pdf", "excel", "drawings"):
+    for command in ("all", "markdown", "pdf", "excel", "drawings"):
         result = runner.invoke(app, ["generate", command])
 
         assert result.exit_code == 0
-        assert "placeholder completed" in result.output
+        assert "completed" in result.output
 
 
 def test_clean_placeholder() -> None:

@@ -12,6 +12,7 @@ from mountain_retreat_x1.calculators import area_summary, cost_summary, quantity
 from mountain_retreat_x1.calculators.results import QuantityMap
 from mountain_retreat_x1.config import ConfigLoadError, load_config
 from mountain_retreat_x1.config.loader import MountainRetreatConfig
+from mountain_retreat_x1.generators import generate_markdown_volumes
 
 app = typer.Typer(
     name="mrx1",
@@ -24,7 +25,7 @@ app = typer.Typer(
 generate_app = typer.Typer(help="Generate preliminary planning artifacts.")
 app.add_typer(generate_app, name="generate")
 console = Console()
-OUTPUT_SUBDIRS = ("pdf", "excel", "drawings", "zip")
+OUTPUT_SUBDIRS = ("markdown", "pdf", "excel", "drawings", "zip")
 
 
 ConfigDirOption = Annotated[
@@ -266,14 +267,18 @@ def _print_placeholder_generation(kind: str, output_dir: Path) -> None:
 
 @generate_app.command("all")
 def generate_all(
+    config_dir: ConfigDirOption = Path("config"),
     output_dir: OutputDirOption = Path("output"),
 ) -> None:
     """Generate all preliminary planning artifacts."""
     _ensure_output_dirs(output_dir)
+    config = _load_config_or_exit(config_dir)
+    markdown_paths = generate_markdown_volumes(config, output_dir)
     table = Table(title="Planned Generators")
     table.add_column("Artifact", style="cyan")
     table.add_column("Future Output")
-    table.add_row("PDF", "Documentation volumes with disclaimers, revision history, page numbers")
+    table.add_row("Markdown", f"{len(markdown_paths)} source volumes generated")
+    table.add_row("PDF", "Placeholder: documentation volumes with disclaimers and page numbers")
     table.add_row("Excel", "BOM, cost estimate, Gantt schedule, QA/QC checklists")
     table.add_row("Drawings", "Plain SVG schematic drawings marked preliminary")
     table.add_row("ZIP", "Final package with YAML, manifest, and generated artifacts")
@@ -281,6 +286,25 @@ def generate_all(
     console.print(
         f"[green]Generate-all placeholder completed.[/green] Output prepared: {output_dir}"
     )
+
+
+@generate_app.command("markdown")
+def generate_markdown(
+    config_dir: ConfigDirOption = Path("config"),
+    output_dir: OutputDirOption = Path("output"),
+) -> None:
+    """Generate preliminary Markdown source volumes."""
+    _ensure_output_dirs(output_dir)
+    config = _load_config_or_exit(config_dir)
+    paths = generate_markdown_volumes(config, output_dir)
+
+    table = Table(title="Generated Markdown Volumes")
+    table.add_column("File", style="cyan")
+    table.add_column("Status")
+    for path in paths:
+        table.add_row(str(path), "generated")
+    console.print(table)
+    console.print(f"[green]Markdown generation completed.[/green] {len(paths)} files.")
 
 
 @generate_app.command("pdf")

@@ -10,6 +10,8 @@ build/
 output/**
 !output/
 !output/.gitkeep
+!output/markdown/
+!output/markdown/.gitkeep
 !output/pdf/
 !output/pdf/.gitkeep
 !output/excel/

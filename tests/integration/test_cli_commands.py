@@ -45,7 +45,8 @@ def test_generate_all_creates_output_folders(tmp_path: Path) -> None:
 
     assert result.exit_code == 0
     assert "Planned Generators" in result.output
-    for subdir in ("pdf", "excel", "drawings", "zip"):
+    assert "Markdown" in result.output
+    for subdir in ("markdown", "pdf", "excel", "drawings", "zip"):
         assert (output_dir / subdir).is_dir()
 
 
@@ -56,7 +57,7 @@ def test_generate_specific_placeholders_create_output_folders(tmp_path: Path) ->
 
         assert result.exit_code == 0
         assert "placeholder completed" in result.output
-        for subdir in ("pdf", "excel", "drawings", "zip"):
+        for subdir in ("markdown", "pdf", "excel", "drawings", "zip"):
             assert (output_dir / subdir).is_dir()
 
 
@@ -74,5 +75,5 @@ def test_clean_preserves_gitkeep_files(tmp_path: Path) -> None:
     assert "Clean completed" in result.output
     assert keep_file.exists()
     assert not generated_pdf.exists()
-    for subdir in ("pdf", "excel", "drawings", "zip"):
+    for subdir in ("markdown", "pdf", "excel", "drawings", "zip"):
         assert (output_dir / subdir / ".gitkeep").exists()

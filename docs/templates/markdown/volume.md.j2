@@ -1,0 +1,61 @@
+# {{ volume.title }}
+
+**Project code:** {{ project.project_code }}  
+**Project:** {{ project.project_name }}  
+**Version:** {{ project.version }}  
+**Status:** {{ project.status }}  
+**Revision date:** {{ project.revision_date }}  
+**Language:** {{ project.language }}  
+
+## Revision History
+
+| Version | Date | Author | Notes |
+|---|---|---|---|
+| {{ project.version }} | {{ project.revision_date }} | {{ project.author }} | Generated preliminary planning source volume. |
+
+## Mandatory Notice
+
+{{ project.disclaimer }}
+
+This Markdown source volume is **PRELIMINARY** and requires professional review before any real-world use.
+
+## Required Professional Review
+
+{% for reviewer in project.review_required_by -%}
+- {{ reviewer }}
+{% endfor %}
+{% for reviewer in volume.required_review -%}
+- {{ reviewer }}
+{% endfor %}
+
+## Assumptions
+
+{% for assumption in volume.assumptions -%}
+- {{ assumption }}
+{% endfor %}
+
+## Limitations
+
+{% for limitation in volume.limitations -%}
+- {{ limitation }}
+{% endfor %}
+
+## Main Content
+
+{% for section in volume.sections -%}
+### {{ section.heading }}
+
+{% for line in section.lines -%}
+- {{ line }}
+{% endfor %}
+
+{% endfor -%}
+
+{% if volume.qa_notes %}
+## QA Notes
+
+{% for note in volume.qa_notes -%}
+- {{ note }}
+{% endfor %}
+{% endif %}
+
