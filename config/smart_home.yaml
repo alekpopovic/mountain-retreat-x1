@@ -7,6 +7,8 @@ network_assumptions:
   backbone: Wired Ethernet to key zones where practical
   wifi: Ceiling access points, final count by coverage study
   rack_location: Technical room
+  segmentation: VLAN/security concept to separate IoT, cameras, guests, and admin devices
+  backup_power: UPS for network equipment and controller
 systems:
   - lighting scenes
   - heating control integration
@@ -14,5 +16,14 @@ systems:
   - leak sensors
   - smoke and CO sensor integration placeholder
   - energy monitoring
+  - Home Assistant local-first controller
+  - Zigbee coordinator
+  - Matter controller/thread border router placeholder
+  - MQTT broker
+  - PoE cameras
+  - smart locks
+  - motion sensors
+  - outdoor weather station
+  - solar monitoring
+  - UPS for network equipment
 notes: Electrical design, device placement, and safety systems require professional review.
-

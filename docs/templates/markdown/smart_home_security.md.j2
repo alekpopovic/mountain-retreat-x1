@@ -1,0 +1,181 @@
+# 07 Smart Home and Security Package
+
+**Project code:** {{ project.project_code }}  
+**Project:** {{ project.project_name }}  
+**Version:** {{ project.version }}  
+**Status:** {{ project.status }}  
+**Revision date:** {{ project.revision_date }}  
+**Language:** {{ project.language }}  
+
+## Revision History
+
+| Version | Date | Author | Notes |
+|---|---|---|---|
+| {{ project.version }} | {{ project.revision_date }} | {{ project.author }} | Generated preliminary smart-home and security package from YAML assumptions. |
+
+## Mandatory Notice
+
+{{ project.disclaimer }}
+
+This smart-home and security package is **PRELIMINARY** and not for construction. It is a planning document only and does not certify cybersecurity, life safety, access control, CCTV legality, alarm performance, network resilience, or electrical compliance.
+
+## Required Professional Review
+
+- Licensed electrical engineer
+- Qualified smart-home/security integrator
+- Licensed alarm, CCTV, or access-control professional where required
+- Local authority/legal review for cameras, recording, privacy, and access-control rules
+- Licensed electrician for PoE, mains power, UPS, equipment racks, and grounding/bonding
+
+## Assumptions
+
+{% for assumption in assumptions -%}
+- {{ assumption }}
+{% endfor %}
+- Platform assumption: {{ smart_home.platform }}.
+- Protocol assumptions: {{ smart_home.protocols | join(", ") }}.
+- Network assumptions:
+{% for key, value in smart_home.network_assumptions.items() -%}
+  - {{ key }}: {{ value }}
+{% endfor %}
+- Configured smart-home systems:
+{% for system in smart_home.systems -%}
+  - {{ system }}
+{% endfor %}
+- Device schedule rows: {{ device_count }}.
+- Sensor schedule rows: {{ sensor_count }}.
+- Automation examples: {{ automation_count }}.
+
+## Limitations
+
+{% for limitation in limitations -%}
+- {{ limitation }}
+{% endfor %}
+- Security automations are advisory and do not guarantee protection against intrusion, fire, water damage, equipment failure, or cyberattack.
+- Smoke/CO detection, egress, alarms, locks, and life-safety systems must remain compliant and functional without relying on Home Assistant.
+- CCTV placement, audio recording, retention, signage, and remote access require local legal/privacy review.
+- Passwords, secrets, encryption keys, camera credentials, and remote-access tokens must never be committed to this repository.
+
+## 1. Smart Home Architecture
+
+- Use {{ smart_home.platform }} as the local-first coordination layer for lighting scenes, heating integration, terrace lighting, leak sensors, smoke/CO integration placeholders, energy monitoring, cameras, locks, and notifications.
+- Use Zigbee, Matter, and MQTT as planning assumptions, with Ethernet/PoE preferred for fixed infrastructure such as cameras, access points, and equipment racks.
+- Keep critical safety devices independently functional and use smart-home integration only for monitoring, convenience, and mirrored alerts.
+
+## 2. Local-First Control Philosophy
+
+- Prefer local automation, local dashboards, local device control, and local notification paths where practical.
+- Internet/cloud services may be used for selected remote notifications, but the cabin must retain basic heating, access, leak detection, and life-safety functions during internet outages.
+- Manual overrides must exist for locks, heating, lighting, water shutoff, generator systems, and life-safety devices.
+
+## 3. Network Topology
+
+- Rack location assumption: {{ smart_home.network_assumptions.rack_location }}.
+- Backbone assumption: {{ smart_home.network_assumptions.backbone }}.
+- Wi-Fi assumption: {{ smart_home.network_assumptions.wifi }}.
+- Provide wired Ethernet to the technical room, access points, PoE cameras, NVR/storage if used, and other stable infrastructure where practical.
+- Use UPS-backed power for router/firewall, switch, controller, camera/NVR core, and modem where practical.
+
+## 4. VLAN/Security Concept
+
+- Use a segmented network concept for admin devices, IoT devices, cameras, guests, and building systems.
+- Restrict camera and IoT device internet access unless a specific integration requires it.
+- Use firewall rules, strong passwords, unique device credentials, multi-factor authentication, update management, and least-privilege service accounts.
+- Final VLAN, firewall, VPN, certificate, and remote-access design must be reviewed by a qualified network/security integrator.
+
+## 5. Device Schedule
+
+| Device code | Device type | Room/location | Protocol | Power source | Network dependency | Automation role | Priority | Notes |
+|---|---|---|---|---|---|---|---|---|
+{% for device in devices -%}
+| {{ device.device_code }} | {{ device.device_type }} | {{ device.room_location }} | {{ device.protocol }} | {{ device.power_source }} | {{ device.network_dependency }} | {{ device.automation_role }} | {{ device.priority }} | {{ device.notes }} |
+{% endfor %}
+
+## 6. Sensor Schedule
+
+| Sensor code | Sensor type | Room/location | Protocol | Alert route | Priority | Notes |
+|---|---|---|---|---|---|---|
+{% for sensor in sensors -%}
+| {{ sensor.sensor_code }} | {{ sensor.sensor_type }} | {{ sensor.room_location }} | {{ sensor.protocol }} | {{ sensor.alert_route }} | {{ sensor.priority }} | {{ sensor.notes }} |
+{% endfor %}
+
+## 7. Automation List
+
+| Code | Automation | Trigger | Action | Dependencies | Safety note |
+|---|---|---|---|---|---|
+{% for automation in automations -%}
+| {{ automation.code }} | {{ automation.name }} | {{ automation.trigger }} | {{ automation.action }} | {{ automation.dependencies }} | {{ automation.safety_note }} |
+{% endfor %}
+
+## 8. Security System
+
+- Security concept includes motion detection, camera events, smart-lock state, night security mode, away mode, and notification escalation.
+- This document does not specify a certified alarm system, police/fire monitoring service, or guaranteed intrusion detection.
+- Final security design should address tamper resistance, battery backup, entry/exit delays, sirens, manual panic options, nuisance alarms, privacy, and local licensing.
+
+## 9. CCTV Concept
+
+- PoE cameras are assumed at entry, driveway, terrace, and service approach locations.
+- Prefer local recording with controlled remote viewing, clear retention limits, secure credentials, and camera VLAN isolation.
+- Camera coverage must respect privacy, local law, signage requirements, neighboring properties, and areas where recording is restricted.
+
+## 10. Access Control
+
+- Smart locks are planning assumptions for convenience and status monitoring only.
+- Every smart lock must retain manual/keyed override, emergency access, egress safety, battery replacement access, and owner-controlled credential management.
+- Access-control logs and guest credentials must be protected as sensitive data.
+
+## 11. Water Leak Protection
+
+- Leak sensors are assumed in kitchen, bathrooms, laundry/storage, and technical room.
+- Optional water shutoff automation must be professionally reviewed and must preserve manual bypass and access.
+- Leak sensors do not replace waterproofing, floor drains, pipe insulation, maintenance, or winterization procedures.
+
+## 12. Fire/CO Detection
+
+- Smoke/CO sensors are life-safety systems and must be selected, powered, located, installed, and maintained according to applicable local requirements.
+- Smart-home integration may mirror alerts but must not be the primary approved detection system.
+- Fireplace, technical room, bedrooms, sleeping circulation, and any fuel-burning equipment require professional review.
+
+## 13. Solar and Battery Monitoring
+
+- Solar monitoring is a planning assumption for PV production, battery state, generator alerts, and outage visibility.
+- Monitoring data should be treated as informational unless reviewed by licensed electrical professionals.
+- Inverter, battery, generator, and transfer-system control must not be modified through unreviewed automations.
+
+## 14. Remote Access
+
+- Prefer VPN, secure tunnel, or managed remote access with MFA over exposed ports.
+- Disable default accounts, avoid password reuse, rotate credentials, and document recovery access.
+- Remote unlock, shutoff, heating, generator, and security actions must include confirmation and audit logging.
+
+## 15. Backup and Restore
+
+- Back up {{ smart_home.platform }} configuration, dashboards, automations, device registry, MQTT settings, and network/firewall configuration.
+- Store backups encrypted, versioned, and separate from the controller.
+- Test restore procedures after major changes and before relying on the system during winter vacancy.
+
+## 16. Cybersecurity Checklist
+
+- Change all default passwords and use unique credentials.
+- Enable MFA for admin and remote-access accounts.
+- Segment IoT, camera, guest, and admin networks.
+- Keep controller, integrations, firmware, router/firewall, cameras, and apps updated.
+- Disable unused services, UPnP, exposed ports, and weak protocols.
+- Protect secrets, API keys, backup files, and camera streams.
+- Review logs for failed login attempts, unusual traffic, device dropouts, and automation failures.
+
+## 17. Maintenance Checklist
+
+- Check battery devices and critical sensors on a scheduled basis.
+- Confirm UPS runtime, battery health, and graceful shutdown behavior.
+- Review camera lenses, mounts, storage capacity, retention policy, and firmware.
+- Test leak alerts, smoke/CO alert mirroring, motion automations, away mode, night mode, and remote access.
+- Review backups and restore procedure after platform upgrades.
+- Keep a plain-language owner handover sheet for manual overrides, emergency access, and winter operating mode.
+
+## QA Notes
+
+- Smart-home convenience must not be confused with approved life-safety, security, or electrical systems.
+- Cybersecurity and privacy warnings must remain visible in generated documents.
+- All device locations, camera views, access-control behavior, and alarm workflows require owner and professional review.

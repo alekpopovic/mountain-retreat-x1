@@ -17,6 +17,7 @@ STRUCTURAL_TEMPLATE_NAME = "structural_concept.md.j2"
 ELECTRICAL_TEMPLATE_NAME = "electrical_package.md.j2"
 PLUMBING_TEMPLATE_NAME = "plumbing_wastewater.md.j2"
 HVAC_TEMPLATE_NAME = "hvac_package.md.j2"
+SMART_HOME_TEMPLATE_NAME = "smart_home_security.md.j2"
 DEFAULT_TEMPLATE_DIR = Path("docs/templates/markdown")
 
 
@@ -147,6 +148,46 @@ class HvacEquipmentItem:
     electrical_dependency: str
     maintenance_interval: str
     notes: str
+
+
+@dataclass(frozen=True)
+class SmartHomeDeviceItem:
+    """Preliminary smart-home device schedule item."""
+
+    device_code: str
+    device_type: str
+    room_location: str
+    protocol: str
+    power_source: str
+    network_dependency: str
+    automation_role: str
+    priority: str
+    notes: str
+
+
+@dataclass(frozen=True)
+class SensorScheduleItem:
+    """Preliminary smart-home sensor schedule item."""
+
+    sensor_code: str
+    sensor_type: str
+    room_location: str
+    protocol: str
+    alert_route: str
+    priority: str
+    notes: str
+
+
+@dataclass(frozen=True)
+class AutomationItem:
+    """Preliminary smart-home automation item."""
+
+    code: str
+    name: str
+    trigger: str
+    action: str
+    dependencies: str
+    safety_note: str
 
 
 def _shared_limitations(config: MountainRetreatConfig) -> tuple[str, ...]:
@@ -961,6 +1002,263 @@ def _hvac_context(config: MountainRetreatConfig) -> dict[str, object]:
     }
 
 
+def _smart_home_device_schedule(config: MountainRetreatConfig) -> tuple[SmartHomeDeviceItem, ...]:
+    protocols = config.smart_home.protocols
+    zigbee = "Zigbee" if "Zigbee" in protocols else "Low-power mesh TBD"
+    matter = "Matter" if "Matter" in protocols else "Matter/thread TBD"
+    mqtt = "MQTT" if "MQTT" in protocols else "MQTT/event bus TBD"
+    rows = (
+        (
+            "SH-001",
+            "Home Assistant controller",
+            config.smart_home.network_assumptions["rack_location"],
+            "Ethernet",
+            "UPS-backed mains",
+            "Local LAN; internet optional for selected integrations",
+            "Primary local automation coordinator",
+            "Critical",
+            "Use backups, monitored storage, and documented restore procedure.",
+        ),
+        (
+            "SH-002",
+            "Zigbee coordinator",
+            config.smart_home.network_assumptions["rack_location"],
+            zigbee,
+            "USB/PoE adapter or powered coordinator TBD",
+            "Local mesh and Home Assistant",
+            "Low-power sensors and switches",
+            "Critical",
+            "Place away from electrical noise; final channel plan TBD.",
+        ),
+        (
+            "SH-003",
+            "Matter controller / thread border router placeholder",
+            "Technical room / central living zone TBD",
+            matter,
+            "UPS-backed mains where practical",
+            "Local LAN and vendor ecosystem dependency TBD",
+            "Matter device onboarding and resilience",
+            "High",
+            "Avoid cloud-only dependencies for critical cabin functions.",
+        ),
+        (
+            "SH-004",
+            "MQTT broker",
+            config.smart_home.network_assumptions["rack_location"],
+            mqtt,
+            "UPS-backed mains",
+            "Local LAN",
+            "Telemetry/event bus for energy, sensors, and alerts",
+            "High",
+            "Use authentication, least privilege, and retained-message review.",
+        ),
+        (
+            "SH-005",
+            "PoE camera set",
+            "Entry, driveway, terrace, and service approach",
+            "Ethernet/PoE",
+            "PoE switch on UPS where practical",
+            "Camera VLAN and NVR/Home Assistant integration",
+            "Perimeter awareness and event recording",
+            "High",
+            "Privacy, signage, retention, and local surveillance law review required.",
+        ),
+        (
+            "SH-006",
+            "Smart lock",
+            "Entrance vestibule",
+            matter,
+            "Battery with keyed/manual override",
+            "Local controller plus emergency manual access",
+            "Away mode, guest access, lock status alerts",
+            "High",
+            "Never rely on automation as the only safe means of entry or egress.",
+        ),
+        (
+            "SH-007",
+            "Motion sensor group",
+            "Entrance, stair zone, living room, gallery, terrace",
+            zigbee,
+            "Battery",
+            "Local mesh",
+            "Lighting scenes, occupancy, and security modes",
+            "Medium",
+            "Locations require nuisance-trigger review around fireplace and windows.",
+        ),
+        (
+            "SH-008",
+            "Water leak sensor group",
+            "Kitchen, bathrooms, laundry/storage, technical room",
+            zigbee,
+            "Battery",
+            "Local mesh; optional shutoff valve dependency",
+            "Leak alerts and optional water shutoff",
+            "Critical",
+            "Sensor alerts do not replace waterproofing, drains, or maintenance.",
+        ),
+        (
+            "SH-009",
+            "Smoke/CO sensor integration placeholder",
+            "Bedrooms, living room, fireplace zone, technical room",
+            "Certified detector system + integration TBD",
+            "Code-required independent power per final design",
+            "Life-safety system independent of smart-home platform",
+            "Notification mirror only",
+            "Critical",
+            "Smart-home integration must not replace approved smoke/CO detection.",
+        ),
+        (
+            "SH-010",
+            "Outdoor weather station",
+            "Exterior mast/location TBD",
+            "Wi-Fi/Ethernet/MQTT TBD",
+            "Mains/solar/battery TBD",
+            "Local LAN or weather gateway",
+            "Wind, temperature, freeze, and terrace/weather automations",
+            "Medium",
+            "Mounting must consider wind, lightning, ice, and service access.",
+        ),
+        (
+            "SH-011",
+            "Solar and battery monitoring gateway",
+            "Technical room",
+            "Ethernet/MQTT/API TBD",
+            "UPS-backed mains where supported",
+            "Local LAN plus inverter/battery gateway",
+            "Production, battery, generator, and outage notifications",
+            "High",
+            "Electrical system data is informational unless reviewed by professionals.",
+        ),
+        (
+            "SH-012",
+            "UPS for network equipment",
+            config.smart_home.network_assumptions["rack_location"],
+            "Local power monitoring / USB / network card TBD",
+            "Battery-backed mains",
+            "Controller, router, PoE switch, and modem dependency",
+            "Graceful shutdown and outage alerts",
+            "Critical",
+            "Runtime sizing, battery service, and safe shutdown must be tested.",
+        ),
+    )
+    return tuple(SmartHomeDeviceItem(*row) for row in rows)
+
+
+def _sensor_schedule(
+    devices: tuple[SmartHomeDeviceItem, ...],
+) -> tuple[SensorScheduleItem, ...]:
+    sensor_devices = tuple(
+        device
+        for device in devices
+        if any(
+            marker in device.device_type.lower()
+            for marker in ("sensor", "camera", "weather", "monitoring")
+        )
+    )
+    return tuple(
+        SensorScheduleItem(
+            sensor_code=f"SS-{index:03d}",
+            sensor_type=device.device_type,
+            room_location=device.room_location,
+            protocol=device.protocol,
+            alert_route="Home Assistant dashboard, local notification, and alert log",
+            priority=device.priority,
+            notes=device.notes,
+        )
+        for index, device in enumerate(sensor_devices, start=1)
+    )
+
+
+def _automation_examples() -> tuple[AutomationItem, ...]:
+    rows = (
+        (
+            "AU-001",
+            "Winter freeze protection",
+            "Low indoor/technical-room temperature or weather station frost warning",
+            "Notify owner, verify heat source status, and raise heating setpoint placeholder",
+            "Temperature sensors, weather station, HVAC integration, UPS/network",
+            "Must not replace engineered freeze protection or winterization procedure.",
+        ),
+        (
+            "AU-002",
+            "Water leak shutoff",
+            "Leak sensor alarm in wet room or technical room",
+            "Send critical alert and close smart shutoff valve if installed and approved",
+            "Leak sensors, optional motorized valve, local controller, power backup",
+            "Shutoff valve must be manually accessible and professionally reviewed.",
+        ),
+        (
+            "AU-003",
+            "Away mode",
+            "Owner activates away profile or no occupancy detected for configured period",
+            "Lower heating setpoints, arm security mode, reduce lighting, and monitor leaks",
+            "Occupancy sensors, smart lock state, HVAC controls, camera/security system",
+            "Do not lock occupants in or disable required life-safety systems.",
+        ),
+        (
+            "AU-004",
+            "Night security mode",
+            "Scheduled night period or manual scene activation",
+            "Arm perimeter alerts, dim path lighting, and keep smoke/CO alerts mirrored",
+            "Motion sensors, cameras, lighting controls, smart lock status",
+            "Security automation is advisory and does not guarantee protection.",
+        ),
+        (
+            "AU-005",
+            "Terrace lighting scene",
+            "Manual scene, sunset, or motion event",
+            "Activate low-glare terrace lights and shut off after timeout",
+            "Terrace lighting, motion sensors, weather condition input",
+            "Exterior lighting must remain electrically safe and weather-rated.",
+        ),
+        (
+            "AU-006",
+            "Low battery warning",
+            "Battery device drops below configured threshold",
+            "Create maintenance task and send owner notification",
+            "Battery sensors, Home Assistant, notification service",
+            "Critical sensors need periodic manual checks even when automation is quiet.",
+        ),
+        (
+            "AU-007",
+            "Generator alert",
+            "Generator run/fault signal or outage state detected",
+            "Notify owner and log event for maintenance follow-up",
+            "Generator interface, power monitor, UPS-backed network",
+            "Generator controls and transfer equipment require licensed electrical design.",
+        ),
+        (
+            "AU-008",
+            "Solar production notification",
+            "Solar production, battery state, or inverter fault crosses configured threshold",
+            "Notify owner and log trend for review",
+            "Solar monitoring gateway, MQTT/API integration, local network",
+            "Energy data is informational and not a substitute for electrical commissioning.",
+        ),
+    )
+    return tuple(AutomationItem(*row) for row in rows)
+
+
+def _smart_home_context(config: MountainRetreatConfig) -> dict[str, object]:
+    devices = _smart_home_device_schedule(config)
+    sensors = _sensor_schedule(devices)
+    automations = _automation_examples()
+    return {
+        "project": config.project,
+        "smart_home": config.smart_home,
+        "off_grid": config.off_grid,
+        "terrace": config.terrace,
+        "assumptions": _shared_assumptions(config),
+        "limitations": _shared_limitations(config),
+        "devices": devices,
+        "sensors": sensors,
+        "automations": automations,
+        "device_count": len(devices),
+        "sensor_count": len(sensors),
+        "automation_count": len(automations),
+    }
+
+
 def all_config_rooms(config: MountainRetreatConfig) -> list[Room]:
     """Return all configured room models."""
     return [*config.rooms_ground_floor.rooms, *config.rooms_gallery.rooms]
@@ -1384,6 +1682,7 @@ def generate_markdown_volumes(
     electrical_template = env.get_template(ELECTRICAL_TEMPLATE_NAME)
     plumbing_template = env.get_template(PLUMBING_TEMPLATE_NAME)
     hvac_template = env.get_template(HVAC_TEMPLATE_NAME)
+    smart_home_template = env.get_template(SMART_HOME_TEMPLATE_NAME)
     paths: list[Path] = []
     for volume in _volume_specs(config):
         if volume.filename == "02_architectural_package.md":
@@ -1396,6 +1695,8 @@ def generate_markdown_volumes(
             rendered = plumbing_template.render(**_plumbing_context(config))
         elif volume.filename == "06_hvac_package.md":
             rendered = hvac_template.render(**_hvac_context(config))
+        elif volume.filename == "07_smart_home_security.md":
+            rendered = smart_home_template.render(**_smart_home_context(config))
         else:
             rendered = template.render(project=config.project, volume=volume)
         path = markdown_dir / volume.filename

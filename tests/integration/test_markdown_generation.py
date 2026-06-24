@@ -342,3 +342,73 @@ def test_hvac_package_includes_all_rooms_in_zone_considerations(
     )
     for room_name in room_names:
         assert room_name in text
+
+
+def test_smart_home_package_contains_required_sections_tables_and_warnings(
+    tmp_path: Path,
+) -> None:
+    output_dir = tmp_path / "output"
+
+    result = runner.invoke(app, ["generate", "markdown", "--output-dir", str(output_dir)])
+
+    assert result.exit_code == 0
+    text = (output_dir / "markdown" / "07_smart_home_security.md").read_text(
+        encoding="utf-8"
+    )
+    for section in (
+        "## 1. Smart Home Architecture",
+        "## 2. Local-First Control Philosophy",
+        "## 3. Network Topology",
+        "## 4. VLAN/Security Concept",
+        "## 5. Device Schedule",
+        "## 6. Sensor Schedule",
+        "## 7. Automation List",
+        "## 8. Security System",
+        "## 9. CCTV Concept",
+        "## 10. Access Control",
+        "## 11. Water Leak Protection",
+        "## 12. Fire/CO Detection",
+        "## 13. Solar and Battery Monitoring",
+        "## 14. Remote Access",
+        "## 15. Backup and Restore",
+        "## 16. Cybersecurity Checklist",
+        "## 17. Maintenance Checklist",
+    ):
+        assert section in text
+
+    assert "Device code" in text
+    assert "Sensor code" in text
+    assert "Home Assistant" in text
+    assert "Zigbee" in text
+    assert "Matter" in text
+    assert "MQTT" in text
+    assert "PoE camera set" in text
+    assert "Smart lock" in text
+    assert "UPS for network equipment" in text
+    assert "does not certify cybersecurity" in text
+    assert "must not be the primary approved detection system" in text
+    assert "local legal/privacy review" in text
+
+
+def test_smart_home_package_contains_required_automation_examples(
+    tmp_path: Path,
+) -> None:
+    output_dir = tmp_path / "output"
+
+    result = runner.invoke(app, ["generate", "markdown", "--output-dir", str(output_dir)])
+
+    assert result.exit_code == 0
+    text = (output_dir / "markdown" / "07_smart_home_security.md").read_text(
+        encoding="utf-8"
+    )
+    for automation in (
+        "Winter freeze protection",
+        "Water leak shutoff",
+        "Away mode",
+        "Night security mode",
+        "Terrace lighting scene",
+        "Low battery warning",
+        "Generator alert",
+        "Solar production notification",
+    ):
+        assert automation in text
