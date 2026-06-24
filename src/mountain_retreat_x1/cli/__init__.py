@@ -12,7 +12,11 @@ from mountain_retreat_x1.calculators import area_summary, cost_summary, quantity
 from mountain_retreat_x1.calculators.results import QuantityMap
 from mountain_retreat_x1.config import ConfigLoadError, load_config
 from mountain_retreat_x1.config.loader import MountainRetreatConfig
-from mountain_retreat_x1.exporters import generate_bom_workbook, generate_cost_estimate_workbook
+from mountain_retreat_x1.exporters import (
+    generate_bom_workbook,
+    generate_cost_estimate_workbook,
+    generate_gantt_schedule_workbook,
+)
 from mountain_retreat_x1.generators import generate_markdown_volumes
 
 app = typer.Typer(
@@ -334,9 +338,16 @@ def generate_excel(
             help="Generate the preliminary Excel cost estimate workbook.",
         ),
     ] = False,
+    gantt: Annotated[
+        bool,
+        typer.Option(
+            "--gantt",
+            help="Generate the preliminary 52-week Gantt schedule workbook.",
+        ),
+    ] = False,
 ) -> None:
     """Generate preliminary Excel workbooks."""
-    if bom or cost:
+    if bom or cost or gantt:
         _ensure_output_dirs(output_dir)
         config = _load_config_or_exit(config_dir)
         generated_paths: list[Path] = []
@@ -344,6 +355,8 @@ def generate_excel(
             generated_paths.append(generate_bom_workbook(config, output_dir))
         if cost:
             generated_paths.append(generate_cost_estimate_workbook(config, output_dir))
+        if gantt:
+            generated_paths.append(generate_gantt_schedule_workbook(config, output_dir))
         table = Table(title="Generated Excel Workbooks")
         table.add_column("File", style="cyan")
         table.add_column("Status")

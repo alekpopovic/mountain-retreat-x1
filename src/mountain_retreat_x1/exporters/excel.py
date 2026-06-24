@@ -1,6 +1,7 @@
 """Excel workbook exporters for preliminary planning documents."""
 
 from collections.abc import Iterable
+from dataclasses import dataclass
 from pathlib import Path
 
 from openpyxl import Workbook  # type: ignore[import-untyped]
@@ -13,8 +14,10 @@ from mountain_retreat_x1.models import CostItem, MaterialItem
 
 BOM_FILENAME = "Mountain_Retreat_X1_BOM.xlsx"
 COST_FILENAME = "Mountain_Retreat_X1_Cost_Estimate.xlsx"
+GANTT_FILENAME = "Mountain_Retreat_X1_Gantt_Schedule.xlsx"
 BOM_OUTPUT_DIR = "excel"
 COST_OUTPUT_DIR = "excel"
+GANTT_OUTPUT_DIR = "excel"
 
 ITEM_HEADERS = (
     "Item Code",
@@ -76,6 +79,16 @@ COST_WORKBOOK_SHEETS = (
     "Assumptions",
     "Review_Notes",
 )
+GANTT_WORKBOOK_SHEETS = (
+    "Gantt",
+    "Phase_Details",
+    "Milestones",
+    "Dependencies",
+    "Risks",
+    "Inspections",
+    "Cashflow_By_Week",
+    "Assumptions",
+)
 
 COST_ITEM_HEADERS = (
     "Cost Code",
@@ -101,6 +114,22 @@ SCENARIO_HEADERS = (
 )
 
 EUR_FORMAT = '#,##0.00 "EUR"'
+WEEK_HEADERS = tuple(f"Week {week}" for week in range(1, 53))
+GANTT_HEADERS = (
+    "WBS",
+    "Phase",
+    "Task",
+    "Duration Days",
+    "Start Week",
+    "End Week",
+    "Dependencies",
+    "Responsible Party",
+    "Risk Level",
+    "Inspection Required",
+    "Weather Sensitive",
+    "Notes",
+    *WEEK_HEADERS,
+)
 
 
 HEADER_FILL = PatternFill("solid", fgColor="1F4E78")
@@ -108,6 +137,27 @@ SUBHEADER_FILL = PatternFill("solid", fgColor="D9EAF7")
 HEADER_FONT = Font(color="FFFFFF", bold=True)
 BOLD_FONT = Font(bold=True)
 NOTICE_FONT = Font(bold=True, color="9C0006")
+TIMELINE_FILL = PatternFill("solid", fgColor="70AD47")
+MILESTONE_FILL = PatternFill("solid", fgColor="FFC000")
+RISK_FILL = PatternFill("solid", fgColor="F4B084")
+
+
+@dataclass(frozen=True)
+class GanttTask:
+    """Preliminary Gantt task row."""
+
+    wbs: str
+    phase: str
+    task: str
+    duration_days: int
+    start_week: int
+    end_week: int
+    dependencies: str
+    responsible_party: str
+    risk_level: str
+    inspection_required: str
+    weather_sensitive: str
+    notes: str
 
 
 def _all_materials(config: MountainRetreatConfig) -> list[MaterialItem]:
@@ -825,5 +875,545 @@ def generate_cost_estimate_workbook(config: MountainRetreatConfig, output_dir: P
     _apply_cost_workbook_metadata(workbook, config)
 
     path = excel_dir / COST_FILENAME
+    workbook.save(path)
+    return path
+
+
+def _default_gantt_tasks() -> tuple[GanttTask, ...]:
+    return (
+        GanttTask(
+            "1.0",
+            "Design and professional review",
+            "Surveys, geotechnical brief, and licensed review",
+            20,
+            1,
+            4,
+            "",
+            "Owner with licensed professionals",
+            "Medium",
+            "Yes",
+            "Yes",
+            "Mountain site access and weather windows must be confirmed.",
+        ),
+        GanttTask(
+            "2.0",
+            "Permits and site preparation",
+            "Permitting pathway, temporary services, and site setup",
+            15,
+            5,
+            7,
+            "1.0",
+            "Owner / architect / local authority",
+            "High",
+            "Yes",
+            "Yes",
+            "No generated document is a permit or approval.",
+        ),
+        GanttTask(
+            "3.0",
+            "Access road and logistics",
+            "Access road verification, delivery planning, laydown zones",
+            15,
+            6,
+            8,
+            "1.0",
+            "Contractor / civil consultant",
+            "High",
+            "Yes",
+            "Yes",
+            "Mountain logistics can control the real schedule.",
+        ),
+        GanttTask(
+            "4.0",
+            "Earthworks",
+            "Excavation, slope control, and temporary erosion measures",
+            15,
+            8,
+            10,
+            "2.0, 3.0",
+            "Civil contractor",
+            "High",
+            "Yes",
+            "Yes",
+            "Weather and soil assumptions must be verified on site.",
+        ),
+        GanttTask(
+            "5.0",
+            "Drainage",
+            "Temporary and permanent drainage routes",
+            10,
+            9,
+            11,
+            "4.0",
+            "Civil contractor / drainage designer",
+            "High",
+            "Yes",
+            "Yes",
+            "Drainage must be coordinated before foundations are closed.",
+        ),
+        GanttTask(
+            "6.0",
+            "Foundations",
+            "Foundation works and slab concept execution",
+            20,
+            11,
+            14,
+            "4.0, 5.0",
+            "Structural contractor",
+            "High",
+            "Yes",
+            "Yes",
+            "Requires geotechnical and structural design before construction.",
+        ),
+        GanttTask(
+            "7.0",
+            "Structural frame",
+            "Timber/hybrid structural frame erection",
+            20,
+            15,
+            18,
+            "6.0",
+            "Structural contractor",
+            "High",
+            "Yes",
+            "Yes",
+            "Lifting plan, bracing, and inspection hold points required.",
+        ),
+        GanttTask(
+            "8.0",
+            "Roof",
+            "Roof structure, underlay, and standing seam concept",
+            15,
+            18,
+            20,
+            "7.0",
+            "Roofing contractor",
+            "High",
+            "Yes",
+            "Yes",
+            "Snow, wind, fall protection, and weather closure are key risks.",
+        ),
+        GanttTask(
+            "9.0",
+            "Exterior closure",
+            "Windows, doors, air/water barrier, temporary dry-in",
+            15,
+            20,
+            22,
+            "8.0",
+            "Envelope contractor",
+            "Medium",
+            "Yes",
+            "Yes",
+            "Protect interior works from mountain weather.",
+        ),
+        GanttTask(
+            "10.0",
+            "Facade",
+            "Timber, stone, and glass facade works",
+            20,
+            22,
+            25,
+            "9.0",
+            "Facade contractor",
+            "Medium",
+            "Yes",
+            "Yes",
+            "Thermal bridges and waterproofing details require review.",
+        ),
+        GanttTask(
+            "11.0",
+            "Electrical rough-in",
+            "Electrical containment, rough wiring, boards, exterior routes",
+            15,
+            24,
+            26,
+            "9.0",
+            "Licensed electrician",
+            "High",
+            "Yes",
+            "No",
+            "Final cable sizing and code compliance by licensed professionals.",
+        ),
+        GanttTask(
+            "12.0",
+            "Plumbing rough-in",
+            "Water, waste, vent, and drainage rough-in",
+            15,
+            24,
+            26,
+            "9.0",
+            "Licensed plumber",
+            "High",
+            "Yes",
+            "Yes",
+            "Freeze protection and slopes must be inspected.",
+        ),
+        GanttTask(
+            "13.0",
+            "HVAC rough-in",
+            "UFH manifolds, heat-pump interfaces, ventilation routes",
+            15,
+            25,
+            27,
+            "9.0, 11.0, 12.0",
+            "Mechanical contractor",
+            "High",
+            "Yes",
+            "Yes",
+            "No final heat-loss calculation is generated by this project.",
+        ),
+        GanttTask(
+            "14.0",
+            "Interior walls and insulation",
+            "Partitions, insulation, vapor control, service closures",
+            20,
+            27,
+            30,
+            "11.0, 12.0, 13.0",
+            "Interior contractor",
+            "Medium",
+            "Yes",
+            "No",
+            "Do not close walls before MEP inspections.",
+        ),
+        GanttTask(
+            "15.0",
+            "Floors and finishes",
+            "Floor build-ups, wall finishes, ceiling finishes",
+            20,
+            31,
+            34,
+            "14.0",
+            "Finishing contractor",
+            "Medium",
+            "No",
+            "No",
+            "Moisture and temperature conditions affect finish quality.",
+        ),
+        GanttTask(
+            "16.0",
+            "Bathrooms",
+            "Bathroom waterproofing, fixtures, extraction, finishes",
+            15,
+            32,
+            34,
+            "12.0, 14.0",
+            "Bathroom contractor / plumber",
+            "High",
+            "Yes",
+            "No",
+            "Waterproofing hold points and ventilation checks required.",
+        ),
+        GanttTask(
+            "17.0",
+            "Kitchen",
+            "Kitchen installation and appliance interfaces",
+            10,
+            35,
+            36,
+            "11.0, 12.0, 15.0",
+            "Kitchen installer",
+            "Medium",
+            "No",
+            "No",
+            "Appliance loads and plumbing connections require review.",
+        ),
+        GanttTask(
+            "18.0",
+            "Terrace",
+            "Terrace structure, drainage, guard, decking, utility placeholders",
+            25,
+            34,
+            38,
+            "7.0, 8.0, 10.0",
+            "Terrace contractor / structural engineer",
+            "High",
+            "Yes",
+            "Yes",
+            "Terrace load, waterproofing, guard, and drainage risks are high.",
+        ),
+        GanttTask(
+            "19.0",
+            "Smart home",
+            "Controller, network, sensors, cameras, scenes, tests",
+            10,
+            37,
+            38,
+            "11.0, 15.0",
+            "Smart-home integrator",
+            "Medium",
+            "No",
+            "No",
+            "Security and life-safety integrations must remain advisory.",
+        ),
+        GanttTask(
+            "20.0",
+            "Solar/off-grid",
+            "PV, battery, generator, water/off-grid placeholders",
+            20,
+            39,
+            42,
+            "8.0, 11.0, 13.0",
+            "Licensed electrical/mechanical specialists",
+            "High",
+            "Yes",
+            "Yes",
+            "Winter performance and utility approvals are not guaranteed.",
+        ),
+        GanttTask(
+            "21.0",
+            "Landscaping",
+            "Final grading, paths, erosion control, planting",
+            20,
+            43,
+            46,
+            "5.0, 18.0",
+            "Landscape / civil contractor",
+            "Medium",
+            "Yes",
+            "Yes",
+            "Weather, slope, and drainage can shift sequencing.",
+        ),
+        GanttTask(
+            "22.0",
+            "Testing and handover",
+            "Commissioning, inspections, owner handover, defect list",
+            20,
+            47,
+            50,
+            "16.0, 17.0, 18.0, 19.0, 20.0",
+            "Contractor with licensed professionals",
+            "High",
+            "Yes",
+            "Yes",
+            "Contractor quotes, approvals, and commissioning records required.",
+        ),
+    )
+
+
+def _configure_gantt_sheet(sheet: Worksheet) -> None:
+    sheet.append(GANTT_HEADERS)
+    _style_header_row(sheet)
+    sheet.freeze_panes = "M2"
+    sheet.auto_filter.ref = f"A1:{get_column_letter(len(GANTT_HEADERS))}1"
+    _set_widths(sheet, (10, 24, 42, 14, 12, 10, 24, 28, 12, 18, 18, 56, *([4] * 52)))
+    for column in range(13, 65):
+        sheet.cell(row=1, column=column).alignment = Alignment(
+            text_rotation=90,
+            horizontal="center",
+            vertical="bottom",
+        )
+
+
+def _append_gantt_task(sheet: Worksheet, task: GanttTask) -> None:
+    row = sheet.max_row + 1
+    sheet.append(
+        (
+            task.wbs,
+            task.phase,
+            task.task,
+            task.duration_days,
+            task.start_week,
+            task.end_week,
+            task.dependencies,
+            task.responsible_party,
+            task.risk_level,
+            task.inspection_required,
+            task.weather_sensitive,
+            task.notes,
+            *("" for _ in range(52)),
+        )
+    )
+    for cell in sheet[row]:
+        cell.alignment = Alignment(vertical="top", wrap_text=True)
+    if task.risk_level == "High":
+        sheet[f"I{row}"].fill = RISK_FILL
+    for week in range(task.start_week, task.end_week + 1):
+        cell = sheet.cell(row=row, column=12 + week)
+        cell.value = "■"
+        cell.fill = TIMELINE_FILL
+        cell.alignment = Alignment(horizontal="center", vertical="center")
+
+
+def _build_gantt_sheet(sheet: Worksheet, tasks: tuple[GanttTask, ...]) -> None:
+    _configure_gantt_sheet(sheet)
+    for task in tasks:
+        _append_gantt_task(sheet, task)
+
+
+def _build_phase_details_sheet(sheet: Worksheet, tasks: tuple[GanttTask, ...]) -> None:
+    sheet.append(("WBS", "Phase", "Task", "Duration Days", "Window", "Responsible Party", "Notes"))
+    _style_header_row(sheet)
+    for task in tasks:
+        sheet.append(
+            (
+                task.wbs,
+                task.phase,
+                task.task,
+                task.duration_days,
+                f"Week {task.start_week} to Week {task.end_week}",
+                task.responsible_party,
+                task.notes,
+            )
+        )
+    sheet.freeze_panes = "A2"
+    sheet.auto_filter.ref = f"A1:G{sheet.max_row}"
+    _set_widths(sheet, (10, 28, 44, 14, 20, 32, 70))
+
+
+def _build_milestones_sheet(sheet: Worksheet, tasks: tuple[GanttTask, ...]) -> None:
+    sheet.append(("Milestone", "Target Week", "Related WBS", "Notes"))
+    _style_header_row(sheet)
+    milestones = (
+        ("Professional review complete", 4, "1.0", "Proceed only with required licensed input."),
+        ("Site ready for earthworks", 8, "2.0, 3.0", "Access and logistics confirmed."),
+        ("Foundations complete", 14, "6.0", "Inspection and hold-point records required."),
+        ("Weather-tight shell", 22, "8.0, 9.0", "Dry-in before interior closures."),
+        ("MEP rough-ins complete", 27, "11.0, 12.0, 13.0", "Do not close walls before review."),
+        ("Terrace complete", 38, "18.0", "Guard, drainage, waterproofing checks required."),
+        ("Off-grid systems tested", 42, "20.0", "No autonomy guarantee implied."),
+        ("Handover complete", 50, "22.0", "Commissioning and owner documentation complete."),
+    )
+    for row in milestones:
+        sheet.append(row)
+        sheet.cell(row=sheet.max_row, column=2).fill = MILESTONE_FILL
+    sheet.freeze_panes = "A2"
+    sheet.auto_filter.ref = f"A1:D{sheet.max_row}"
+    _set_widths(sheet, (34, 14, 18, 70))
+
+
+def _build_dependencies_sheet(sheet: Worksheet, tasks: tuple[GanttTask, ...]) -> None:
+    sheet.append(("WBS", "Phase", "Dependencies", "Dependency Warning"))
+    _style_header_row(sheet)
+    for task in tasks:
+        warning = (
+            "No predecessor listed; verify readiness before starting."
+            if not task.dependencies
+            else "Starting before predecessors close may create rework, inspection, or safety risk."
+        )
+        sheet.append((task.wbs, task.phase, task.dependencies or "None listed", warning))
+    sheet.freeze_panes = "A2"
+    sheet.auto_filter.ref = f"A1:D{sheet.max_row}"
+    _set_widths(sheet, (10, 30, 36, 78))
+
+
+def _build_risks_sheet(sheet: Worksheet, tasks: tuple[GanttTask, ...]) -> None:
+    sheet.append(("WBS", "Phase", "Risk Level", "Weather Sensitive", "Risk Notes"))
+    _style_header_row(sheet)
+    for task in tasks:
+        notes = task.notes
+        if task.weather_sensitive == "Yes":
+            notes = f"{notes} Mountain weather can delay or resequence this phase."
+        sheet.append((task.wbs, task.phase, task.risk_level, task.weather_sensitive, notes))
+        if task.risk_level == "High":
+            sheet.cell(row=sheet.max_row, column=3).fill = RISK_FILL
+    sheet.freeze_panes = "A2"
+    sheet.auto_filter.ref = f"A1:E{sheet.max_row}"
+    _set_widths(sheet, (10, 30, 14, 18, 90))
+
+
+def _build_inspections_sheet(
+    sheet: Worksheet,
+    config: MountainRetreatConfig,
+    tasks: tuple[GanttTask, ...],
+) -> None:
+    sheet.append(("WBS/Checklist", "Phase", "Inspection Required", "Responsible Party", "Notes"))
+    _style_header_row(sheet)
+    for task in tasks:
+        if task.inspection_required == "Yes":
+            sheet.append((task.wbs, task.phase, "Yes", task.responsible_party, task.notes))
+    for item in config.checklists_seed.checklist_items:
+        sheet.append((item.id, item.phase, "Yes", item.responsible_party, item.inspection_item))
+    sheet.freeze_panes = "A2"
+    sheet.auto_filter.ref = f"A1:E{sheet.max_row}"
+    _set_widths(sheet, (18, 32, 20, 34, 86))
+
+
+def _build_weekly_cashflow_sheet(sheet: Worksheet, tasks: tuple[GanttTask, ...]) -> None:
+    sheet.append(("Week", "Planned Activity Count", "Planning Cashflow Weight", "Notes"))
+    _style_header_row(sheet)
+    for week in range(1, 53):
+        active_count = sum(1 for task in tasks if task.start_week <= week <= task.end_week)
+        sheet.append(
+            (
+                f"Week {week}",
+                active_count,
+                f"=B{week + 1}/SUM($B$2:$B$53)",
+                "Placeholder distribution only; contractor cashflow required.",
+            )
+        )
+    total_row = sheet.max_row + 1
+    sheet.append(("TOTAL", f"=SUM(B2:B{total_row - 1})", f"=SUM(C2:C{total_row - 1})", ""))
+    for cell in sheet[total_row]:
+        cell.font = BOLD_FONT
+        cell.fill = SUBHEADER_FILL
+    for cell in sheet["C"]:
+        cell.number_format = "0.00%"
+    sheet.freeze_panes = "A2"
+    sheet.auto_filter.ref = f"A1:D{sheet.max_row}"
+    _set_widths(sheet, (14, 24, 24, 70))
+
+
+def _build_gantt_assumptions_sheet(sheet: Worksheet, config: MountainRetreatConfig) -> None:
+    rows = (
+        ("Project", config.project.project_name),
+        ("Status", config.project.status),
+        ("Disclaimer", config.project.disclaimer),
+        ("Schedule duration", "12 months / 52 weeks"),
+        ("Schedule basis", "Preliminary planning sequence only; not a contractor baseline."),
+        ("Country", config.project.country),
+        ("Climate zone", config.site.climate_zone),
+        ("Altitude m", f"{config.site.altitude_m:g}"),
+        ("Drainage risk", config.site.drainage_risk),
+        ("Access road", config.site.access_road_type),
+        ("Mountain weather note", "Snow, frost, rain, wind, and access limits can delay work."),
+        (
+            "Dependency warning",
+            "Predecessor phases must be verified before starting dependent work.",
+        ),
+        ("Professional review", ", ".join(config.project.review_required_by)),
+        ("YAML seed phases", str(len(config.construction_phases.phases))),
+    )
+    sheet.append(("Assumption", "Value"))
+    _style_header_row(sheet)
+    for row in rows:
+        sheet.append(row)
+    sheet.freeze_panes = "A2"
+    sheet.auto_filter.ref = f"A1:B{sheet.max_row}"
+    _set_widths(sheet, (30, 100))
+    for cell in sheet["B"]:
+        cell.alignment = Alignment(wrap_text=True, vertical="top")
+
+
+def _apply_gantt_workbook_metadata(workbook: Workbook, config: MountainRetreatConfig) -> None:
+    workbook.properties.title = "Mountain Retreat X1 Preliminary Gantt Schedule"
+    workbook.properties.subject = "Preliminary 52-week planning schedule"
+    workbook.properties.creator = config.project.author
+    workbook.properties.keywords = "PRELIMINARY, Gantt, not a contractor baseline"
+
+
+def generate_gantt_schedule_workbook(config: MountainRetreatConfig, output_dir: Path) -> Path:
+    """Generate the preliminary 52-week Gantt schedule workbook and return its path."""
+    excel_dir = output_dir / GANTT_OUTPUT_DIR
+    excel_dir.mkdir(parents=True, exist_ok=True)
+
+    workbook = Workbook()
+    workbook.active.title = "Gantt"
+    for sheet_name in GANTT_WORKBOOK_SHEETS[1:]:
+        workbook.create_sheet(sheet_name)
+
+    tasks = _default_gantt_tasks()
+    _build_gantt_sheet(workbook["Gantt"], tasks)
+    _build_phase_details_sheet(workbook["Phase_Details"], tasks)
+    _build_milestones_sheet(workbook["Milestones"], tasks)
+    _build_dependencies_sheet(workbook["Dependencies"], tasks)
+    _build_risks_sheet(workbook["Risks"], tasks)
+    _build_inspections_sheet(workbook["Inspections"], config, tasks)
+    _build_weekly_cashflow_sheet(workbook["Cashflow_By_Week"], tasks)
+    _build_gantt_assumptions_sheet(workbook["Assumptions"], config)
+    _apply_gantt_workbook_metadata(workbook, config)
+
+    path = excel_dir / GANTT_FILENAME
     workbook.save(path)
     return path
