@@ -8,9 +8,11 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from mountain_retreat_x1.calculators import area_summary, cost_summary, quantity_summary
 from mountain_retreat_x1.calculators.results import QuantityMap
 from mountain_retreat_x1.config.loader import MountainRetreatConfig
+from mountain_retreat_x1.models import Room
 
 MARKDOWN_OUTPUT_DIR = "markdown"
 TEMPLATE_NAME = "volume.md.j2"
+ARCHITECTURAL_TEMPLATE_NAME = "architectural_package.md.j2"
 DEFAULT_TEMPLATE_DIR = Path("docs/templates/markdown")
 
 
@@ -33,6 +35,44 @@ class MarkdownVolume:
     required_review: tuple[str, ...]
     sections: tuple[MarkdownSection, ...]
     qa_notes: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class ScheduleItem:
+    """Door/window schedule item."""
+
+    code: str
+    location: str
+    type: str
+    approximate_size: str
+    glazing_note: str
+    thermal_performance_placeholder: str
+    safety_glass_placeholder: str
+    notes: str
+
+
+@dataclass(frozen=True)
+class ArchitecturalRoomSheet:
+    """Room data for the architectural package."""
+
+    code: str
+    name: str
+    floor: str
+    area_m2: float
+    length_m: float
+    width_m: float
+    function: str
+    furniture_assumptions: str
+    window_assumptions: str
+    door_assumptions: str
+    floor_finish: str
+    wall_finish: str
+    ceiling_finish: str
+    light_point_count: int
+    socket_count: int
+    heating_type: str
+    ventilation_type: str
+    notes: str
 
 
 def _shared_limitations(config: MountainRetreatConfig) -> tuple[str, ...]:
@@ -91,6 +131,153 @@ def _cost_metric_lines(costs: QuantityMap) -> tuple[str, ...]:
         f"Cost per m2 gross: {gross.value:g} {gross.unit}.",
         f"Cost per m2 net: {net.value:g} {net.unit}.",
     )
+
+
+def _furniture_assumptions(room_name: str, function: str) -> str:
+    text = f"{room_name} / {function}".lower()
+    if "entrance" in text or "vestibule" in text or "entry" in text:
+        return "Coat storage, bench/drop zone, boot storage, and clear entry circulation TBD."
+    if "kitchen" in text:
+        return "Cabinetry, worktop, sink, appliance positions, and circulation clearances TBD."
+    if "dining" in text:
+        return "Dining table sized for occupancy assumption, with terrace circulation clearance."
+    if "living" in text or "lounge" in text:
+        return "Seating group oriented toward panoramic view, fireplace, and circulation paths."
+    if "bedroom" in text:
+        return "Bed, bedside storage, wardrobe/storage, and circulation clearances TBD."
+    if "bathroom" in text or "wc" in text:
+        return "Sanitary fixtures from plumbing fixture list; clearances require code review."
+    if "technical" in text:
+        return "MEP equipment zones, access clearances, wall space, and service routes TBD."
+    if "laundry" in text or "storage" in text:
+        return "Laundry/storage shelving, appliance zone, and service access TBD."
+    if "stair" in text:
+        return "Stair, landing, handrail, guard, and under-stair coordination TBD."
+    return "Furniture layout to be confirmed during architectural design."
+
+
+def _architectural_room_sheets(config: MountainRetreatConfig) -> tuple[ArchitecturalRoomSheet, ...]:
+    rooms = [*config.rooms_ground_floor.rooms, *config.rooms_gallery.rooms]
+    return tuple(
+        ArchitecturalRoomSheet(
+            code=room.code,
+            name=room.name,
+            floor=room.floor,
+            area_m2=room.area_m2,
+            length_m=room.length_m,
+            width_m=room.width_m,
+            function=room.function,
+            furniture_assumptions=_furniture_assumptions(room.name, room.function),
+            window_assumptions=(
+                f"Configured total window area: {room.window_area_m2:g} m2; "
+                "final dimensions, sill heights, and operation type TBD."
+            ),
+            door_assumptions=(
+                f"Configured door count: {room.door_count}; final leaf sizes, swings, "
+                "thresholds, and fire/acoustic ratings TBD."
+            ),
+            floor_finish=room.floor_finish,
+            wall_finish=room.wall_finish,
+            ceiling_finish=room.ceiling_finish,
+            light_point_count=room.light_point_count,
+            socket_count=room.socket_count,
+            heating_type=room.heating_type,
+            ventilation_type=room.ventilation_type,
+            notes=room.notes,
+        )
+        for room in rooms
+    )
+
+
+def _window_type(window_area_m2: float) -> str:
+    if window_area_m2 <= 0:
+        return "No configured exterior window"
+    if window_area_m2 >= 8:
+        return "Panoramic glazing placeholder"
+    if window_area_m2 >= 3:
+        return "Large window/door glazing placeholder"
+    return "Standard window placeholder"
+
+
+def _window_schedule(config: MountainRetreatConfig) -> tuple[ScheduleItem, ...]:
+    items: list[ScheduleItem] = []
+    for room in [*config.rooms_ground_floor.rooms, *config.rooms_gallery.rooms]:
+        if room.window_area_m2 <= 0:
+            continue
+        items.append(
+            ScheduleItem(
+                code=f"W-{room.code}",
+                location=room.name,
+                type=_window_type(room.window_area_m2),
+                approximate_size=f"Configured glazed area: {room.window_area_m2:g} m2",
+                glazing_note="Final glazing build-up, opening type, and solar control TBD.",
+                thermal_performance_placeholder="U-value/SHGC target by energy review.",
+                safety_glass_placeholder="Safety glass need to be reviewed by location and height.",
+                notes="Derived from room.window_area_m2 YAML assumption.",
+            )
+        )
+    return tuple(items)
+
+
+def _door_schedule(config: MountainRetreatConfig) -> tuple[ScheduleItem, ...]:
+    items: list[ScheduleItem] = []
+    for room in [*config.rooms_ground_floor.rooms, *config.rooms_gallery.rooms]:
+        if room.door_count <= 0:
+            continue
+        door_type = (
+            "Exterior/terrace door placeholder"
+            if room.floor == "ground_floor"
+            else "Interior door placeholder"
+        )
+        items.append(
+            ScheduleItem(
+                code=f"D-{room.code}",
+                location=room.name,
+                type=door_type,
+                approximate_size=f"Configured door count: {room.door_count}; dimensions TBD",
+                glazing_note="Glazing only if required by final door design.",
+                thermal_performance_placeholder=(
+                    "Exterior doors require envelope performance review."
+                ),
+                safety_glass_placeholder="Safety glass placeholder where doors include glazing.",
+                notes="Derived from room.door_count YAML assumption.",
+            )
+        )
+    return tuple(items)
+
+
+def _architectural_context(config: MountainRetreatConfig) -> dict[str, object]:
+    calculated_areas = area_summary(config)
+    rooms = _architectural_room_sheets(config)
+    ground_floor_rooms = tuple(room for room in rooms if room.floor == "ground_floor")
+    gallery_rooms = tuple(room for room in rooms if room.floor == "gallery")
+    return {
+        "project": config.project,
+        "site": config.site,
+        "building": config.building,
+        "terrace": config.terrace,
+        "assumptions": _shared_assumptions(config),
+        "limitations": _shared_limitations(config),
+        "rooms": rooms,
+        "ground_floor_rooms": ground_floor_rooms,
+        "gallery_rooms": gallery_rooms,
+        "ground_floor_area": round(sum(room.area_m2 for room in ground_floor_rooms), 1),
+        "gallery_area": round(sum(room.area_m2 for room in gallery_rooms), 1),
+        "terrace_zone_names": ", ".join(zone.name for zone in config.terrace.zones),
+        "window_schedule": _window_schedule(config),
+        "door_schedule": _door_schedule(config),
+        "facade_area": calculated_areas["facade_rough_area"].value,
+        "roof_area": calculated_areas["roof_rough_area"].value,
+        "total_window_area": round(
+            sum(room.window_area_m2 for room in all_config_rooms(config)),
+            1,
+        ),
+    }
+
+
+def all_config_rooms(config: MountainRetreatConfig) -> list[Room]:
+    """Return all configured room models."""
+    return [*config.rooms_ground_floor.rooms, *config.rooms_gallery.rooms]
 
 
 def _volume_specs(config: MountainRetreatConfig) -> tuple[MarkdownVolume, ...]:
@@ -504,10 +691,15 @@ def generate_markdown_volumes(
     markdown_dir = output_dir / MARKDOWN_OUTPUT_DIR
     markdown_dir.mkdir(parents=True, exist_ok=True)
 
-    template = _environment(template_dir).get_template(TEMPLATE_NAME)
+    env = _environment(template_dir)
+    template = env.get_template(TEMPLATE_NAME)
+    architectural_template = env.get_template(ARCHITECTURAL_TEMPLATE_NAME)
     paths: list[Path] = []
     for volume in _volume_specs(config):
-        rendered = template.render(project=config.project, volume=volume)
+        if volume.filename == "02_architectural_package.md":
+            rendered = architectural_template.render(**_architectural_context(config))
+        else:
+            rendered = template.render(project=config.project, volume=volume)
         path = markdown_dir / volume.filename
         path.write_text(rendered, encoding="utf-8")
         paths.append(path)

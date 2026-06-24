@@ -3,6 +3,7 @@ from pathlib import Path
 from typer.testing import CliRunner
 
 from mountain_retreat_x1.cli import app
+from mountain_retreat_x1.config import load_config
 
 EXPECTED_MARKDOWN_FILES = (
     "01_project_charter.md",
@@ -50,3 +51,57 @@ def test_generated_markdown_contains_required_safety_language(tmp_path: Path) ->
         assert "## Assumptions" in text
         assert "## Limitations" in text
 
+
+def test_architectural_package_contains_all_room_names(tmp_path: Path) -> None:
+    output_dir = tmp_path / "output"
+    config = load_config("config")
+    room_names = [
+        room.name
+        for room in [*config.rooms_ground_floor.rooms, *config.rooms_gallery.rooms]
+    ]
+
+    result = runner.invoke(app, ["generate", "markdown", "--output-dir", str(output_dir)])
+
+    assert result.exit_code == 0
+    text = (output_dir / "markdown" / "02_architectural_package.md").read_text(
+        encoding="utf-8"
+    )
+    for room_name in room_names:
+        assert room_name in text
+
+
+def test_architectural_package_contains_required_sections_and_schedules(tmp_path: Path) -> None:
+    output_dir = tmp_path / "output"
+
+    result = runner.invoke(app, ["generate", "markdown", "--output-dir", str(output_dir)])
+
+    assert result.exit_code == 0
+    text = (output_dir / "markdown" / "02_architectural_package.md").read_text(
+        encoding="utf-8"
+    )
+    for section in (
+        "## 1. Design Intent",
+        "## 2. Mountain Cabin Concept",
+        "## 3. Site Orientation Assumptions",
+        "## 4. Functional Zoning",
+        "## 5. Ground Floor Plan Narrative",
+        "## 6. Gallery Plan Narrative",
+        "## 7. Terrace Design Narrative",
+        "## 8. Room Data Sheets",
+        "## 9. Door and Window Schedule",
+        "## 10. Facade Concept",
+        "## 11. Roof Concept",
+        "## 12. Material Palette",
+        "## 13. Daylight and Views",
+        "## 14. Natural Ventilation Strategy",
+        "## 15. Accessibility Considerations",
+        "## 16. Fire Safety Concept Placeholders",
+        "## 17. Drawing Index",
+        "## 18. Architect Review Checklist",
+    ):
+        assert section in text
+
+    assert "Preliminary planning document only" in text
+    assert "Required Professional Review" in text
+    assert "W-GF-LIV" in text
+    assert "D-GF-ENT" in text

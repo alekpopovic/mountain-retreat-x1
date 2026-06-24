@@ -1,0 +1,220 @@
+# 02 Architectural Package
+
+**Project code:** {{ project.project_code }}  
+**Project:** {{ project.project_name }}  
+**Version:** {{ project.version }}  
+**Status:** {{ project.status }}  
+**Revision date:** {{ project.revision_date }}  
+**Language:** {{ project.language }}  
+
+## Revision History
+
+| Version | Date | Author | Notes |
+|---|---|---|---|
+| {{ project.version }} | {{ project.revision_date }} | {{ project.author }} | Generated preliminary architectural package from YAML room, building, terrace, and site assumptions. |
+
+## Mandatory Notice
+
+{{ project.disclaimer }}
+
+This architectural package is **PRELIMINARY**. It is not for construction, permitting, procurement, financing, or legal reliance.
+
+## Required Professional Review
+
+{% for reviewer in project.review_required_by -%}
+- {{ reviewer }}
+{% endfor %}
+- Licensed architect
+- Local planning/permitting authority
+- Fire-safety/code professional where required
+- Accessibility/code reviewer where required
+
+## Assumptions
+
+{% for assumption in assumptions -%}
+- {{ assumption }}
+{% endfor %}
+
+## Limitations
+
+{% for limitation in limitations -%}
+- {{ limitation }}
+{% endfor %}
+
+## 1. Design Intent
+
+- Create a contemporary mountain cabin organized around panoramic views, warm materials, a compact two-level plan, and a large outdoor terrace.
+- Prioritize clear day/night/service zoning, resilient mountain-weather detailing, and simple circulation between the interior living spaces and terrace.
+- Keep the documentation suitable for preliminary planning and professional review only.
+
+## 2. Mountain Cabin Concept
+
+- Concept type: modern mountain retreat with {{ building.floors }} levels: ground floor plus gallery.
+- Construction variant: {{ building.construction_variant }}.
+- Primary exterior expression: {{ building.facade_type }} with {{ building.roof_type }}.
+- Target occupancy assumption: {{ building.occupancy_people }} people.
+- Design life assumption: {{ building.design_life_years }} years, subject to professional design and maintenance planning.
+
+## 3. Site Orientation Assumptions
+
+- Site location descriptor: {{ site.location_name }}, {{ site.country }}.
+- Climate assumption: {{ site.climate_zone }} at approximately {{ site.altitude_m }} m altitude.
+- Slope assumption: {{ site.slope_percent }}%.
+- Access assumption: {{ site.access_road_type }}.
+- Drainage risk: {{ site.drainage_risk }}.
+- Soil assumption: {{ site.soil_assumption }}
+- Geotechnical report required: {{ site.geotechnical_report_required }}.
+
+## 4. Functional Zoning
+
+- Entry/service zone: entrance vestibule, technical room, laundry/storage, guest bathroom, stair zone.
+- Day zone: kitchen, dining, living room, fireplace zone, gallery lounge, terrace connections.
+- Private zone: guest bedroom, master bedroom, bedrooms 2 and 3, walk-in closet.
+- Sanitary zone: guest bathroom, master bathroom, bathroom 2.
+- Outdoor zone: {{ terrace_zone_names }}.
+
+## 5. Ground Floor Plan Narrative
+
+- The ground floor is organized as the main arrival and social level.
+- The entrance vestibule acts as a thermal buffer before the plan opens into kitchen, dining, living, fireplace, and terrace-facing zones.
+- Service spaces are grouped to simplify future MEP coordination.
+- The guest bedroom and guest bathroom support accessible guest use, subject to code and accessibility review.
+- Ground floor configured room area: {{ ground_floor_area }} m2 across {{ ground_floor_rooms|length }} rooms.
+
+## 6. Gallery Plan Narrative
+
+- The gallery level contains the principal sleeping spaces and a secondary lounge overlooking or connecting visually to the main volume.
+- Bedrooms are planned as compact sleeping rooms with natural ventilation and individual lighting/socket assumptions.
+- Wet rooms on the gallery require careful plumbing, ventilation, acoustic, and waterproofing coordination.
+- Gallery configured room area: {{ gallery_area }} m2 across {{ gallery_rooms|length }} rooms.
+
+## 7. Terrace Design Narrative
+
+- Terrace area assumption: {{ terrace.terrace_area_m2 }} m2.
+- Terrace zones:
+{% for zone in terrace.zones %}
+  - {{ zone.code }}: {{ zone.name }} ({{ zone.area_m2 }} m2) - {{ zone.function }}.
+{% endfor %}
+- Terrace guards, drainage, waterproofing, snow/ice exposure, wind exposure, structure, and slip resistance require detailed professional design.
+- Jacuzzi, fire pit, BBQ/outdoor kitchen, and covered dining assumptions are placeholders until structural, fire-safety, MEP, and authority review.
+
+## 8. Room Data Sheets
+
+{% for room in rooms %}
+### {{ room.code }} - {{ room.name }}
+
+| Field | Value |
+|---|---|
+| Room code | {{ room.code }} |
+| Name | {{ room.name }} |
+| Floor | {{ room.floor }} |
+| Area | {{ room.area_m2 }} m2 |
+| Approximate dimensions | {{ room.length_m }} m x {{ room.width_m }} m |
+| Function | {{ room.function }} |
+| Furniture assumptions | {{ room.furniture_assumptions }} |
+| Window assumptions | {{ room.window_assumptions }} |
+| Door assumptions | {{ room.door_assumptions }} |
+| Floor finish | {{ room.floor_finish }} |
+| Wall finish | {{ room.wall_finish }} |
+| Ceiling finish | {{ room.ceiling_finish }} |
+| Lighting | {{ room.light_point_count }} light point(s), final lighting design required |
+| Socket count | {{ room.socket_count }} |
+| HVAC concept | Heating: {{ room.heating_type }}; ventilation: {{ room.ventilation_type }} |
+| Notes | {{ room.notes }} |
+| Required review | Licensed architect; MEP/fire/accessibility review where applicable |
+
+{% endfor %}
+
+## 9. Door and Window Schedule
+
+### Window Schedule
+
+| Code | Location | Type | Approximate size | Glazing note | Thermal performance placeholder | Safety glass placeholder | Notes |
+|---|---|---|---|---|---|---|---|
+{% for item in window_schedule -%}
+| {{ item.code }} | {{ item.location }} | {{ item.type }} | {{ item.approximate_size }} | {{ item.glazing_note }} | {{ item.thermal_performance_placeholder }} | {{ item.safety_glass_placeholder }} | {{ item.notes }} |
+{% endfor %}
+
+### Door Schedule
+
+| Code | Location | Type | Approximate size | Glazing note | Thermal performance placeholder | Safety glass placeholder | Notes |
+|---|---|---|---|---|---|---|---|
+{% for item in door_schedule -%}
+| {{ item.code }} | {{ item.location }} | {{ item.type }} | {{ item.approximate_size }} | {{ item.glazing_note }} | {{ item.thermal_performance_placeholder }} | {{ item.safety_glass_placeholder }} | {{ item.notes }} |
+{% endfor %}
+
+## 10. Facade Concept
+
+- Facade concept: {{ building.facade_type }}.
+- Rough facade area estimate: {{ facade_area }} m2.
+- Timber and stone facade shares are preliminary and are controlled by calculator assumptions.
+- Large glazing areas require thermal-bridge, waterproofing, safety glass, shading, and condensation review.
+
+## 11. Roof Concept
+
+- Roof concept: {{ building.roof_type }}.
+- Roof pitch assumption: {{ building.roof_pitch_deg }} degrees.
+- Rough roof area estimate: {{ roof_area }} m2.
+- Snow guards, roof drainage, eaves, ventilation, penetrations, and standing-seam detailing require professional design.
+
+## 12. Material Palette
+
+- Exterior: timber, stone, glass, standing seam metal roof.
+- Interior floors: engineered wood, porcelain tile, sealed concrete or technical tile where appropriate.
+- Interior walls: painted gypsum board, washable boards in service rooms, tile in wet zones.
+- Ceilings: painted gypsum board, sloped board, exposed timber where appropriate.
+- Terrace: exterior-rated decking, non-combustible cooking/fire zones, reinforced waterproof finishes where required.
+
+## 13. Daylight and Views
+
+- Primary daylight and view strategy centers on the living, dining, kitchen, gallery lounge, and terrace-facing rooms.
+- Total configured window area from room data: {{ total_window_area }} m2.
+- Window-to-floor ratios are planning indicators only and require architectural and energy review.
+- Large view glazing must be coordinated with overheating, glare, privacy, bird safety, guard conditions, and structural openings.
+
+## 14. Natural Ventilation Strategy
+
+- Natural ventilation is assumed for most bedrooms and day spaces.
+- Mechanical extract is assumed for wet rooms, laundry/storage, and technical spaces where configured.
+- Stack-effect behavior around the stair/gallery zone must be reviewed for comfort, smoke movement, and winter operation.
+- Final ventilation rates require mechanical engineering review.
+
+## 15. Accessibility Considerations
+
+- Ground floor guest bedroom and guest bathroom can support adaptable use, subject to dimensional and code review.
+- Entrance, terrace thresholds, stair geometry, handrails, guards, and bathroom clearances require local accessibility review.
+- This package does not certify accessibility compliance.
+
+## 16. Fire Safety Concept Placeholders
+
+- Fireplace zone requires fire-rated surround, hearth, flue, combustion air, clearance, and installation review.
+- Sleeping areas require compliant egress, smoke/CO detection strategy, and fire separation review.
+- Terrace fire pit and BBQ/outdoor kitchen are placeholders and require local fire-safety approval.
+- This package does not certify fire-safety compliance.
+
+## 17. Drawing Index
+
+| Code | Title | Status |
+|---|---|---|
+| A-001 | Concept floor plan - ground floor | PRELIMINARY |
+| A-002 | Concept floor plan - gallery | PRELIMINARY |
+| A-003 | Terrace zoning plan | PRELIMINARY |
+| A-004 | Facade concept elevations | PRELIMINARY |
+| A-005 | Roof concept plan | PRELIMINARY |
+| A-006 | Section concept through living room and terrace | PRELIMINARY |
+
+## 18. Architect Review Checklist
+
+- Confirm room program, room areas, and circulation strategy.
+- Confirm terrace zoning, guard concept, waterproofing strategy, and drainage strategy.
+- Confirm facade material logic, opening sizes, safety glass needs, and thermal-performance targets.
+- Confirm roof geometry, drainage, snow guards, penetrations, and eaves.
+- Confirm accessibility, fire-safety, and local planning constraints.
+- Confirm that all drawings and documents remain marked PRELIMINARY until properly reviewed and approved through real processes.
+
+## QA Notes
+
+- No room from YAML should be omitted from the room data sheets.
+- Door and window schedules are derived from room-level YAML assumptions and remain preliminary.
+- Architect review is required before any permit, procurement, or construction use.
+
