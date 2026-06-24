@@ -1,6 +1,6 @@
 project_name: Mountain Retreat X1
 project_code: MRX1
-version: 0.1.0
+version: 1.0.0
 language: sr-Latn
 country: Serbia
 currency: EUR
@@ -17,4 +17,3 @@ review_required_by:
   - Licensed electrical engineer
   - Licensed mechanical engineer
   - Local permitting authority
-

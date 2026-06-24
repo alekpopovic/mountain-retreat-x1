@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mountain-retreat-x1"
-version = "0.1.0"
+version = "1.0.0"
 description = "Preliminary planning documentation generator for Mountain Retreat X1."
 requires-python = ">=3.12"
 readme = "README.md"

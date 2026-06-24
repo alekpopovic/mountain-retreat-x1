@@ -1,84 +1,133 @@
 # Mountain Retreat X1
 
-Mountain Retreat X1 is a Python 3.12 documentation-generation system for preliminary planning of a modern mountain cabin with a large panoramic terrace.
+Mountain Retreat X1 is a Python 3.12 documentation generation system for preliminary planning of a modern mountain cabin with a large panoramic terrace. It builds a coordinated planning binder from YAML assumptions, Pydantic schemas, Jinja2 templates, OpenPyXL workbooks, SVG schematics, PDF volumes, and a final ZIP package.
 
-The project is designed to generate a coordinated planning package from structured YAML assumptions and templates:
+All generated documents are preliminary planning documents only. They are not construction documents, permit documents, signed engineering calculations, professional approvals, procurement instructions, or legal approvals.
 
-- PDF documentation volumes
-- Excel bill of materials
-- Excel cost estimate
-- Excel Gantt schedule
-- Excel QA/QC checklists
-- SVG schematic drawings
-- Markdown source documents
-- YAML configuration files
-- final ZIP package
-
-## Professional Limits
-
-Mountain Retreat X1 does not replace licensed architects, structural engineers, electrical engineers, mechanical engineers, contractors, cost estimators, surveyors, code consultants, or local permitting authorities.
-
-All generated materials must be treated as preliminary planning documents only. They are not for construction, permitting, procurement, financing, legal reliance, or professional approval.
-
-The system must not generate:
-
-- fake legal permits
-- fake signed or sealed engineering calculations
-- fake professional stamps
-- legally binding construction approvals
-- claims that drawings are approved for construction
-
-All assumptions must be stored in YAML and surfaced in generated documents.
-
-## Schematic Drawings
-
-`mrx1 generate drawings` creates plain SVG schematic drawings in `output/drawings/`.
-These drawings are generated from YAML planning assumptions and are not official CAD
-files, permit drawings, shop drawings, or construction drawings. They are intended
-only for preliminary coordination and must be reviewed and replaced by drawings
-prepared by licensed professionals before any construction, permitting, procurement,
-or installation use.
-
-## Quick Start
+## Installation
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
-mrx1 --help
-pytest
-ruff check .
 ```
 
-## CLI
+Optional WeasyPrint PDF support:
 
-Placeholder commands are available while the repository structure is being established:
+```bash
+pip install -e ".[dev,pdf]"
+```
+
+The PDF generator uses WeasyPrint when available, ReportLab as a fallback, and a minimal built-in PDF fallback for development environments.
+
+## Quick Start
 
 ```bash
 mrx1 validate
-mrx1 generate all
-mrx1 generate pdf
-mrx1 generate excel
-mrx1 generate drawings
-mrx1 clean
+mrx1 summary
+mrx1 generate all --project config/project.yaml --output output --lang sr-Latn --large
 ```
 
-## Repository Layout
+The final command validates configuration, generates all source and output artifacts, writes `output/BUILD_MANIFEST.json`, writes `output/INDEX.md`, and creates:
 
 ```text
-config/                  YAML project configuration and examples
-data/                    static catalogs and localization data
-docs/                    architecture, limits, templates, and volume docs
-output/                  generated artifacts, ignored by Git
-src/mountain_retreat_x1/ Python package
-tests/                   unit and integration tests
-.codex/                  Codex project context
+output/zip/Mountain_Retreat_X1_Professional_Documentation_Package.zip
+```
+
+## Example Commands
+
+```bash
+mrx1 validate
+mrx1 generate markdown --lang sr-Latn
+mrx1 generate markdown --lang en --large
+mrx1 generate drawings
+mrx1 generate pdf
+mrx1 generate excel --bom --large
+mrx1 generate excel --cost
+mrx1 generate excel --gantt
+mrx1 generate excel --qa --large
+mrx1 generate excel --maintenance
+mrx1 generate all --lang sr-Latn
+mrx1 generate all --lang sr-Latn --large --clean
+```
+
+## Generated Outputs
+
+The build pipeline creates:
+
+- `output/markdown/`: Markdown source volumes
+- `output/pdf/`: PDF documentation volumes
+- `output/excel/`: BOM, cost estimate, Gantt, QA/QC, and maintenance workbooks
+- `output/drawings/`: schematic SVG drawings
+- `output/INDEX.md`: package index
+- `output/ASSUMPTIONS_SUMMARY.md`: key YAML and calculated assumptions
+- `output/BUILD_MANIFEST.json`: generated package manifest
+- `output/zip/`: final professional documentation ZIP package
+
+Large mode expands the planning binder with deeper room data sheets, 300+ self-build steps, 1000+ QA/QC rows, a 30-year maintenance calendar, expanded BOM line items, and construction management registers.
+
+## Editing YAML Assumptions
+
+Project assumptions live in `config/*.yaml`. Edit YAML files first, then regenerate outputs.
+
+Important files:
+
+- `config/project.yaml`: project name, version, language, disclaimer, review requirements
+- `config/site.yaml`: climate, altitude, slope, soil, snow/wind/seismic placeholders
+- `config/building.yaml`: area, footprint, roof, facade, construction variant
+- `config/rooms_ground_floor.yaml` and `config/rooms_gallery.yaml`: room data sheets
+- `config/terrace.yaml`: terrace zones and utility assumptions
+- `config/materials_core.yaml` and `config/materials_mep.yaml`: BOM seed items
+- `config/cost_assumptions_serbia_2026.yaml`: static planning prices and warnings
+
+After edits:
+
+```bash
+mrx1 validate
+mrx1 generate all --project config/project.yaml --output output --lang sr-Latn --large --clean
+```
+
+## Localization
+
+Default visible output language is Serbian Latin (`sr-Latn`). English (`en`) is also supported. Filenames remain English for compatibility.
+
+```bash
+mrx1 generate all --lang sr-Latn
+mrx1 generate all --lang en
+```
+
+## Project Limitations
+
+Mountain Retreat X1 does not replace:
+
+- licensed architects
+- licensed structural engineers
+- licensed electrical engineers
+- licensed mechanical or plumbing engineers
+- fire-safety professionals
+- geotechnical engineers
+- surveyors
+- contractors and cost estimators
+- utility providers
+- local permitting authorities
+
+The system must not generate fake permits, fake stamps, fake signatures, fake signed calculations, legally binding approvals, or claims that documents are approved for construction.
+
+## Professional Review Requirements
+
+Before any real-world use, generated materials must be reviewed, corrected, and replaced as needed by appropriately licensed professionals and local authorities. This applies especially to structural design, foundations, terrace structure, snow/wind/seismic design, electrical systems, HVAC, plumbing, wastewater, fire safety, off-grid systems, and code/permitting requirements.
+
+## Development QA
+
+```bash
+pytest
+ruff check .
+mypy src
+mrx1 validate
+mrx1 generate all --lang sr-Latn
+mrx1 generate all --lang sr-Latn --large
 ```
 
 ## Agent Guidance
 
-Future Codex and coding-agent tasks must follow [AGENTS.md](AGENTS.md). That file defines the project mission, safety limits, testing expectations, generated-output rules, pricing policy, assumption handling, Serbian localization rules, and required commit/push workflow.
-
-## Status
-
-This is an initial production-grade scaffold. The CLI commands are placeholders and intentionally do not yet generate construction documentation.
+Future Codex and coding-agent tasks must follow [AGENTS.md](AGENTS.md). It defines the project mission, safety limits, testing expectations, generated-output rules, pricing policy, assumption handling, Serbian localization rules, and required commit/push workflow.
