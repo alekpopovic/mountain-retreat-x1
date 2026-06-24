@@ -66,7 +66,10 @@ tests/                   unit and integration tests
 .codex/                  Codex project context
 ```
 
+## Agent Guidance
+
+Future Codex and coding-agent tasks must follow [AGENTS.md](AGENTS.md). That file defines the project mission, safety limits, testing expectations, generated-output rules, pricing policy, assumption handling, Serbian localization rules, and required commit/push workflow.
+
 ## Status
 
 This is an initial production-grade scaffold. The CLI commands are placeholders and intentionally do not yet generate construction documentation.
-
