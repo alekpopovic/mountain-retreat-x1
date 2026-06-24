@@ -16,6 +16,7 @@ ARCHITECTURAL_TEMPLATE_NAME = "architectural_package.md.j2"
 STRUCTURAL_TEMPLATE_NAME = "structural_concept.md.j2"
 ELECTRICAL_TEMPLATE_NAME = "electrical_package.md.j2"
 PLUMBING_TEMPLATE_NAME = "plumbing_wastewater.md.j2"
+HVAC_TEMPLATE_NAME = "hvac_package.md.j2"
 DEFAULT_TEMPLATE_DIR = Path("docs/templates/markdown")
 
 
@@ -119,6 +120,32 @@ class FixtureItem:
     waste_required: str
     trap_vent_note: str
     freeze_risk: str
+    notes: str
+
+
+@dataclass(frozen=True)
+class HvacZoneItem:
+    """Preliminary heating zone schedule item."""
+
+    zone_code: str
+    room: str
+    area: str
+    design_temperature_placeholder: str
+    floor_heating_loop_placeholder: str
+    thermostat_required: str
+    notes: str
+
+
+@dataclass(frozen=True)
+class HvacEquipmentItem:
+    """Preliminary HVAC equipment schedule item."""
+
+    equipment: str
+    location: str
+    purpose: str
+    power_capacity_placeholder: str
+    electrical_dependency: str
+    maintenance_interval: str
     notes: str
 
 
@@ -764,6 +791,176 @@ def _plumbing_context(config: MountainRetreatConfig) -> dict[str, object]:
     }
 
 
+def _design_temperature_placeholder(room: Room) -> str:
+    room_text = f"{room.name} {room.zone} {room.function}".lower()
+    if "bathroom" in room_text or "sanitary" in room_text:
+        return "24 C placeholder, final by heat-loss calculation"
+    if "bedroom" in room_text or "sleeping" in room_text:
+        return "20 C placeholder, final by comfort brief"
+    if "technical" in room_text:
+        return "10-18 C placeholder, frost and equipment needs TBD"
+    if "laundry" in room_text or "storage" in room_text:
+        return "18-20 C placeholder, final by use and ventilation"
+    if "entrance" in room_text or "vestibule" in room_text:
+        return "18 C placeholder, final by envelope and air leakage"
+    return "21 C placeholder, final by mechanical engineer"
+
+
+def _thermostat_requirement(room: Room) -> str:
+    room_text = f"{room.name} {room.zone} {room.heating_type}".lower()
+    if "adjacent" in room_text or "natural transfer" in room_text:
+        return "Shared/adjacent control TBD"
+    if "fireplace" in room_text:
+        return "Yes, coordinate with fireplace temperature influence"
+    if "frost" in room_text or "technical" in room_text:
+        return "Yes, frost protection/alarm control"
+    return "Yes, zone thermostat placeholder"
+
+
+def _floor_loop_placeholder(room: Room) -> str:
+    heating = room.heating_type.lower()
+    if "underfloor" in heating:
+        return "Underfloor loop count/spacing TBD by heat-loss and floor build-up"
+    if "radiator" in heating:
+        return "No UFH loop assumed; emitter sizing TBD"
+    if "fireplace" in heating:
+        return "No primary UFH loop shown; comfort backup TBD"
+    if "frost" in heating:
+        return "Frost-protection emitter/loop TBD"
+    return "Heating emitter/loop TBD by mechanical engineer"
+
+
+def _hvac_zone_notes(room: Room) -> str:
+    return (
+        f"Heating: {room.heating_type}; ventilation: {room.ventilation_type}. "
+        "No final heat loss calculation is included."
+    )
+
+
+def _hvac_zones(config: MountainRetreatConfig) -> tuple[HvacZoneItem, ...]:
+    zones: list[HvacZoneItem] = []
+    for index, room in enumerate(all_config_rooms(config), start=1):
+        zones.append(
+            HvacZoneItem(
+                zone_code=f"HZ-{index:03d}",
+                room=room.name,
+                area=f"{room.area_m2:g} m2",
+                design_temperature_placeholder=_design_temperature_placeholder(room),
+                floor_heating_loop_placeholder=_floor_loop_placeholder(room),
+                thermostat_required=_thermostat_requirement(room),
+                notes=_hvac_zone_notes(room),
+            )
+        )
+    return tuple(zones)
+
+
+def _hvac_equipment(config: MountainRetreatConfig) -> tuple[HvacEquipmentItem, ...]:
+    return (
+        HvacEquipmentItem(
+            equipment="Air-to-water heat pump",
+            location="Technical room / exterior unit location TBD",
+            purpose="Primary low-temperature heating source and possible cooling support",
+            power_capacity_placeholder="Capacity TBD by final heat loss/gain calculation",
+            electrical_dependency="Dedicated electrical supply and controls TBD",
+            maintenance_interval="Seasonal inspection; manufacturer schedule TBD",
+            notes=(
+                "Outdoor unit placement, defrost drainage, noise, snow clearance, "
+                "and access TBD."
+            ),
+        ),
+        HvacEquipmentItem(
+            equipment="Buffer tank / hydraulic separator",
+            location="Technical room",
+            purpose="Hydraulic stability for heat pump and distribution circuits",
+            power_capacity_placeholder="Volume TBD by mechanical design",
+            electrical_dependency="Controls/sensors/circulation pumps TBD",
+            maintenance_interval="Annual inspection",
+            notes=(
+                "Clearance, insulation, valves, strainers, and drain points require "
+                "layout review."
+            ),
+        ),
+        HvacEquipmentItem(
+            equipment="Underfloor heating manifold set",
+            location="Ground floor and gallery manifold locations TBD",
+            purpose="Room or zone heat distribution",
+            power_capacity_placeholder="Loop lengths/spacing TBD by heat-loss calculation",
+            electrical_dependency="Thermostats, actuators, and control wiring TBD",
+            maintenance_interval="Annual balancing and actuator check",
+            notes="Manifold locations must remain accessible and coordinated with finishes.",
+        ),
+        HvacEquipmentItem(
+            equipment="Fireplace / stove system",
+            location="Fireplace zone",
+            purpose="Secondary heat source and cabin amenity",
+            power_capacity_placeholder="Appliance output TBD by chimney/fireplace professional",
+            electrical_dependency="Combustion air and fan/control power if applicable",
+            maintenance_interval="Seasonal chimney and appliance service",
+            notes="Combustion air, clearances, flue, CO alarms, and fire safety review required.",
+        ),
+        HvacEquipmentItem(
+            equipment="Mechanical extract fans",
+            location="Bathrooms, laundry/storage, technical room",
+            purpose="Moisture and odor extraction",
+            power_capacity_placeholder="Airflow TBD by ventilation calculation",
+            electrical_dependency="Switched/timer/humidity controls TBD",
+            maintenance_interval="Quarterly grille/filter cleaning; annual function check",
+            notes="Duct routing, condensation control, backdraft dampers, and noise TBD.",
+        ),
+        HvacEquipmentItem(
+            equipment="Heat recovery ventilation option",
+            location="Technical room or service zone TBD",
+            purpose="Balanced ventilation with heat recovery",
+            power_capacity_placeholder="Airflow and heat recovery capacity TBD",
+            electrical_dependency="Dedicated power, controls, sensors, and condensate drain TBD",
+            maintenance_interval="Filter check every 3-6 months; annual service",
+            notes=(
+                "Optional system; duct routes, fire/smoke strategy, frost protection, "
+                "and noise TBD."
+            ),
+        ),
+        HvacEquipmentItem(
+            equipment="Domestic hot water cylinder",
+            location="Technical room",
+            purpose="Domestic hot water storage integrated with heat pump concept",
+            power_capacity_placeholder="Cylinder volume and coil/backup capacity TBD",
+            electrical_dependency="Controls and backup heater power TBD",
+            maintenance_interval="Annual safety and legionella-control review",
+            notes=(
+                "Coordinate with plumbing package, expansion, relief discharge, "
+                "and service access."
+            ),
+        ),
+    )
+
+
+def _hvac_context(config: MountainRetreatConfig) -> dict[str, object]:
+    zones = _hvac_zones(config)
+    equipment = _hvac_equipment(config)
+    wet_rooms = tuple(
+        room
+        for room in all_config_rooms(config)
+        if room.plumbing_fixtures
+        or "bathroom" in room.name.lower()
+        or "laundry" in room.name.lower()
+    )
+    return {
+        "project": config.project,
+        "site": config.site,
+        "building": config.building,
+        "smart_home": config.smart_home,
+        "off_grid": config.off_grid,
+        "assumptions": _shared_assumptions(config),
+        "limitations": _shared_limitations(config),
+        "zones": zones,
+        "equipment": equipment,
+        "wet_rooms": wet_rooms,
+        "zone_count": len(zones),
+        "equipment_count": len(equipment),
+        "total_zone_area_m2": sum(room.area_m2 for room in all_config_rooms(config)),
+    }
+
+
 def all_config_rooms(config: MountainRetreatConfig) -> list[Room]:
     """Return all configured room models."""
     return [*config.rooms_ground_floor.rooms, *config.rooms_gallery.rooms]
@@ -1186,6 +1383,7 @@ def generate_markdown_volumes(
     structural_template = env.get_template(STRUCTURAL_TEMPLATE_NAME)
     electrical_template = env.get_template(ELECTRICAL_TEMPLATE_NAME)
     plumbing_template = env.get_template(PLUMBING_TEMPLATE_NAME)
+    hvac_template = env.get_template(HVAC_TEMPLATE_NAME)
     paths: list[Path] = []
     for volume in _volume_specs(config):
         if volume.filename == "02_architectural_package.md":
@@ -1196,6 +1394,8 @@ def generate_markdown_volumes(
             rendered = electrical_template.render(**_electrical_context(config))
         elif volume.filename == "05_plumbing_wastewater.md":
             rendered = plumbing_template.render(**_plumbing_context(config))
+        elif volume.filename == "06_hvac_package.md":
+            rendered = hvac_template.render(**_hvac_context(config))
         else:
             rendered = template.render(project=config.project, volume=volume)
         path = markdown_dir / volume.filename

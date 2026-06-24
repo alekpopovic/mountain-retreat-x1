@@ -281,3 +281,64 @@ def test_plumbing_package_includes_all_configured_wet_rooms(tmp_path: Path) -> N
     assert "Terrace" in text
     assert "outdoor sink placeholder" in text
     assert "jacuzzi/spa water and drain placeholder" in text
+
+
+def test_hvac_package_contains_required_sections_tables_and_review_language(
+    tmp_path: Path,
+) -> None:
+    output_dir = tmp_path / "output"
+
+    result = runner.invoke(app, ["generate", "markdown", "--output-dir", str(output_dir)])
+
+    assert result.exit_code == 0
+    text = (output_dir / "markdown" / "06_hvac_package.md").read_text(
+        encoding="utf-8"
+    )
+    for section in (
+        "## 1. Heating and Cooling Concept",
+        "## 2. Mountain Climate Assumptions",
+        "## 3. Air-to-Water Heat Pump Concept",
+        "## 4. Underfloor Heating Concept",
+        "## 5. Heating Zones",
+        "## 6. Fireplace Concept",
+        "## 7. Domestic Hot Water Integration",
+        "## 8. Mechanical Ventilation Concept",
+        "## 9. Heat Recovery Ventilation Option",
+        "## 10. Bathroom Extraction",
+        "## 11. Technical Room Layout",
+        "## 12. Pipe Insulation",
+        "## 13. Winterization",
+        "## 14. Commissioning Checklist",
+        "## 15. Maintenance Schedule",
+        "## 16. Licensed Mechanical Engineer Review Checklist",
+    ):
+        assert section in text
+
+    assert "Zone code" in text
+    assert "Design temperature placeholder" in text
+    assert "Floor heating loop placeholder" in text
+    assert "HVAC Equipment Table" in text
+    assert "Power/capacity placeholder" in text
+    assert "does not produce a final heat loss calculation" in text
+    assert "Licensed mechanical engineer" in text
+    assert "Commissioning Checklist" in text
+
+
+def test_hvac_package_includes_all_rooms_in_zone_considerations(
+    tmp_path: Path,
+) -> None:
+    output_dir = tmp_path / "output"
+    config = load_config("config")
+    room_names = [
+        room.name
+        for room in [*config.rooms_ground_floor.rooms, *config.rooms_gallery.rooms]
+    ]
+
+    result = runner.invoke(app, ["generate", "markdown", "--output-dir", str(output_dir)])
+
+    assert result.exit_code == 0
+    text = (output_dir / "markdown" / "06_hvac_package.md").read_text(
+        encoding="utf-8"
+    )
+    for room_name in room_names:
+        assert room_name in text

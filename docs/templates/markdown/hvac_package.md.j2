@@ -1,0 +1,173 @@
+# 06 HVAC Package
+
+**Project code:** {{ project.project_code }}  
+**Project:** {{ project.project_name }}  
+**Version:** {{ project.version }}  
+**Status:** {{ project.status }}  
+**Revision date:** {{ project.revision_date }}  
+**Language:** {{ project.language }}  
+
+## Revision History
+
+| Version | Date | Author | Notes |
+|---|---|---|---|
+| {{ project.version }} | {{ project.revision_date }} | {{ project.author }} | Generated preliminary HVAC package from YAML room, site, building, smart-home, and off-grid assumptions. |
+
+## Mandatory Notice
+
+{{ project.disclaimer }}
+
+This HVAC package is **PRELIMINARY** and not for construction. It does not produce a final heat loss calculation, does not produce final cooling-load calculations, and does not provide final equipment sizing, duct sizing, pipe sizing, loop spacing, commissioning certification, or code compliance approval.
+
+## Required Professional Review
+
+- Licensed mechanical engineer
+- Licensed HVAC contractor or commissioning specialist
+- Licensed electrician for equipment power and controls
+- Licensed plumbing/mechanical reviewer for domestic hot water integration
+- Fireplace/chimney professional and local authority where required
+
+## Assumptions
+
+{% for assumption in assumptions -%}
+- {{ assumption }}
+{% endfor %}
+- Heating-zone rows generated from configured rooms: {{ zone_count }}.
+- Heating-zone room area total: {{ total_zone_area_m2 }} m2.
+- HVAC equipment planning rows: {{ equipment_count }}.
+- Climate assumption: {{ site.climate_zone }} at {{ site.altitude_m }} m altitude.
+- Heating concept assumption: air-to-water heat pump + underfloor heating + fireplace.
+- Smart-home heating integration assumption: {{ smart_home.platform }}.
+
+## Limitations
+
+{% for limitation in limitations -%}
+- {{ limitation }}
+{% endfor %}
+- No final heat loss calculation, cooling-load calculation, ventilation calculation, or humidity analysis is included.
+- All heat pump capacity, emitter sizing, UFH loop spacing, pump selection, pipe sizing, duct sizing, and controls values are placeholders until mechanical engineering review.
+- Fireplace output, chimney/flue design, combustion air, CO protection, and fire-safety interfaces require specialist review.
+- This document must not be used as an installation drawing, energy-code compliance statement, commissioning certificate, or final equipment schedule.
+
+## 1. Heating and Cooling Concept
+
+- Use a low-temperature heating concept based on an air-to-water heat pump, hydronic underfloor heating where configured, and fireplace support in the main living/fireplace zone.
+- Cooling is treated as an optional comfort concept only; no final cooling-load calculation or chilled-floor/air-conditioning design is included.
+- Final design must coordinate envelope performance, glazing, shading, air tightness, thermal bridges, occupancy, internal gains, and mountain climate exposure.
+
+## 2. Mountain Climate Assumptions
+
+- Site climate: {{ site.climate_zone }}.
+- Altitude placeholder: {{ site.altitude_m }} m.
+- Frost depth placeholder: {{ site.frost_depth_placeholder_cm }} cm.
+- Mountain conditions raise risks around cold starts, snow-blocked outdoor units, defrost drainage, power outages, wind exposure, condensation, and vacant-period freeze protection.
+
+## 3. Air-to-Water Heat Pump Concept
+
+- Heat pump is assumed as the primary heat source for underfloor heating and domestic hot water integration.
+- Final capacity, COP/SCOP, design outdoor temperature, bivalent point, backup heat, defrost strategy, noise, refrigerant constraints, and outdoor-unit placement are TBD.
+- Outdoor equipment must be protected from snow burial, roof sliding snow, ice, poor drainage, and blocked service access.
+
+## 4. Underfloor Heating Concept
+
+- Underfloor heating is assumed for most occupied areas where room YAML indicates underfloor heating.
+- Loop spacing, circuit lengths, manifold count, water temperature, flow rate, screed/floor build-up, controls, and balancing are placeholders.
+- Floor finishes must be coordinated with thermal resistance, movement joints, waterproofing, and manufacturer requirements.
+
+## 5. Heating Zones
+
+| Zone code | Room | Area | Design temperature placeholder | Floor heating loop placeholder | Thermostat required | Notes |
+|---|---|---|---|---|---|---|
+{% for zone in zones -%}
+| {{ zone.zone_code }} | {{ zone.room }} | {{ zone.area }} | {{ zone.design_temperature_placeholder }} | {{ zone.floor_heating_loop_placeholder }} | {{ zone.thermostat_required }} | {{ zone.notes }} |
+{% endfor %}
+
+## 6. Fireplace Concept
+
+- Fireplace is a secondary/amenity heat source, not a substitute for engineered whole-building heating design.
+- Appliance output, clearances, hearth, flue/chimney route, combustion air, external air supply, CO alarms, makeup air, and fire-rated interfaces are TBD.
+- Fireplace influence on nearby thermostats and overheating risk must be coordinated with the heating control strategy.
+
+## 7. Domestic Hot Water Integration
+
+- Domestic hot water may be integrated with the heat pump and a technical-room cylinder.
+- Cylinder volume, recovery time, backup heater, mixing/scald protection, expansion, pressure relief discharge, legionella strategy, and maintenance access are TBD.
+- Plumbing and electrical packages must remain coordinated with mechanical design.
+
+## 8. Mechanical Ventilation Concept
+
+- Natural ventilation is shown in several room data sheets, while wet rooms and technical/service spaces require mechanical extraction review.
+- Final supply/extract airflow, transfer paths, pressure balance, acoustic performance, fire/smoke interfaces, duct routes, and controls are TBD.
+- Ventilation must consider mountain winter operation, condensation, indoor air quality, fireplace combustion, and occupancy peaks.
+
+## 9. Heat Recovery Ventilation Option
+
+- HRV/MVHR is an optional strategy for balanced ventilation with heat recovery.
+- Unit capacity, duct layout, frost protection, condensate drain, filters, silencers, commissioning dampers, and controls are placeholders.
+- HRV feasibility depends on envelope air tightness, service routes, noise criteria, and maintenance access.
+
+## 10. Bathroom Extraction
+
+- Wet rooms requiring ventilation review:
+{% for room in wet_rooms -%}
+  - {{ room.name }}: {{ room.ventilation_type }}; fixtures: {{ room.plumbing_fixtures | join(", ") }}.
+{% endfor %}
+- Extract fans or HRV extract terminals must manage humidity without creating backdraft, noise, condensation, or cold-air discomfort.
+- Final fan airflow, run-on timers, humidity controls, duct insulation, roof/wall terminals, and backdraft protection are TBD.
+
+## 11. Technical Room Layout
+
+- Technical room is the assumed location for heat pump hydraulic equipment, DHW cylinder, manifolds, pumps, filtration, valves, controls, and monitoring.
+- Preserve service clearances, floor drainage, ventilation, condensate disposal, acoustic isolation, electrical separation, and leak detection.
+- Equipment layout must be coordinated before procurement because service access is a primary long-term maintenance requirement.
+
+## 12. Pipe Insulation
+
+- Heating and DHW pipework should be insulated wherever heat loss, condensation, freezing, or occupant contact could be a risk.
+- Pipe insulation thickness, vapor barriers, UV/exterior protection, fire stopping, and penetration details are TBD.
+- Exposed or cold-zone pipe routes need mechanical review and winterization strategy.
+
+## 13. Winterization
+
+- Winterization must address power outages, vacant periods, heat-pump lockout, frozen condensate, exterior units, water lines, terrace systems, and technical-room frost alarms.
+- Possible measures include antifreeze strategy review, minimum-temperature controls, remote monitoring, drain-down procedures, backup heat, UPS/control backup, and service access during snow.
+- No antifreeze concentration, emergency heating sequence, or freeze-protection design is final in this package.
+
+## 14. Commissioning Checklist
+
+- Confirm final mechanical calculations and equipment selections are issued by licensed professionals.
+- Verify heat pump installation, hydraulic flushing, pressure testing, air purging, water treatment, glycol/antifreeze decision, flow rates, balancing, and controls.
+- Verify thermostat addressing, smart-home integration, safety interlocks, backup heat, alarms, and power-loss behavior.
+- Verify ventilation airflow, fan operation, duct insulation, condensation management, noise, filter access, and bathroom extract run-on.
+- Confirm fireplace/chimney commissioning, CO alarms, combustion-air provision, and owner handover documentation.
+
+## 15. Maintenance Schedule
+
+| Equipment | Location | Purpose | Power/capacity placeholder | Electrical dependency | Maintenance interval | Notes |
+|---|---|---|---|---|---|---|
+{% for item in equipment -%}
+| {{ item.equipment }} | {{ item.location }} | {{ item.purpose }} | {{ item.power_capacity_placeholder }} | {{ item.electrical_dependency }} | {{ item.maintenance_interval }} | {{ item.notes }} |
+{% endfor %}
+
+## 16. Licensed Mechanical Engineer Review Checklist
+
+- Confirm final heat loss calculation, cooling-load decision, ventilation calculation, design temperatures, humidity risk, and comfort criteria.
+- Confirm heat pump capacity, backup heat, DHW integration, hydraulic schematic, pumps, valves, expansion, safety devices, water treatment, and controls.
+- Confirm underfloor loop layout, manifold locations, floor build-ups, zoning, thermostats, balancing, and commissioning method.
+- Confirm ventilation strategy, bathroom extraction, HRV option, duct routes, condensate management, acoustics, and fire/smoke coordination.
+- Confirm fireplace interfaces, combustion air, CO alarms, flue route, clearances, and local authority requirements.
+- Confirm that this package remains PRELIMINARY and uses placeholders for final sizing.
+
+## HVAC Equipment Table
+
+| Equipment | Location | Purpose | Power/capacity placeholder | Electrical dependency | Maintenance interval | Notes |
+|---|---|---|---|---|---|---|
+{% for item in equipment -%}
+| {{ item.equipment }} | {{ item.location }} | {{ item.purpose }} | {{ item.power_capacity_placeholder }} | {{ item.electrical_dependency }} | {{ item.maintenance_interval }} | {{ item.notes }} |
+{% endfor %}
+
+## QA Notes
+
+- Every configured room should appear in the heating-zone table.
+- Heating and cooling statements are planning assumptions only and must not be treated as final heat loss or equipment sizing.
+- Commissioning records must be produced by qualified parties before operation.
