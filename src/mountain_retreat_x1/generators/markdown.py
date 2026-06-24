@@ -13,6 +13,7 @@ from mountain_retreat_x1.models import Room
 MARKDOWN_OUTPUT_DIR = "markdown"
 TEMPLATE_NAME = "volume.md.j2"
 ARCHITECTURAL_TEMPLATE_NAME = "architectural_package.md.j2"
+STRUCTURAL_TEMPLATE_NAME = "structural_concept.md.j2"
 DEFAULT_TEMPLATE_DIR = Path("docs/templates/markdown")
 
 
@@ -73,6 +74,20 @@ class ArchitecturalRoomSheet:
     heating_type: str
     ventilation_type: str
     notes: str
+
+
+@dataclass(frozen=True)
+class StructuralVariant:
+    """Structural variant comparison item."""
+
+    title: str
+    advantages: tuple[str, ...]
+    disadvantages: tuple[str, ...]
+    procurement_complexity: str
+    self_build_difficulty: str
+    risk_level: str
+    preliminary_materials: tuple[str, ...]
+    licensed_engineering_required: tuple[str, ...]
 
 
 def _shared_limitations(config: MountainRetreatConfig) -> tuple[str, ...]:
@@ -272,6 +287,127 @@ def _architectural_context(config: MountainRetreatConfig) -> dict[str, object]:
             sum(room.window_area_m2 for room in all_config_rooms(config)),
             1,
         ),
+    }
+
+
+def _structural_variants(config: MountainRetreatConfig) -> tuple[StructuralVariant, ...]:
+    return (
+        StructuralVariant(
+            title="Variant A: standard timber hybrid",
+            advantages=(
+                "Good fit for the configured standard_hybrid assumption.",
+                "Warm mountain-cabin expression with efficient prefabrication potential.",
+                "Can combine timber superstructure with reinforced concrete foundation/slab zones.",
+            ),
+            disadvantages=(
+                "Requires careful moisture, fire, acoustic, and connection detailing.",
+                "Large glazing and terrace interfaces may need steel or engineered timber support.",
+                "Quality depends heavily on shop drawings and site protection from weather.",
+            ),
+            procurement_complexity=(
+                "Medium; regional timber supplier and engineer coordination required."
+            ),
+            self_build_difficulty=(
+                "High; limited to non-structural tasks unless qualified and approved."
+            ),
+            risk_level="Medium, with elevated terrace and moisture-interface risks.",
+            preliminary_materials=(
+                "Reinforced concrete foundation placeholder",
+                "Hybrid timber frame package",
+                "Engineered connectors and hold-downs, final selection by engineer",
+                "Standing seam metal roof over engineered roof structure",
+            ),
+            licensed_engineering_required=(
+                "Final load path and lateral stability design",
+                "Beam, column, joist, rafter, lintel, and connection sizing",
+                "Foundation/slab reinforcement and anchorage design",
+                "Terrace support, guards, and waterproofing interfaces",
+            ),
+        ),
+        StructuralVariant(
+            title="Variant B: premium CLT/glulam",
+            advantages=(
+                "High prefabrication potential and dimensional precision.",
+                "Fast enclosure if procurement and crane access are feasible.",
+                "Strong architectural expression for exposed timber interiors.",
+            ),
+            disadvantages=(
+                "Higher procurement complexity and supplier dependency.",
+                "Requires early coordination of openings, penetrations, lifting, and transport.",
+                "Mountain access roads may constrain panel size and crane logistics.",
+            ),
+            procurement_complexity=(
+                "High; specialist CLT/glulam supplier and logistics planning required."
+            ),
+            self_build_difficulty="Very high; not suitable for informal self-build structure work.",
+            risk_level=(
+                "Medium-high due to logistics, weather protection, and interface coordination."
+            ),
+            preliminary_materials=(
+                "CLT wall/floor/roof panel placeholders",
+                "Glulam beams/columns where required",
+                "Specialist steel connectors and hold-downs",
+                "Temporary weather protection during erection",
+            ),
+            licensed_engineering_required=(
+                "Panel thickness, spans, openings, vibration, and diaphragm design",
+                "Fire resistance and char-rate strategy",
+                "Connection, lifting, temporary bracing, and erection sequence design",
+                "Foundation interface and moisture separation details",
+            ),
+        ),
+        StructuralVariant(
+            title="Variant C: masonry hybrid",
+            advantages=(
+                "Potentially familiar trades and robust wall mass.",
+                "Good thermal mass potential when properly insulated and detailed.",
+                "Can suit stone/timber/glass facade expression with hybrid framing.",
+            ),
+            disadvantages=(
+                "Heavier structure increases foundation and seismic design importance.",
+                "Thermal bridges and moisture detailing require careful professional design.",
+                "Large openings and panoramic glazing may require engineered lintels/frames.",
+            ),
+            procurement_complexity=(
+                "Medium; common materials but detailed engineering coordination needed."
+            ),
+            self_build_difficulty="High; structural masonry work requires qualified supervision.",
+            risk_level="Medium-high in seismic, slope, frost, and moisture conditions.",
+            preliminary_materials=(
+                "Masonry block wall placeholder",
+                "Reinforced concrete foundation and slab placeholders",
+                "Engineered lintels/ring beams/vertical reinforcement placeholders",
+                "Hybrid roof and terrace support system",
+            ),
+            licensed_engineering_required=(
+                "Wall thickness, reinforcement, lintels, ring beams, and lateral stability",
+                "Seismic detailing and anchorage",
+                "Foundation sizing and frost/drainage detailing",
+                "Openings, terrace loads, and roof-to-wall connections",
+            ),
+        ),
+    )
+
+
+def _structural_context(config: MountainRetreatConfig) -> dict[str, object]:
+    quantities = quantity_summary(config)
+    roof_area = area_summary(config)["roof_rough_area"]
+    return {
+        "project": config.project,
+        "site": config.site,
+        "building": config.building,
+        "terrace": config.terrace,
+        "assumptions": _shared_assumptions(config),
+        "limitations": _shared_limitations(config),
+        "variants": _structural_variants(config),
+        "quantities": quantities,
+        "roof_area": roof_area,
+        "foundation_depth_m": config.calculator_assumptions.foundation_depth_m,
+        "gravel_depth_m": config.calculator_assumptions.gravel_depth_m,
+        "frost_depth_cm": config.site.frost_depth_placeholder_cm,
+        "snow_load": config.site.snow_load_placeholder_kn_m2,
+        "wind_load": config.site.wind_load_placeholder_kn_m2,
+        "seismic_zone": config.site.seismic_zone_placeholder,
     }
 
 
@@ -694,10 +830,13 @@ def generate_markdown_volumes(
     env = _environment(template_dir)
     template = env.get_template(TEMPLATE_NAME)
     architectural_template = env.get_template(ARCHITECTURAL_TEMPLATE_NAME)
+    structural_template = env.get_template(STRUCTURAL_TEMPLATE_NAME)
     paths: list[Path] = []
     for volume in _volume_specs(config):
         if volume.filename == "02_architectural_package.md":
             rendered = architectural_template.render(**_architectural_context(config))
+        elif volume.filename == "03_structural_concept.md":
+            rendered = structural_template.render(**_structural_context(config))
         else:
             rendered = template.render(project=config.project, volume=volume)
         path = markdown_dir / volume.filename

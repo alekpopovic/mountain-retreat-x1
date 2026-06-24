@@ -105,3 +105,46 @@ def test_architectural_package_contains_required_sections_and_schedules(tmp_path
     assert "Required Professional Review" in text
     assert "W-GF-LIV" in text
     assert "D-GF-ENT" in text
+
+
+def test_structural_concept_contains_required_sections_and_review_language(
+    tmp_path: Path,
+) -> None:
+    output_dir = tmp_path / "output"
+
+    result = runner.invoke(app, ["generate", "markdown", "--output-dir", str(output_dir)])
+
+    assert result.exit_code == 0
+    text = (output_dir / "markdown" / "03_structural_concept.md").read_text(
+        encoding="utf-8"
+    )
+    for section in (
+        "## 1. Structural Design Philosophy",
+        "## 2. Required Geotechnical Investigation",
+        "## 3. Site Risks for Mountain Terrain",
+        "## 4. Foundation Concept",
+        "## 5. Frost Protection Concept",
+        "## 6. Drainage Strategy",
+        "## 7. Ground Slab Concept",
+        "## 8. Structural Variant A: standard timber hybrid",
+        "## 9. Structural Variant B: premium CLT/glulam",
+        "## 10. Structural Variant C: masonry hybrid",
+        "## 11. Roof Structure Concept",
+        "## 12. Terrace Structure Concept",
+        "## 13. Snow Load Placeholder",
+        "## 14. Wind Load Placeholder",
+        "## 15. Seismic Placeholder",
+        "## 16. Connection Concept",
+        "## 17. Moisture and Condensation Risks",
+        "## 18. Durability Strategy",
+        "## 19. Preliminary Quantity Summary",
+        "## 20. Structural Engineer Review Checklist",
+    ):
+        assert section in text
+
+    assert "Licensed structural engineer" in text
+    assert "not a final structural calculation" in text
+    assert "not a reinforcement drawing set" in text
+    assert "not a safety-compliance certificate" in text
+    assert "No final beam" in text
+    assert "Must Be Engineered by Licensed Professional" in text

@@ -1,0 +1,218 @@
+# 03 Structural Concept
+
+**Project code:** {{ project.project_code }}  
+**Project:** {{ project.project_name }}  
+**Version:** {{ project.version }}  
+**Status:** {{ project.status }}  
+**Revision date:** {{ project.revision_date }}  
+**Language:** {{ project.language }}  
+
+## Revision History
+
+| Version | Date | Author | Notes |
+|---|---|---|---|
+| {{ project.version }} | {{ project.revision_date }} | {{ project.author }} | Generated preliminary structural concept from YAML assumptions and calculator outputs. |
+
+## Mandatory Notice
+
+{{ project.disclaimer }}
+
+This is a **PRELIMINARY structural concept document only**. It is not a final structural calculation, not a reinforcement drawing set, not a beam schedule, not a signed/sealed engineering document, and not a safety-compliance certificate.
+
+## Required Professional Review
+
+- Licensed structural engineer
+- Geotechnical professional
+- Licensed architect for architectural/structural coordination
+- Local permitting authority
+- Contractor or temporary-works specialist where construction sequencing affects stability
+
+## Assumptions
+
+{% for assumption in assumptions -%}
+- {{ assumption }}
+{% endfor %}
+- Site snow load placeholder: {{ snow_load }} kN/m2.
+- Site wind load placeholder: {{ wind_load }} kN/m2.
+- Seismic placeholder: {{ seismic_zone }}.
+- Frost depth placeholder: {{ frost_depth_cm }} cm.
+
+## Limitations
+
+{% for limitation in limitations -%}
+- {{ limitation }}
+{% endfor %}
+- No final beam, column, slab, rafter, lintel, footing, connection, or reinforcement sizing is provided.
+- No fake reinforcement drawings, structural stamps, professional signatures, or safety-compliance claims are generated.
+- Assumptions are separate from verified engineering and must be replaced by licensed professional analysis.
+
+## 1. Structural Design Philosophy
+
+- Keep the structural concept conservative, simple, inspectable, and compatible with mountain terrain.
+- Favor clear load paths, robust moisture separation, reliable drainage, and buildable interfaces between structure, terrace, roof, and envelope.
+- Treat the large panoramic terrace, large glazing, snow exposure, wind exposure, frost, slope, and site access as primary risk drivers.
+- Use this document to brief licensed professionals, not to size or approve structural members.
+
+## 2. Required Geotechnical Investigation
+
+- A geotechnical report is required: {{ site.geotechnical_report_required }}.
+- Soil assumption: {{ site.soil_assumption }}
+- Investigation should confirm bearing capacity, groundwater, frost susceptibility, slope stability, excavation constraints, drainage paths, and retaining needs.
+- Foundation type, depth, reinforcement, drainage, retaining, and slab detailing must be based on geotechnical findings.
+
+## 3. Site Risks for Mountain Terrain
+
+- Altitude assumption: {{ site.altitude_m }} m.
+- Slope assumption: {{ site.slope_percent }}%.
+- Access road assumption: {{ site.access_road_type }}.
+- Drainage risk: {{ site.drainage_risk }}.
+- Key risks include snow accumulation, freeze/thaw cycles, stormwater concentration, slope movement, access limitations, winter construction logistics, and material storage exposure.
+
+## 4. Foundation Concept
+
+- Preliminary foundation quantity estimate: {{ quantities["qty.concrete.volume"].value }} {{ quantities["qty.concrete.volume"].unit }}.
+- Foundation depth assumption used by calculator: {{ foundation_depth_m }} m.
+- Foundation concept remains open until geotechnical and structural design are complete.
+- Possible concepts include shallow reinforced concrete foundations, thickened slab zones, stepped foundations, retaining elements, or locally appropriate alternatives.
+- Final reinforcement, footing sizes, bearing checks, settlement checks, uplift/sliding checks, and anchorage are excluded.
+
+## 5. Frost Protection Concept
+
+- Frost depth placeholder: {{ frost_depth_cm }} cm.
+- Frost protection should consider foundation depth, insulation strategy, drainage, capillary break, local code, and exposure.
+- No frost-protection detail in this package is final.
+
+## 6. Drainage Strategy
+
+- Drainage must move water away from foundations, slab edges, retaining elements, terrace waterproofing, and access paths.
+- Mountain slope runoff and terrace runoff must be handled as coordinated civil/architectural/structural design issues.
+- Drainage elements may include perimeter drains, free-draining gravel, positive falls, swales, gutters, downpipes, and controlled discharge points.
+- Final drainage design requires site survey and authority review.
+
+## 7. Ground Slab Concept
+
+- Ground slab should be coordinated with bearing conditions, insulation, vapor control, radon/local requirements, underfloor heating, floor drains, and thresholds.
+- Gravel/tampon estimate: {{ quantities["qty.gravel.volume"].value }} {{ quantities["qty.gravel.volume"].unit }}.
+- Waterproofing estimate: {{ quantities["qty.waterproofing.area"].value }} {{ quantities["qty.waterproofing.area"].unit }}.
+- No slab thickness, reinforcement mesh, joint pattern, or edge detail is finalized.
+
+{% for variant in variants %}
+## {{ loop.index + 7 }}. Structural {{ variant.title }}
+
+### Advantages
+
+{% for item in variant.advantages -%}
+- {{ item }}
+{% endfor %}
+
+### Disadvantages
+
+{% for item in variant.disadvantages -%}
+- {{ item }}
+{% endfor %}
+
+### Procurement Complexity
+
+- {{ variant.procurement_complexity }}
+
+### Self-Build Difficulty
+
+- {{ variant.self_build_difficulty }}
+
+### Risk Level
+
+- {{ variant.risk_level }}
+
+### Preliminary Materials
+
+{% for item in variant.preliminary_materials -%}
+- {{ item }}
+{% endfor %}
+
+### Must Be Engineered by Licensed Professional
+
+{% for item in variant.licensed_engineering_required -%}
+- {{ item }}
+{% endfor %}
+
+{% endfor %}
+## 11. Roof Structure Concept
+
+- Roof type assumption: {{ building.roof_type }}.
+- Roof pitch assumption: {{ building.roof_pitch_deg }} degrees.
+- Rough roof area estimate: {{ roof_area.value }} {{ roof_area.unit }}.
+- Roof structure must address snow loading, wind uplift, diaphragm behavior, bracing, eaves, drainage, penetrations, condensation control, and connection to walls.
+- Final rafters, purlins, beams, sheathing, bracing, and connectors are excluded.
+
+## 12. Terrace Structure Concept
+
+- Terrace area assumption: {{ terrace.terrace_area_m2 }} m2.
+- Terrace structure must account for occupant loads, guard loads, waterproofing build-up, drainage falls, snow/ice, wind exposure, thermal movement, and future jacuzzi/fire-pit placeholders.
+- Jacuzzi-ready zone is not approved for equipment installation without structural and electrical design.
+- Terrace supports, cantilevers, posts, beams, ledgers, anchors, and guards require licensed structural engineering.
+
+## 13. Snow Load Placeholder
+
+- Snow load placeholder: {{ snow_load }} kN/m2.
+- This value is not verified and must be replaced by jurisdictional snow-load determination.
+- Snow drift at roofs, terrace covers, parapets, terrain exposure, and roof geometry must be reviewed.
+
+## 14. Wind Load Placeholder
+
+- Wind load placeholder: {{ wind_load }} kN/m2.
+- Mountain wind exposure, suction on standing seam roofing, large glazing, terrace guards, and uplift connections require professional analysis.
+
+## 15. Seismic Placeholder
+
+- Seismic zone placeholder: {{ seismic_zone }}.
+- Lateral stability, ductility, anchorage, diaphragms, shear walls/bracing, masonry reinforcement, and connection detailing require licensed structural engineering.
+
+## 16. Connection Concept
+
+- Connections should be visible, inspectable where practical, corrosion-resistant, and compatible with timber, masonry, concrete, steel, waterproofing, and facade systems.
+- Conceptual connection topics include hold-downs, roof-to-wall ties, terrace ledger/support interfaces, guard anchors, glulam/CLT connectors, masonry reinforcement, and foundation anchors.
+- No connection capacity or fastener schedule is provided.
+
+## 17. Moisture and Condensation Risks
+
+- Mountain conditions increase risk from wind-driven rain, snow storage, freeze/thaw, condensation, trapped moisture, and construction wetting.
+- Timber and CLT options require temporary weather protection, drying strategy, vapor-control review, and envelope sequencing.
+- Masonry hybrid options require thermal bridge and condensation review at concrete, lintel, roof, and terrace interfaces.
+
+## 18. Durability Strategy
+
+- Separate structure from water with drainage, capillary breaks, waterproofing, flashings, overhangs, ventilation gaps, and maintainable details.
+- Select corrosion-resistant connectors suitable for exterior and treated-material interfaces.
+- Detail terrace and roof interfaces so leaks can be detected and repaired.
+- Establish inspection and maintenance intervals before final documentation.
+
+## 19. Preliminary Quantity Summary
+
+| Quantity | Value | Formula Note | Assumptions |
+|---|---:|---|---|
+| Concrete volume | {{ quantities["qty.concrete.volume"].value }} {{ quantities["qty.concrete.volume"].unit }} | {{ quantities["qty.concrete.volume"].formula_note }} | {{ quantities["qty.concrete.volume"].assumptions_used | join(", ") }} |
+| Rebar | {{ quantities["qty.rebar.mass"].value }} {{ quantities["qty.rebar.mass"].unit }} | {{ quantities["qty.rebar.mass"].formula_note }} | {{ quantities["qty.rebar.mass"].assumptions_used | join(", ") }} |
+| Gravel/tampon | {{ quantities["qty.gravel.volume"].value }} {{ quantities["qty.gravel.volume"].unit }} | {{ quantities["qty.gravel.volume"].formula_note }} | {{ quantities["qty.gravel.volume"].assumptions_used | join(", ") }} |
+| Waterproofing | {{ quantities["qty.waterproofing.area"].value }} {{ quantities["qty.waterproofing.area"].unit }} | {{ quantities["qty.waterproofing.area"].formula_note }} | {{ quantities["qty.waterproofing.area"].assumptions_used | join(", ") }} |
+| Standard hybrid timber | {{ quantities["qty.timber.standard_hybrid"].value }} {{ quantities["qty.timber.standard_hybrid"].unit }} | {{ quantities["qty.timber.standard_hybrid"].formula_note }} | {{ quantities["qty.timber.standard_hybrid"].assumptions_used | join(", ") }} |
+| Premium CLT | {{ quantities["qty.clt.premium_clt"].value }} {{ quantities["qty.clt.premium_clt"].unit }} | {{ quantities["qty.clt.premium_clt"].formula_note }} | {{ quantities["qty.clt.premium_clt"].assumptions_used | join(", ") }} |
+| Masonry blocks | {{ quantities["qty.masonry.blocks"].value }} {{ quantities["qty.masonry.blocks"].unit }} | {{ quantities["qty.masonry.blocks"].formula_note }} | {{ quantities["qty.masonry.blocks"].assumptions_used | join(", ") }} |
+| Roof covering | {{ quantities["qty.roof.covering"].value }} {{ quantities["qty.roof.covering"].unit }} | {{ quantities["qty.roof.covering"].formula_note }} | {{ quantities["qty.roof.covering"].assumptions_used | join(", ") }} |
+| Terrace decking | {{ quantities["qty.terrace.decking"].value }} {{ quantities["qty.terrace.decking"].unit }} | {{ quantities["qty.terrace.decking"].formula_note }} | {{ quantities["qty.terrace.decking"].assumptions_used | join(", ") }} |
+
+## 20. Structural Engineer Review Checklist
+
+- Confirm geotechnical investigation scope and design parameters.
+- Confirm gravity load path, lateral system, diaphragm strategy, and foundation concept.
+- Confirm snow, wind, seismic, terrace, guard, roof, and glazing support assumptions.
+- Confirm variant selection and whether timber hybrid, CLT/glulam, or masonry hybrid is appropriate.
+- Confirm all member sizes, connections, anchorage, reinforcement, bracing, and temporary works.
+- Confirm moisture, condensation, durability, fire, acoustic, and construction sequencing implications.
+- Confirm that no generated document is used as a final calculation, reinforcement drawing, permit approval, or safety-compliance certificate.
+
+## QA Notes
+
+- This volume must remain conservative and concept-only.
+- Beam sizing, reinforcement drawings, and safety-compliance claims are intentionally excluded.
+- Licensed structural engineer review is mandatory before any real-world structural use.
+
