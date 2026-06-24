@@ -101,7 +101,6 @@ class LocalizedString(StrictModel):
 
     en: str
     sr_latn: str = Field(alias="sr-Latn")
-    sr_cyrl: str = Field(alias="sr-Cyrl")
 
 
 class LocalizationConfig(StrictModel):

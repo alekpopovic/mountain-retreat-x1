@@ -1,0 +1,49 @@
+language: en
+language_name: English
+common_headings:
+  revision_history: Revision History
+  mandatory_notice: Mandatory Notice
+  required_professional_review: Required Professional Review
+  assumptions: Assumptions
+  limitations: Limitations
+  main_content: Main Content
+  qa_notes: QA Notes
+table_columns:
+  task: Task
+  frequency: Frequency
+  responsible_person: Responsible Person
+  estimated_effort: Estimated Effort
+  required_tools: Required Tools
+  warning_signs: Warning Signs
+  notes: Notes
+room_names: {}
+phase_names: {}
+checklist_statuses:
+  not_started: Not Started
+  in_progress: In Progress
+  passed: Passed
+  failed: Failed
+  needs_review: Needs Review
+  not_applicable: Not Applicable
+disclaimer_text: >
+  Preliminary planning document only. Not for construction, permitting,
+  procurement, financing, or legal reliance. Requires review by licensed
+  professionals and local authorities before use.
+professional_review_notes:
+  - Licensed architect review required.
+  - Licensed structural engineer review required.
+  - Licensed electrical professional review required.
+  - Licensed mechanical/plumbing professional review required.
+  - Local permitting authority review required.
+drawing_title_block_labels:
+  project: Project
+  drawing_code: Drawing code
+  title: Title
+  scale: Scale
+  status: Status
+  note: Note
+excel_sheet_names:
+  Summary: Summary
+  Assumptions: Assumptions
+  Calendar: Calendar
+  Task_Catalog: Task_Catalog

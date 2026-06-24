@@ -1,6 +1,6 @@
 """Markdown volume generation using Jinja2."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import cast
 
@@ -9,6 +9,7 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from mountain_retreat_x1.calculators import area_summary, cost_summary, quantity_summary
 from mountain_retreat_x1.calculators.results import QuantityMap
 from mountain_retreat_x1.config.loader import MountainRetreatConfig
+from mountain_retreat_x1.localization import load_translator
 from mountain_retreat_x1.models import Room
 
 MARKDOWN_OUTPUT_DIR = "markdown"
@@ -2317,6 +2318,22 @@ def all_config_rooms(config: MountainRetreatConfig) -> list[Room]:
     return [*config.rooms_ground_floor.rooms, *config.rooms_gallery.rooms]
 
 
+def _localized_config(
+    config: MountainRetreatConfig,
+    language: str | None,
+) -> MountainRetreatConfig:
+    translator = load_translator(language or config.project.language)
+    review_notes = translator.list_text("professional_review_notes")
+    project = config.project.model_copy(
+        update={
+            "language": translator.language,
+            "disclaimer": translator.text("disclaimer_text", config.project.disclaimer),
+            "review_required_by": review_notes or config.project.review_required_by,
+        }
+    )
+    return replace(config, project=project)
+
+
 def _volume_specs(config: MountainRetreatConfig) -> tuple[MarkdownVolume, ...]:
     calculated_areas = area_summary(config)
     quantities = quantity_summary(config)
@@ -2725,8 +2742,10 @@ def generate_markdown_volumes(
     template_dir: Path = DEFAULT_TEMPLATE_DIR,
     *,
     large_mode: bool = False,
+    language: str | None = None,
 ) -> list[Path]:
     """Generate all Markdown source volumes and return their paths."""
+    config = _localized_config(config, language)
     markdown_dir = output_dir / MARKDOWN_OUTPUT_DIR
     markdown_dir.mkdir(parents=True, exist_ok=True)
 

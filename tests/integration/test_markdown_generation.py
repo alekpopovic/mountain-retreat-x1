@@ -40,6 +40,39 @@ def test_generate_markdown_creates_all_expected_files(tmp_path: Path) -> None:
         assert (output_dir / "markdown" / filename).exists()
 
 
+def test_generate_all_lang_sr_latn_uses_serbian_disclaimer(tmp_path: Path) -> None:
+    output_dir = tmp_path / "output"
+
+    result = runner.invoke(
+        app,
+        ["generate", "all", "--lang", "sr-Latn", "--output-dir", str(output_dir)],
+    )
+
+    assert result.exit_code == 0
+    text = (output_dir / "markdown" / "01_project_charter.md").read_text(
+        encoding="utf-8"
+    )
+    assert "PRELIMINARNI planski dokument" in text
+    assert "Nije za izvođenje radova" in text
+    assert "licenciranih stručnjaka" in text
+
+
+def test_generate_all_lang_en_uses_english_disclaimer(tmp_path: Path) -> None:
+    output_dir = tmp_path / "output"
+
+    result = runner.invoke(
+        app,
+        ["generate", "all", "--lang", "en", "--output-dir", str(output_dir)],
+    )
+
+    assert result.exit_code == 0
+    text = (output_dir / "markdown" / "01_project_charter.md").read_text(
+        encoding="utf-8"
+    )
+    assert "Preliminary planning document only" in text
+    assert "Not for construction" in text
+
+
 def test_generated_markdown_contains_required_safety_language(tmp_path: Path) -> None:
     output_dir = tmp_path / "output"
 
@@ -50,8 +83,15 @@ def test_generated_markdown_contains_required_safety_language(tmp_path: Path) ->
         text = (output_dir / "markdown" / filename).read_text(encoding="utf-8")
         assert "PRELIMINARY" in text
         assert "Required Professional Review" in text
-        assert "licensed professionals" in text.lower() or "licensed" in text.lower()
-        assert "not for construction" in text.lower()
+        assert (
+            "licensed professionals" in text.lower()
+            or "licensed" in text.lower()
+            or "licenciranih" in text.lower()
+        )
+        assert (
+            "not for construction" in text.lower()
+            or "nije za izvođenje radova" in text.lower()
+        )
         assert "## Assumptions" in text
         assert "## Limitations" in text
 
@@ -73,7 +113,7 @@ def test_maintenance_manual_contains_year_based_sections(tmp_path: Path) -> None
     assert "Planning horizon:** 30 years" in text
     assert "| Task | Frequency | Responsible person | Estimated effort |" in text
     assert "PRELIMINARY" in text
-    assert "not for construction" in text.lower()
+    assert "not for construction" in text.lower() or "nije za izvođenje radova" in text.lower()
 
 
 def test_self_build_guide_contains_at_least_100_normal_steps(
@@ -87,8 +127,8 @@ def test_self_build_guide_contains_at_least_100_normal_steps(
     text = (output_dir / "markdown" / "13_self_build_guide.md").read_text(encoding="utf-8")
     assert _self_build_step_count(text) >= 100
     assert "Stop point requiring professional review" in text
-    assert "Licensed structural engineer" in text
-    assert "not for construction" in text.lower()
+    assert "Licensed structural engineer" in text or "građevinskog konstruktora" in text
+    assert "not for construction" in text.lower() or "nije za izvođenje radova" in text.lower()
 
 
 def test_self_build_guide_large_mode_contains_at_least_300_steps(
@@ -152,7 +192,7 @@ def test_architectural_package_contains_required_sections_and_schedules(tmp_path
     ):
         assert section in text
 
-    assert "Preliminary planning document only" in text
+    assert "Preliminary planning document only" in text or "PRELIMINARNI planski dokument" in text
     assert "Required Professional Review" in text
     assert "W-GF-LIV" in text
     assert "D-GF-ENT" in text

@@ -1,0 +1,88 @@
+language: sr-Latn
+language_name: Serbian Latin
+common_headings:
+  revision_history: Istorija revizija
+  mandatory_notice: Obavezna napomena
+  required_professional_review: Obavezna stručna provera
+  assumptions: Pretpostavke
+  limitations: Ograničenja
+  main_content: Glavni sadržaj
+  qa_notes: QA napomene
+table_columns:
+  task: Zadatak
+  frequency: Učestalost
+  responsible_person: Odgovorna osoba
+  estimated_effort: Procena trajanja
+  required_tools: Potreban alat
+  warning_signs: Znaci upozorenja
+  notes: Napomene
+room_names:
+  entrance vestibule: ulazni vetrobran
+  technical room: tehnička prostorija
+  laundry/storage: vešernica/ostava
+  guest bathroom: gostinsko kupatilo
+  guest bedroom: gostinska soba
+  kitchen: kuhinja
+  dining: trpezarija
+  living room: dnevna soba
+  fireplace zone: zona kamina
+  stair zone: zona stepeništa
+  master bedroom: glavna spavaća soba
+  master bathroom: glavno kupatilo
+  walk-in closet: garderober
+  bedroom 2: spavaća soba 2
+  bedroom 3: spavaća soba 3
+  gallery lounge: galerijski salon
+  bathroom 2: kupatilo 2
+phase_names:
+  Design and professional review: Projektovanje i stručna provera
+  Permits and site preparation: Dozvole i priprema gradilišta
+  Access road and logistics: Pristupni put i logistika
+  Earthworks: Zemljani radovi
+  Drainage: Drenaža
+  Foundations: Temelji
+  Structural frame: Konstrukcija
+  Roof: Krov
+  Exterior closure: Zatvaranje omotača
+  Facade: Fasada
+  Electrical rough-in: Elektro grubi razvod
+  Plumbing rough-in: Vodovod i kanalizacija grubi razvod
+  HVAC rough-in: HVAC grubi razvod
+  Interior walls and insulation: Unutrašnji zidovi i izolacija
+  Floors and finishes: Podovi i završne obrade
+  Bathrooms: Kupatila
+  Kitchen: Kuhinja
+  Terrace: Terasa
+  Smart home: Pametna kuća
+  Solar/off-grid: Solarni/off-grid sistemi
+  Landscaping: Uređenje terena
+  Testing and handover: Ispitivanje i predaja
+checklist_statuses:
+  not_started: Nije započeto
+  in_progress: U toku
+  passed: Prošlo
+  failed: Nije prošlo
+  needs_review: Potrebna provera
+  not_applicable: Nije primenljivo
+disclaimer_text: >
+  PRELIMINARNI planski dokument. Nije za izvođenje radova, ishodovanje dozvola,
+  nabavku, finansiranje ili pravno oslanjanje. Pre bilo kakve upotrebe potrebna
+  je provera od strane licenciranih stručnjaka i nadležnih lokalnih organa.
+professional_review_notes:
+  - Potrebna je provera od strane licenciranog arhitekte.
+  - Potrebna je provera od strane licenciranog građevinskog konstruktora.
+  - Potrebna je provera od strane licenciranog elektro stručnjaka.
+  - Potrebna je provera od strane licenciranog mašinskog/instalaterskog stručnjaka.
+  - Potrebna je provera nadležnog organa za dozvole.
+drawing_title_block_labels:
+  project: Projekat
+  drawing_code: Oznaka crteža
+  title: Naziv
+  scale: Razmera
+  status: Status
+  note: Napomena
+excel_sheet_names:
+  Summary: Sažetak
+  Assumptions: Pretpostavke
+  Calendar: Kalendar
+  Task_Catalog: Katalog_zadataka

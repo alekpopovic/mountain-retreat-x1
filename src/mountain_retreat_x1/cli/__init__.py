@@ -24,6 +24,7 @@ from mountain_retreat_x1.generators import (
     generate_pdf_volumes,
     generate_svg_drawings,
 )
+from mountain_retreat_x1.localization import LocalizationError, normalize_language
 
 app = typer.Typer(
     name="mrx1",
@@ -276,15 +277,29 @@ def _print_placeholder_generation(kind: str, output_dir: Path) -> None:
     console.print(f"Output directory prepared: {output_dir}")
 
 
+def _language_or_exit(language: str | None) -> str:
+    try:
+        return normalize_language(language)
+    except LocalizationError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1) from exc
+
+
 @generate_app.command("all")
 def generate_all(
     config_dir: ConfigDirOption = Path("config"),
     output_dir: OutputDirOption = Path("output"),
+    lang: str = typer.Option(
+        "sr-Latn",
+        "--lang",
+        help="Visible output language: sr-Latn or en.",
+    ),
 ) -> None:
     """Generate all preliminary planning artifacts."""
     _ensure_output_dirs(output_dir)
     config = _load_config_or_exit(config_dir)
-    markdown_paths = generate_markdown_volumes(config, output_dir)
+    language = _language_or_exit(lang)
+    markdown_paths = generate_markdown_volumes(config, output_dir, language=language)
     table = Table(title="Planned Generators")
     table.add_column("Artifact", style="cyan")
     table.add_column("Future Output")
@@ -303,6 +318,11 @@ def generate_all(
 def generate_markdown(
     config_dir: ConfigDirOption = Path("config"),
     output_dir: OutputDirOption = Path("output"),
+    lang: str = typer.Option(
+        "sr-Latn",
+        "--lang",
+        help="Visible output language: sr-Latn or en.",
+    ),
     large: bool = typer.Option(
         False,
         "--large",
@@ -312,7 +332,13 @@ def generate_markdown(
     """Generate preliminary Markdown source volumes."""
     _ensure_output_dirs(output_dir)
     config = _load_config_or_exit(config_dir)
-    paths = generate_markdown_volumes(config, output_dir, large_mode=large)
+    language = _language_or_exit(lang)
+    paths = generate_markdown_volumes(
+        config,
+        output_dir,
+        large_mode=large,
+        language=language,
+    )
 
     table = Table(title="Generated Markdown Volumes")
     table.add_column("File", style="cyan")
