@@ -12,6 +12,7 @@ from mountain_retreat_x1.calculators import area_summary, cost_summary, quantity
 from mountain_retreat_x1.calculators.results import QuantityMap
 from mountain_retreat_x1.config import ConfigLoadError, load_config
 from mountain_retreat_x1.config.loader import MountainRetreatConfig
+from mountain_retreat_x1.exporters import generate_bom_workbook
 from mountain_retreat_x1.generators import generate_markdown_volumes
 
 app = typer.Typer(
@@ -317,9 +318,23 @@ def generate_pdf(
 
 @generate_app.command("excel")
 def generate_excel(
+    config_dir: ConfigDirOption = Path("config"),
     output_dir: OutputDirOption = Path("output"),
+    bom: Annotated[
+        bool,
+        typer.Option(
+            "--bom",
+            help="Generate the preliminary Excel BOM workbook.",
+        ),
+    ] = False,
 ) -> None:
     """Generate preliminary Excel workbooks."""
+    if bom:
+        _ensure_output_dirs(output_dir)
+        config = _load_config_or_exit(config_dir)
+        path = generate_bom_workbook(config, output_dir)
+        console.print(f"[green]Excel BOM generation completed.[/green] {path}")
+        return
     _print_placeholder_generation("Excel", output_dir)
 
 
